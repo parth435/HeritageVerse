@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Cormorant Garamond", serif;
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --color-gold: #d4af7a;
+  --color-gold-bright: #f0d9b0;
+  --color-ink: #0c0a09;
+  --color-parchment: #f4ead8;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #0c0a09;
+  color: #f4ead8;
+  font-family: var(--font-sans);
+}
+
+#root {
+  min-height: 100%;
+}
