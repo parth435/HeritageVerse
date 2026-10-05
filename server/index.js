@@ -3,22 +3,22 @@ const cors = require("cors");
 const bcrypt = require("bcrypt");
 require("dotenv").config();
 
+const { authenticate, createAuthToken, getJwtSecret } = require("./auth");
 const pool = require("./db");
 
 const app = express();
+const port = Number(process.env.PORT) || 5000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Test backend
 app.get("/", (req, res) => {
   res.json({
-    message: "HeritageVerse Backend is running!"
+    success: true,
+    message: "HeritageVerse Backend is running!",
   });
 });
 
-// Test database connection
 app.get("/test-db", async (req, res) => {
   try {
     const result = await pool.query("SELECT NOW()");
@@ -26,49 +26,66 @@ app.get("/test-db", async (req, res) => {
     res.json({
       success: true,
       message: "PostgreSQL connected successfully!",
-      time: result.rows[0]
+      time: result.rows[0],
     });
-
   } catch (error) {
     console.error("Database error:", error);
 
     res.status(500).json({
       success: false,
-      message: "Database connection failed"
+      message: "Database connection failed",
     });
   }
 });
 
-// SIGN UP API
 app.post("/api/auth/signup", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
+    const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    const password = typeof req.body?.password === "string" ? req.body.password : "";
 
-    // Validate input
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Name, email and password are required"
+        message: "Name, email and password are required",
       });
     }
 
-    // Check whether email already exists
+    if (name.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Name must be at least 2 characters",
+      });
+    }
+
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid email address",
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
     const existingUser = await pool.query(
       "SELECT id FROM users WHERE email = $1",
       [email]
     );
 
     if (existingUser.rows.length > 0) {
-      return res.status(400).json({
+      return res.status(409).json({
         success: false,
-        message: "User already exists with this email"
+        message: "User already exists with this email",
       });
     }
 
-    // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Insert user into database
     const result = await pool.query(
       `INSERT INTO users (name, email, password_hash)
        VALUES ($1, $2, $3)
@@ -76,46 +93,49 @@ app.post("/api/auth/signup", async (req, res) => {
       [name, email, passwordHash]
     );
 
-    // Return success response
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Account created successfully",
-      user: result.rows[0]
+      user: result.rows[0],
     });
-
   } catch (error) {
     console.error("Signup error:", error);
 
-    res.status(500).json({
-      success: false,
-      message: "Failed to create account"
-    });
-  }
-});
-// SIGN IN API
-app.post("/api/auth/signin", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Validate input
-    if (!email || !password) {
-      return res.status(400).json({
+    if (error.code === "23505") {
+      return res.status(409).json({
         success: false,
-        message: "Email and password are required"
+        message: "User already exists with this email",
       });
     }
 
-    // Find user by email
+    res.status(500).json({
+      success: false,
+      message: "Failed to create account",
+    });
+  }
+});
+
+app.post("/api/auth/signin", async (req, res) => {
+  try {
+    const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    const password = typeof req.body?.password === "string" ? req.body.password : "";
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required",
+      });
+    }
+
     const result = await pool.query(
-      "SELECT * FROM users WHERE email = $1",
+      "SELECT id, name, email, password_hash FROM users WHERE email = $1",
       [email]
     );
 
-    // User not found
     if (result.rows.length === 0) {
       return res.status(401).json({
         success: false,
-        message: "Invalid email or password"
+        message: "Invalid email or password",
       });
     }
 
@@ -130,32 +150,75 @@ app.post("/api/auth/signin", async (req, res) => {
     if (!isPasswordCorrect) {
       return res.status(401).json({
         success: false,
-        message: "Invalid email or password"
+        message: "Invalid email or password",
       });
     }
 
-    // Successful login
-    res.json({
+    return res.json({
       success: true,
       message: "Login successful",
       user: {
         id: user.id,
         name: user.name,
-        email: user.email
-      }
+        email: user.email,
+      },
+      token: createAuthToken(user),
     });
-
   } catch (error) {
     console.error("Signin error:", error);
 
     res.status(500).json({
       success: false,
-      message: "Login failed"
+      message: "Login failed",
     });
   }
 });
 
-// Start server
-app.listen(process.env.PORT, () => {
-  console.log(`Server running on port ${process.env.PORT}`);
+app.get("/api/auth/me", authenticate, async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, name, email, created_at FROM users WHERE id = $1",
+      [req.auth.userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User account was not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      user: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Current user error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load the current user",
+    });
+  }
+});
+
+app.use((error, req, res, next) => {
+  if (error instanceof SyntaxError && "body" in error) {
+    return res.status(400).json({
+      success: false,
+      message: "Request body must be valid JSON",
+    });
+  }
+
+  console.error("Unhandled request error:", error);
+  return res.status(500).json({
+    success: false,
+    message: "Internal server error",
+  });
+});
+
+getJwtSecret();
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });

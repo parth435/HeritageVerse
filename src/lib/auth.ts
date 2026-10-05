@@ -2,6 +2,7 @@ export type SessionUser = {
   id: number;
   name: string;
   email: string;
+  token?: string;
 };
 
 const SESSION_KEY = "heritageverse-session";
@@ -63,7 +64,10 @@ export async function signIn(
     throw new Error(data.message || "Login failed.");
   }
 
-  const user: SessionUser = data.user;
+  const user: SessionUser = {
+    ...data.user,
+    token: data.token,
+  };
 
   writeSession(user);
   return user;
