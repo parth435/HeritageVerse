@@ -1,42 +1,75 @@
 import { AuthPage } from "@/components/AuthPage";
-import { CinematicMonument } from "@/components/CinematicMonument";
-import { HeritageOS } from "@/components/HeritageOS";
-import { LivingAtlas } from "@/components/LivingAtlas";
-import { MonumentDissection } from "@/components/MonumentDissection";
-import { MuseumInMotion } from "@/components/MuseumInMotion";
-import { SiteFooter } from "@/components/SiteFooter";
-import { SiteNav } from "@/components/SiteNav";
-import { ThenNow } from "@/components/ThenNow";
-import { TheJourney } from "@/components/TheJourney";
-import { TimeMachine } from "@/components/TimeMachine";
-import { useAuth } from "@/context/AuthContext";
 import { AdminApp } from "@/components/admin/AdminApp";
+import { ExplorePage } from "@/pages/ExplorePage";
+import { FavoritesPage } from "@/pages/FavoritesPage";
+import { HeritageDetailPage } from "@/pages/HeritageDetailPage";
+import { HomePage } from "@/pages/HomePage";
+import { NotFoundPage } from "@/pages/NotFoundPage";
+import { ProfilePage } from "@/pages/ProfilePage";
+import { VisitedPage } from "@/pages/VisitedPage";
+import { useAuth } from "@/context/AuthContext";
+import { useLocation, useNavigate } from "@/lib/router";
+
+const adminRoutes = new Set([
+  "/admin",
+  "/admin/dashboard",
+  "/admin/heritage",
+  "/admin/timeline",
+  "/admin/stories",
+  "/admin/media",
+  "/admin/users",
+  "/admin/settings",
+]);
 
 export default function App() {
   const { user } = useAuth();
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const normalizedPath = pathname.replace(/\/+$/, "") || "/";
 
-  if (window.location.pathname.startsWith("/admin")) {
-    return <AdminApp />;
+  if (normalizedPath === "/admin" || normalizedPath.startsWith("/admin/")) {
+    if (!adminRoutes.has(normalizedPath)) return <NotFoundPage />;
+    return <AdminApp key={normalizedPath} />;
   }
 
-  if (!user) {
-    return <AuthPage />;
+  if (pathname === "/explore") return <ExplorePage />;
+  if (pathname === "/favorites") return <FavoritesPage isAuthenticated={Boolean(user)} />;
+  if (pathname === "/visited") return <VisitedPage isAuthenticated={Boolean(user)} />;
+  if (pathname === "/profile") return <ProfilePage user={user} />;
+
+  if (pathname === "/login" || pathname === "/signup") {
+    if (user) return <HomePage />;
+    const initialMode = pathname === "/signup" ? "signup" : "signin";
+    return (
+      <AuthPage
+        initialMode={initialMode}
+        onModeChange={(mode) => navigate(mode === "signup" ? "/signup" : "/login")}
+      />
+    );
   }
 
-  return (
-    <div className="min-h-svh bg-ink text-parchment">
-      <SiteNav />
-      <main>
-        <CinematicMonument />
-        <LivingAtlas />
-        <MuseumInMotion />
-        <TimeMachine />
-        <MonumentDissection />
-        <ThenNow />
-        <TheJourney />
-        <HeritageOS />
-      </main>
-      <SiteFooter />
-    </div>
-  );
+  const detailMatch = pathname.match(/^\/heritage\/([^/]+)\/?$/);
+  if (detailMatch?.[1]) {
+    let identifier = detailMatch[1];
+    try {
+      identifier = decodeURIComponent(identifier);
+    } catch {
+      return <NotFoundPage />;
+    }
+    return <HeritageDetailPage identifier={identifier} />;
+  }
+
+  if (pathname === "/" || pathname === "") {
+    if (!user) {
+      return (
+        <AuthPage
+          initialMode="signin"
+          onModeChange={(mode) => navigate(mode === "signup" ? "/signup" : "/login")}
+        />
+      );
+    }
+    return <HomePage />;
+  }
+
+  return <NotFoundPage />;
 }

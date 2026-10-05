@@ -1,11 +1,10 @@
-export type SessionUser = {
-  id: number;
-  name: string;
-  email: string;
-};
+import { apiRequest } from "@/lib/api";
+import { writeAuthToken } from "@/lib/sessionToken";
+import type { AuthResponse, User } from "@/types/auth";
+
+export type SessionUser = User;
 
 const SESSION_KEY = "heritageverse-session";
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5000/api/auth";
 
 // Read current session from browser
 export function readSession(): SessionUser | null {
@@ -25,6 +24,7 @@ export function writeSession(user: SessionUser) {
 // Remove session during logout
 export function clearSession() {
   localStorage.removeItem(SESSION_KEY);
+  writeAuthToken(null);
 }
 
 export async function signUp(
@@ -32,19 +32,15 @@ export async function signUp(
   email: string,
   password: string
 ): Promise<SessionUser> {
-  const response = await fetch(`${API_URL}/signup`, {
+  const data = await apiRequest<AuthResponse>("auth/signup", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, email, password }),
+    authenticated: false,
+    body: { name, email, password },
   });
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || "Failed to create account.");
-  }
 
   const user: SessionUser = data.user;
   writeSession(user);
+  writeAuthToken(typeof data.token === "string" ? data.token : null);
   return user;
 }
 
@@ -52,19 +48,14 @@ export async function signIn(
   email: string,
   password: string
 ): Promise<SessionUser> {
-  const response = await fetch(`${API_URL}/signin`, {
+  const data = await apiRequest<AuthResponse>("auth/signin", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    authenticated: false,
+    body: { email, password },
   });
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || "Login failed.");
-  }
 
   const user: SessionUser = data.user;
-
   writeSession(user);
+  writeAuthToken(typeof data.token === "string" ? data.token : null);
   return user;
 }

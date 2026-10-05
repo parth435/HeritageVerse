@@ -5,16 +5,16 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import type { User } from "@/types/auth";
 import {
   clearSession,
   readSession,
   signIn as signInAccount,
   signUp as signUpAccount,
-  type SessionUser,
 } from "@/lib/auth";
 
 type AuthContextValue = {
-  user: SessionUser | null;
+  user: User | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => void;
@@ -23,7 +23,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<SessionUser | null>(() => readSession());
+  const [user, setUser] = useState<User | null>(() => readSession());
 
   const value = useMemo<AuthContextValue>(
     () => ({

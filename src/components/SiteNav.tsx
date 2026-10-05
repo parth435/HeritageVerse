@@ -3,6 +3,7 @@ import { Compass, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
+import { RouterLink } from "@/lib/router";
 
 const links = [
   { href: "#atlas", label: "Atlas" },
@@ -31,6 +32,12 @@ export function SiteNav() {
           <span className="font-display text-xl tracking-wide">HeritageVerse</span>
         </a>
         <nav className="hidden items-center gap-7 lg:flex">
+          <RouterLink
+            to="/explore"
+            className="text-xs uppercase tracking-[0.2em] text-parchment/70 hover:text-gold-bright focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+          >
+            Explore
+          </RouterLink>
           {links.map((link) => (
             <a
               key={link.href}
@@ -62,6 +69,13 @@ export function SiteNav() {
       </div>
       {open ? (
         <div className="flex flex-col gap-3 border-t border-white/10 px-5 py-4 lg:hidden">
+          <RouterLink
+            to="/explore"
+            onClick={() => setOpen(false)}
+            className="text-sm uppercase tracking-[0.18em] text-parchment/80"
+          >
+            Explore
+          </RouterLink>
           {links.map((link) => (
             <a
               key={link.href}

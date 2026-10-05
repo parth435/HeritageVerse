@@ -1,21 +1,29 @@
 import { AnimatePresence, motion } from "motion/react";
 import { Compass, Eye, EyeOff, Lock, Mail, UserRound } from "lucide-react";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 
-type Mode = "signin" | "signup";
+export type AuthMode = "signin" | "signup";
 
-export function AuthPage() {
+export function AuthPage({
+  initialMode = "signin",
+  onModeChange,
+}: {
+  initialMode?: AuthMode;
+  onModeChange?: (mode: AuthMode) => void;
+}) {
   const { signIn, signUp } = useAuth();
-  const [mode, setMode] = useState<Mode>("signin");
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+
+  useEffect(() => setMode(initialMode), [initialMode]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -101,6 +109,7 @@ export function AuthPage() {
                 onClick={() => {
                   setMode(item);
                   setError("");
+                  onModeChange?.(item);
                 }}
                 className={`rounded-full py-2.5 text-xs uppercase tracking-[0.22em] ${
                   mode === item
@@ -197,8 +206,8 @@ export function AuthPage() {
           </AnimatePresence>
 
           <p className="mt-8 text-xs leading-relaxed text-parchment/45">
-            Accounts are stored on this device for the demo. Create an account
-            first, then sign in on later visits.
+            Your account is stored by HeritageVerse. This browser keeps your
+            signed-in profile locally; token-based sessions are not enabled yet.
           </p>
         </motion.div>
       </main>
