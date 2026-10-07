@@ -5,6 +5,7 @@ require("dotenv").config();
 
 const { authenticate, createAuthToken, getJwtSecret } = require("./auth");
 const pool = require("./db");
+const heritageRouter = require("./heritage");
 
 const app = express();
 const port = Number(process.env.PORT) || 5000;
@@ -29,7 +30,7 @@ app.get("/test-db", async (req, res) => {
       time: result.rows[0],
     });
   } catch (error) {
-    console.error("Database error:", error);
+    console.error("Database health check failed:", error.code || "unknown error");
 
     res.status(500).json({
       success: false,
@@ -97,9 +98,10 @@ app.post("/api/auth/signup", async (req, res) => {
       success: true,
       message: "Account created successfully",
       user: result.rows[0],
+      token: createAuthToken(result.rows[0]),
     });
   } catch (error) {
-    console.error("Signup error:", error);
+    console.error("Signup failed:", error.code || "unknown error");
 
     if (error.code === "23505") {
       return res.status(409).json({
@@ -165,7 +167,7 @@ app.post("/api/auth/signin", async (req, res) => {
       token: createAuthToken(user),
     });
   } catch (error) {
-    console.error("Signin error:", error);
+    console.error("Signin failed:", error.code || "unknown error");
 
     res.status(500).json({
       success: false,
@@ -178,7 +180,7 @@ app.get("/api/auth/me", authenticate, async (req, res) => {
   try {
     const result = await pool.query(
       "SELECT id, name, email, created_at FROM users WHERE id = $1",
-      [req.auth.userId]
+      [req.user.id]
     );
 
     if (result.rows.length === 0) {
@@ -193,7 +195,7 @@ app.get("/api/auth/me", authenticate, async (req, res) => {
       user: result.rows[0],
     });
   } catch (error) {
-    console.error("Current user error:", error);
+    console.error("Current user lookup failed:", error.code || "unknown error");
 
     return res.status(500).json({
       success: false,
@@ -201,6 +203,8 @@ app.get("/api/auth/me", authenticate, async (req, res) => {
     });
   }
 });
+
+app.use("/api", heritageRouter);
 
 app.use((error, req, res, next) => {
   if (error instanceof SyntaxError && "body" in error) {
@@ -210,7 +214,7 @@ app.use((error, req, res, next) => {
     });
   }
 
-  console.error("Unhandled request error:", error);
+  console.error("Unhandled request error:", error.status || "unknown error");
   return res.status(500).json({
     success: false,
     message: "Internal server error",

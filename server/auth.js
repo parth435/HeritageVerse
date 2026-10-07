@@ -13,11 +13,18 @@ function getJwtSecret() {
 }
 
 function createAuthToken(user) {
+  const userId = Number(user?.id);
+
+  if (!Number.isSafeInteger(userId) || userId < 1) {
+    throw new Error("A valid user ID is required to create an authentication token");
+  }
+
   return jwt.sign(
-    { email: user.email, name: user.name },
+    {},
     getJwtSecret(),
     {
-      subject: String(user.id),
+      algorithm: "HS256",
+      subject: String(userId),
       expiresIn: TOKEN_EXPIRY,
     }
   );
@@ -25,31 +32,35 @@ function createAuthToken(user) {
 
 function authenticate(req, res, next) {
   const authorization = req.get("authorization");
+  const match = typeof authorization === "string"
+    ? /^Bearer\s+(\S+)$/i.exec(authorization.trim())
+    : null;
 
-  if (!authorization?.startsWith("Bearer ")) {
+  if (!match) {
     return res.status(401).json({
       success: false,
-      message: "Authentication token is required",
-    });
-  }
-
-  const token = authorization.slice("Bearer ".length).trim();
-
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: "Authentication token is required",
+      message: authorization
+        ? "Authentication token must use the Bearer scheme"
+        : "Authentication token is required",
     });
   }
 
   try {
-    const payload = jwt.verify(token, getJwtSecret());
+    const payload = jwt.verify(match[1], getJwtSecret(), {
+      algorithms: ["HS256"],
+    });
+
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      throw new Error("Invalid token payload");
+    }
+
     const userId = Number(payload.sub);
 
     if (!Number.isSafeInteger(userId) || userId < 1) {
       throw new Error("Invalid token subject");
     }
 
+    req.user = { id: userId };
     req.auth = { userId };
     return next();
   } catch {
