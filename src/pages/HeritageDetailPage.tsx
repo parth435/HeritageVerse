@@ -3,7 +3,8 @@ import type { ReactNode } from "react";
 import { ArrowLeft, Clock3, Heart, Landmark, MapPin, Route } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HeritagePageHeader } from "@/components/heritage/HeritagePageHeader";
-import { getFallbackHeritage } from "@/lib/heritageDataProvider";
+import { ApiRequestError, getHeritageById } from "@/lib/api";
+import { heritageToView } from "@/lib/heritageAdapter";
 import { RouterLink } from "@/lib/router";
 import type { HeritageGalleryImage, HeritageView } from "@/lib/heritageAdapter";
 
@@ -37,13 +38,9 @@ function EmptyDetail({ children }: { children: ReactNode }) {
 }
 
 function HeritageDetailContent({ item }: { item: HeritageView }) {
-  const local = item.localMonument;
-  const period = item.historicalPeriod || local?.era;
-  const year = local?.year;
+  const period = item.historicalPeriod;
   const primaryImage = item.gallery[0];
-  const architectureText = item.architecture || (local?.material
-    ? `Materials noted in the current local record: ${local.material}.`
-    : "Architectural documentation is not available yet.");
+  const architectureText = item.architecture || "Architectural documentation is not available in this record yet.";
 
   return (
     <>
@@ -89,7 +86,7 @@ function HeritageDetailContent({ item }: { item: HeritageView }) {
             <p>{item.description || "Overview information is not available yet."}</p>
           </DetailSection>
           <DetailSection id="history" title="History">
-            <p>{item.history || "Historical notes have not been added to this local record yet."}</p>
+            <p>{item.history || "Historical notes have not been added to this record yet."}</p>
           </DetailSection>
           <DetailSection id="significance" title="Cultural significance">
             <p>{item.culturalSignificance || "Cultural significance notes are not available yet."}</p>
@@ -109,7 +106,7 @@ function HeritageDetailContent({ item }: { item: HeritageView }) {
                   </li>
                 ))}
               </ol>
-            ) : <EmptyDetail>No timeline events are available for this local record.</EmptyDetail>}
+            ) : <EmptyDetail>No timeline events are available for this record.</EmptyDetail>}
           </DetailSection>
           <DetailSection id="artifacts" title="Artifacts">
             {item.artifacts.length ? (
@@ -137,7 +134,6 @@ function HeritageDetailContent({ item }: { item: HeritageView }) {
             <dl className="mt-4 divide-y divide-white/10 text-sm">
               <div className="py-3"><dt className="text-xs uppercase tracking-[0.15em] text-parchment/45">Category</dt><dd className="mt-1 text-parchment/85">{item.category?.name || "Not recorded"}</dd></div>
               <div className="py-3"><dt className="text-xs uppercase tracking-[0.15em] text-parchment/45">Historical period</dt><dd className="mt-1 text-parchment/85">{period || "Not recorded"}</dd></div>
-              {year ? <div className="py-3"><dt className="text-xs uppercase tracking-[0.15em] text-parchment/45">Local date label</dt><dd className="mt-1 text-parchment/85">{year}</dd></div> : null}
               <div className="py-3"><dt className="text-xs uppercase tracking-[0.15em] text-parchment/45">State / territory</dt><dd className="mt-1 text-parchment/85">{item.state || "Not recorded"}</dd></div>
               {item.district ? <div className="py-3"><dt className="text-xs uppercase tracking-[0.15em] text-parchment/45">District</dt><dd className="mt-1 text-parchment/85">{item.district}</dd></div> : null}
             </dl>
@@ -166,17 +162,36 @@ export function HeritageDetailPage({ identifier }: { identifier: string }) {
   const [item, setItem] = useState<HeritageView | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
+    const controller = new AbortController();
     let active = true;
+    setItem(null);
     setLoading(true);
     setError(null);
-    void getFallbackHeritage(identifier)
-      .then((record) => { if (active) setItem(record); })
-      .catch(() => { if (active) setError("The local heritage record could not be read."); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [identifier]);
+    setNotFound(false);
+    void getHeritageById(identifier, { signal: controller.signal })
+      .then((record) => {
+        if (active) setItem(heritageToView(record));
+      })
+      .catch((reason: unknown) => {
+        if (!active) return;
+        if (reason instanceof ApiRequestError && [400, 404].includes(reason.status)) {
+          setNotFound(true);
+          return;
+        }
+        setError(reason instanceof Error ? reason.message : "The heritage record could not load. Please try again.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [identifier, retryKey]);
 
   return (
     <div className="min-h-svh bg-ink text-parchment">
@@ -185,16 +200,21 @@ export function HeritageDetailPage({ identifier }: { identifier: string }) {
         {loading ? (
           <div className="mx-auto max-w-7xl px-5 py-20 md:px-10" role="status" aria-live="polite">Loading the heritage record…</div>
         ) : error ? (
-          <div className="mx-auto max-w-7xl px-5 py-20 md:px-10" role="alert"><p>{error}</p><RouterLink to="/explore" className="mt-4 inline-block text-gold-bright underline">Back to explore</RouterLink></div>
+          <div className="mx-auto max-w-7xl px-5 py-20 md:px-10" role="alert">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-gold">The record could not load</p>
+            <p className="mt-3 text-parchment/70">{error}</p>
+            <button type="button" onClick={() => setRetryKey((current) => current + 1)} className="mt-5 rounded-full border border-gold/40 px-5 py-2.5 text-xs uppercase tracking-[0.15em] text-gold-bright hover:bg-gold/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Try again</button>
+            <RouterLink to="/explore" className="ml-4 inline-block text-gold-bright underline">Back to explore</RouterLink>
+          </div>
         ) : item ? (
           <HeritageDetailContent item={item} />
-        ) : (
+        ) : notFound ? (
           <div className="mx-auto max-w-7xl px-5 py-20 md:px-10" role="status">
             <p className="text-[10px] uppercase tracking-[0.25em] text-gold">Record not found</p>
-            <h1 className="font-display mt-3 text-4xl">This place is not in the local collection.</h1>
+            <h1 className="font-display mt-3 text-4xl">This place is not in the published collection.</h1>
             <RouterLink to="/explore" className="mt-5 inline-flex items-center gap-2 text-sm text-gold-bright underline"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to explore</RouterLink>
           </div>
-        )}
+        ) : null}
       </main>
     </div>
   );

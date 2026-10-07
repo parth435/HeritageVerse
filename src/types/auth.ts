@@ -8,9 +8,8 @@ export type User = {
 };
 
 export type AuthResponse = {
-  success: boolean;
+  success: true;
   message: string;
   user: User;
-  /** The current API does not issue a token; this remains optional for that reason. */
-  token?: string;
+  token: string;
 };

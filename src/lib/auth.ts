@@ -1,61 +1,43 @@
-import { apiRequest } from "@/lib/api";
+import { ApiRequestError, authSignin, authSignup } from "@/lib/api";
 import { writeAuthToken } from "@/lib/sessionToken";
 import type { AuthResponse, User } from "@/types/auth";
 
-export type SessionUser = User;
+function isUser(value: unknown): value is User {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "id" in value &&
+    typeof value.id === "number" &&
+    "name" in value &&
+    typeof value.name === "string" &&
+    "email" in value &&
+    typeof value.email === "string"
+  );
+}
 
-const SESSION_KEY = "heritageverse-session";
-
-// Read current session from browser
-export function readSession(): SessionUser | null {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as SessionUser) : null;
-  } catch {
-    return null;
+function acceptAuthenticatedResponse(response: AuthResponse): User {
+  if (response.success !== true || !isUser(response.user) || typeof response.token !== "string" || !response.token.trim()) {
+    throw new ApiRequestError(
+      "The server did not return a valid authenticated session.",
+      502,
+      null,
+    );
   }
+
+  writeAuthToken(response.token);
+  return response.user;
 }
 
-// Save current session locally
-export function writeSession(user: SessionUser) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-}
-
-// Remove session during logout
 export function clearSession() {
-  localStorage.removeItem(SESSION_KEY);
   writeAuthToken(null);
 }
 
-export async function signUp(
-  name: string,
-  email: string,
-  password: string
-): Promise<SessionUser> {
-  const data = await apiRequest<AuthResponse>("auth/signup", {
-    method: "POST",
-    authenticated: false,
-    body: { name, email, password },
-  });
-
-  const user: SessionUser = data.user;
-  writeSession(user);
-  writeAuthToken(typeof data.token === "string" ? data.token : null);
-  return user;
+export async function signUp(name: string, email: string, password: string): Promise<User> {
+  const response = await authSignup({ name: name.trim(), email: email.trim(), password });
+  return acceptAuthenticatedResponse(response);
 }
 
-export async function signIn(
-  email: string,
-  password: string
-): Promise<SessionUser> {
-  const data = await apiRequest<AuthResponse>("auth/signin", {
-    method: "POST",
-    authenticated: false,
-    body: { email, password },
-  });
-
-  const user: SessionUser = data.user;
-  writeSession(user);
-  writeAuthToken(typeof data.token === "string" ? data.token : null);
-  return user;
+export async function signIn(email: string, password: string): Promise<User> {
+  const response = await authSignin({ email: email.trim(), password });
+  return acceptAuthenticatedResponse(response);
 }

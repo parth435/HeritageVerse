@@ -22,10 +22,18 @@ const adminRoutes = new Set([
 ]);
 
 export default function App() {
-  const { user } = useAuth();
+  const { user, isReady, sessionMessage } = useAuth();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const normalizedPath = pathname.replace(/\/+$/, "") || "/";
+
+  if (!isReady) {
+    return (
+      <main className="grid min-h-svh place-items-center bg-ink px-5 text-parchment" role="status" aria-live="polite">
+        <p className="text-sm text-parchment/70">Verifying your HeritageVerse session…</p>
+      </main>
+    );
+  }
 
   if (normalizedPath === "/admin" || normalizedPath.startsWith("/admin/")) {
     if (!adminRoutes.has(normalizedPath)) return <NotFoundPage />;
@@ -35,7 +43,7 @@ export default function App() {
   if (pathname === "/explore") return <ExplorePage />;
   if (pathname === "/favorites") return <FavoritesPage isAuthenticated={Boolean(user)} />;
   if (pathname === "/visited") return <VisitedPage isAuthenticated={Boolean(user)} />;
-  if (pathname === "/profile") return <ProfilePage user={user} />;
+  if (pathname === "/profile") return <ProfilePage user={user} sessionMessage={sessionMessage} />;
 
   if (pathname === "/login" || pathname === "/signup") {
     if (user) return <HomePage />;
@@ -43,6 +51,7 @@ export default function App() {
     return (
       <AuthPage
         initialMode={initialMode}
+        notice={sessionMessage}
         onModeChange={(mode) => navigate(mode === "signup" ? "/signup" : "/login")}
       />
     );
@@ -64,6 +73,7 @@ export default function App() {
       return (
         <AuthPage
           initialMode="signin"
+          notice={sessionMessage}
           onModeChange={(mode) => navigate(mode === "signup" ? "/signup" : "/login")}
         />
       );

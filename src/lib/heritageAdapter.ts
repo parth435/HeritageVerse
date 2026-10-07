@@ -1,4 +1,4 @@
-import { layers, monuments, type Monument } from "@/data/monuments";
+import { layers, type Monument } from "@/data/monuments";
 import type {
   Heritage,
   HeritageArtifact,
@@ -27,7 +27,7 @@ export type HeritageLayerView = {
 };
 
 export type HeritageView = {
-  /** Route key: a local monument id for fallback data, numeric id for API data. */
+  /** Route key: a local monument id for explicit demo data, numeric id for API data. */
   routeId: string;
   databaseId?: number;
   slug: string;
@@ -50,7 +50,7 @@ export type HeritageView = {
   artifacts: HeritageArtifact[];
   architecturalLayers: HeritageLayerView[];
   sources: HeritageSource[];
-  /** Local view data lets the existing Monument components remain unchanged. */
+  /** Present only for the explicit local demo data source. */
   localMonument?: Monument;
 };
 
@@ -94,11 +94,6 @@ const localCategories: Record<string, HeritageCategoryView> = {
   meenakshi: { name: "Temple and religious site", slug: "temple-religious" },
 };
 
-function getLocalMonument(slug: string) {
-  const localId = localIdBySlug[slug] ?? slug;
-  return monuments.find((monument) => monument.id === localId);
-}
-
 function parseCoordinate(value: number | string | null | undefined) {
   if (value === null || value === undefined || (typeof value === "string" && !value.trim())) return null;
   const coordinate = Number(value);
@@ -116,7 +111,6 @@ function localLocation(monument: Monument) {
 }
 
 export function heritageToView(heritage: Heritage): HeritageView {
-  const localMonument = getLocalMonument(heritage.slug);
   const media = [...(heritage.media ?? [])].sort(
     (a, b) => a.display_order - b.display_order,
   );
@@ -127,11 +121,6 @@ export function heritageToView(heritage: Heritage): HeritageView {
       alt: item.alt_text || item.caption || heritage.name,
       label: item.caption || undefined,
     }));
-
-  // Existing local imagery is a display fallback only; it is not written back as DB media.
-  if (gallery.length === 0 && localMonument) {
-    gallery.push({ src: localMonument.image, alt: localMonument.name, label: "Collection image" });
-  }
 
   const latitude = parseCoordinate(heritage.latitude);
   const longitude = parseCoordinate(heritage.longitude);
@@ -163,7 +152,6 @@ export function heritageToView(heritage: Heritage): HeritageView {
       (a, b) => a.display_order - b.display_order,
     ),
     sources: heritage.sources ?? [],
-    localMonument,
   };
 }
 
@@ -206,7 +194,6 @@ export function localMonumentToView(monument: Monument): HeritageView {
 /** Converts schema/API fields to a nullable boundary for legacy visual fields. */
 export function heritageToMonument(heritage: Heritage): HeritageMonumentAdapter {
   const view = heritageToView(heritage);
-  const local = view.localMonument;
   const latitude = view.latitude;
   const longitude = view.longitude;
 
@@ -222,24 +209,22 @@ export function heritageToMonument(heritage: Heritage): HeritageMonumentAdapter 
   const firstMaterial = view.artifacts.find((artifact) => artifact.material)?.material;
 
   return {
-    id: local?.id ?? heritage.slug,
+    id: heritage.slug,
     name: heritage.name,
     place: view.location,
-    era: heritage.historical_period || local?.era || "Period not recorded",
+    era: heritage.historical_period || "Period not recorded",
     // Historical period is not a construction year, and timeline dates are not
     // assumed to be construction dates. Keep unknown years unknown.
-    year: local?.year ?? null,
+    year: null,
     // The database has no UNESCO field; unknown status stays unknown.
-    unesco: local?.unesco ?? null,
-    x: mapPosition?.x ?? local?.x ?? null,
-    y: mapPosition?.y ?? local?.y ?? null,
+    unesco: null,
+    x: mapPosition?.x ?? null,
+    y: mapPosition?.y ?? null,
     image: firstImage,
-    // Then / Now imagery remains sourced from the existing local record only.
-    // API records without a complete local match cannot replace that experience.
-    thenImage: local?.thenImage ?? null,
-    nowImage: local?.nowImage ?? null,
+    thenImage: null,
+    nowImage: null,
     blurb: heritage.description,
-    material: firstMaterial ?? local?.material ?? "Not recorded",
+    material: firstMaterial ?? "Not recorded",
   };
 }
 

@@ -3,7 +3,7 @@ import { HeritagePageHeader } from "@/components/heritage/HeritagePageHeader";
 import { RouterLink } from "@/lib/router";
 import type { User } from "@/types/auth";
 
-export function ProfilePage({ user }: { user: User | null }) {
+export function ProfilePage({ user, sessionMessage }: { user: User | null; sessionMessage?: string | null }) {
   return (
     <div className="min-h-svh bg-ink text-parchment">
       <HeritagePageHeader />
@@ -26,7 +26,7 @@ export function ProfilePage({ user }: { user: User | null }) {
           </section>
         ) : (
           <section className="mt-8 max-w-2xl rounded-2xl border border-white/10 bg-white/[0.035] p-6" role="status">
-            <p className="text-parchment/70">Sign in to view the account details available in your current session.</p>
+            <p className="text-parchment/70">{sessionMessage || "Sign in to view the account details available in your current session."}</p>
             <RouterLink to="/login" className="mt-4 inline-flex rounded-full bg-gold px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-ink hover:bg-gold-bright focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Sign in</RouterLink>
           </section>
         )}

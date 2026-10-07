@@ -2,8 +2,8 @@ import { monuments } from "@/data/monuments";
 import { localMonumentToView, type HeritageView } from "@/lib/heritageAdapter";
 
 /**
- * Temporary local-only data source. Heritage APIs do not exist in the current backend,
- * so this provider deliberately makes no network requests and does not simulate persistence.
+ * Explicit local demo catalogue. Live Explore and detail pages use the API provider and
+ * must not switch to this data when a request fails, so demo records cannot look database-backed.
  */
 export async function listFallbackHeritage(): Promise<HeritageView[]> {
   return monuments.map(localMonumentToView);

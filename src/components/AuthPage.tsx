@@ -10,9 +10,11 @@ export type AuthMode = "signin" | "signup";
 export function AuthPage({
   initialMode = "signin",
   onModeChange,
+  notice,
 }: {
   initialMode?: AuthMode;
   onModeChange?: (mode: AuthMode) => void;
+  notice?: string | null;
 }) {
   const { signIn, signUp } = useAuth();
   const [mode, setMode] = useState<AuthMode>(initialMode);
@@ -189,6 +191,12 @@ export function AuthPage({
                 </div>
               </Field>
 
+              {notice ? (
+                <p role="status" className="rounded-2xl border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-parchment/80">
+                  {notice}
+                </p>
+              ) : null}
+
               {error ? (
                 <p className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
                   {error}
@@ -206,8 +214,8 @@ export function AuthPage({
           </AnimatePresence>
 
           <p className="mt-8 text-xs leading-relaxed text-parchment/45">
-            Your account is stored by HeritageVerse. This browser keeps your
-            signed-in profile locally; token-based sessions are not enabled yet.
+            Your account is stored by HeritageVerse. This browser stores a
+            session token to restore your sign-in; your password is not stored here.
           </p>
         </motion.div>
       </main>
