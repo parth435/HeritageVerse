@@ -1,4 +1,4 @@
-﻿-- Idempotent starter catalog: 25 cultural properties on UNESCO's World Heritage List.
+-- Idempotent starter catalog: 25 cultural properties on UNESCO's World Heritage List.
 -- Coordinates and media URLs are intentionally NULL/absent pending verification/licensing.
 -- All descriptions are concise paraphrases of the linked UNESCO World Heritage Centre record.
 
@@ -61,4 +61,11 @@ SELECT h.id,'Inscribed on UNESCO World Heritage List','The property was inscribe
 FROM seed s JOIN heritage h ON h.slug=s.slug
 JOIN heritage_sources src ON src.heritage_id=h.id AND src.source_url='https://whc.unesco.org/en/list/' || s.unesco_id
 WHERE NOT EXISTS (SELECT 1 FROM heritage_timeline_events e WHERE e.heritage_id=h.id AND e.title='Inscribed on UNESCO World Heritage List');
+
+-- =========================================================================
+-- INITIAL ADMIN USER SEED
+-- =========================================================================
+INSERT INTO users (name, email, password_hash, role, status)
+VALUES ('Aarav Mehta', 'aarav@heritageverse.in', '$2b$10$bcs0ZkvG1Ygk5s6I8bY2vud6sRFuWHgAipVJ0TfLzUBBSy0oszUEe', 'ADMIN', 'ACTIVE')
+ON CONFLICT (email) DO UPDATE SET role = 'ADMIN', status = 'ACTIVE';
 

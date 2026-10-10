@@ -1,7 +1,10 @@
 export type SessionUser = {
-  id: number;
+  id: number | string;
   name: string;
   email: string;
+  role?: string;
+  status?: string;
+  token?: string;
 };
 
 const SESSION_KEY = "heritageverse-session";
@@ -43,7 +46,12 @@ export async function signUp(
     throw new Error(data.message || "Failed to create account.");
   }
 
-  const user: SessionUser = data.user;
+  const user: SessionUser = {
+    ...data.user,
+    token: data.token,
+    role: data.user?.role,
+    status: data.user?.status,
+  };
   writeSession(user);
   return user;
 }
@@ -63,8 +71,14 @@ export async function signIn(
     throw new Error(data.message || "Login failed.");
   }
 
-  const user: SessionUser = data.user;
+  const user: SessionUser = {
+    ...data.user,
+    token: data.token,
+    role: data.user?.role,
+    status: data.user?.status,
+  };
 
   writeSession(user);
   return user;
 }
+
