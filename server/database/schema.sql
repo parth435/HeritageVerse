@@ -1,4 +1,4 @@
-﻿-- HeritageVerse PostgreSQL schema
+-- HeritageVerse PostgreSQL schema
 -- Safe additive bootstrap: no table is dropped and no existing user rows are changed.
 -- Existing authentication requires users(id, name, email, password_hash, created_at).
 
@@ -181,6 +181,41 @@ BEGIN
     END IF;
   END LOOP;
 END $$;
+
+-- =========================================================================
+-- ADMIN SYSTEM ADDITIVE EXTENSIONS
+-- =========================================================================
+
+-- 1. Ensure users table supports role and status
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'USER';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE';
+
+-- 2. Stories table for Editorial CMS
+CREATE TABLE IF NOT EXISTS stories (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  category TEXT NOT NULL,
+  author TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'PUBLISHED' CHECK (status IN ('PUBLISHED', 'DRAFT', 'ARCHIVED')),
+  published_at TIMESTAMPTZ DEFAULT NOW(),
+  content TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 3. Activity logs for Admin audit trail
+CREATE TABLE IF NOT EXISTS activity_logs (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  entity_type TEXT NOT NULL,
+  entity_id INTEGER,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_activity_logs_created ON activity_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_stories_status ON stories(status);
+
 
 
 
