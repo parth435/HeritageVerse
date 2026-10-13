@@ -4,30 +4,13 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@radix-ui/react-slider": "^1.2.3",
-    "@radix-ui/react-slot": "^1.2.3",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "lucide-react": "^0.511.0",
-    "motion": "^12.23.12",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "tailwind-merge": "^3.3.1"
-  },
-  "devDependencies": {
-    "@tailwindcss/vite": "^4.1.11",
-    "@types/node": "^24.3.0",
-    "@types/react": "^19.1.9",
-    "@types/react-dom": "^19.1.7",
-    "@vitejs/plugin-react": "^5.0.0",
-    "concurrently": "^10.0.5",
-    "tailwindcss": "^4.1.11",
-    "typescript": "^5.9.2",
-    "vite": "^7.1.2"
+    "dev": "npm --prefix frontend run dev",
+    "dev:stack": "concurrently -k \"npm run server:dev\" \"npm run dev\"",
+    "server:dev": "npm --prefix backend run dev",
+    "build": "npm --prefix frontend run build",
+    "preview": "npm --prefix frontend run preview",
+    "test": "npm --prefix backend test && npm --prefix frontend test",
+    "test:migrations": "npm --prefix backend run test:migrations",
+    "images:import": "npm --prefix backend run images:import --"
   }
 }

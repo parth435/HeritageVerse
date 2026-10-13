@@ -1,0 +1,32 @@
+[
+  {
+    "heritage_slug": "taj-mahal",
+    "media_role": "historical",
+    "title": "The Taj Mahal, seen from the riverbed",
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Taj_Mahal_about_1855%E2%80%931865.jpg/1280px-Taj_Mahal_about_1855%E2%80%931865.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Taj_Mahal_about_1855%E2%80%931865.jpg",
+    "creator": "Francis Frith; digitized and supplied by The J. Paul Getty Museum, Los Angeles",
+    "credit": "Francis Frith; image courtesy of The J. Paul Getty Museum, Los Angeles (CC0 1.0 via Wikimedia Commons)",
+    "documented_date": "1855–1865",
+    "license": "CC0 1.0 Universal Public Domain Dedication",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "alt_text": "The Taj Mahal viewed from the riverbed in a photograph dated about 1855 to 1865",
+    "media_context": "The Commons record identifies the scene as the Taj Mahal seen from the riverbed. This historical view is not camera-matched to the contemporary photograph.",
+    "review_status": "verified"
+  },
+  {
+    "heritage_slug": "taj-mahal",
+    "media_role": "current",
+    "title": "Taj Mahal in 2025",
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/00/Taj_Mahal_in_2025_1.jpg/1280px-Taj_Mahal_in_2025_1.jpg",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Taj_Mahal_in_2025_1.jpg",
+    "creator": "Dudva",
+    "credit": "Dudva (CC0 1.0 via Wikimedia Commons)",
+    "documented_date": "2025-10-04",
+    "license": "CC0 1.0 Universal Public Domain Dedication",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "alt_text": "The Taj Mahal photographed on 4 October 2025",
+    "media_context": "The Commons file record dates this photograph to 4 October 2025 and includes camera coordinates. It is a separately documented view, not a camera-matched comparison.",
+    "review_status": "verified"
+  }
+]
