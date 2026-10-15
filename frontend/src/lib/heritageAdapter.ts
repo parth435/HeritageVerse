@@ -136,6 +136,7 @@ function validCoordinatePair(latitude: number | null, longitude: number | null) 
 
 function safeImageUrl(value: string | null | undefined) {
   if (!value) return null;
+  if (/^\/heritage-images\/[a-z0-9-]+\.jpg$/i.test(value)) return value;
   try {
     const url = new URL(value);
     return url.protocol === "https:" && !url.username && !url.password ? url.href : null;

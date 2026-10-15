@@ -16,7 +16,12 @@ const secureUrl = (value) => {
   }
 };
 
+const localPublicImagePath = (value) =>
+  typeof value === "string" && /^\/heritage-images\/[a-z0-9-]+\.jpg$/i.test(value) ? value : null;
+
 export function getHeritageImageSource(image) {
+  const local = localPublicImagePath(image?.displaySrc ?? image?.url ?? image?.src ?? image?.thumbnail_url ?? image?.thumbnailSrc);
+  if (local) return local;
   const display = secureUrl(image?.displaySrc);
   if (display) return display;
   const original = secureUrl(image?.url ?? image?.src);
@@ -26,6 +31,8 @@ export function getHeritageImageSource(image) {
 
 export function getHeritageImageFallback(image, failedUrl) {
   if (failedUrl === LOCAL_HERITAGE_IMAGE_FALLBACK) return null;
+  const local = localPublicImagePath(image?.url ?? image?.src);
+  if (local) return local === failedUrl ? LOCAL_HERITAGE_IMAGE_FALLBACK : local;
   const original = secureUrl(image?.url ?? image?.src);
   const localPhoto = localVerifiedPhoto(original);
   if (localPhoto) return isSameLocalAsset(failedUrl, localPhoto) ? LOCAL_HERITAGE_IMAGE_FALLBACK : localPhoto;

@@ -1,7 +1,9 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const http = require("node:http");
+const path = require("node:path");
 const test = require("node:test");
 const express = require("express");
 const pool = require("../config/db");
@@ -20,11 +22,17 @@ test("curated public image records keep exact source, credit, license, and site 
     assert.equal(record.media.length, 1, slug);
     assert.equal(record.media[0].media_type, "image", slug);
     assert.equal(record.media[0].media_role, "current", slug);
+    assert.equal(record.media[0].caption, null, slug);
     assert.equal(record.media[0].verification_status, "verified", slug);
     assert.equal(record.media[0].is_illustrative, false, slug);
     assert.equal(record.media[0].source_url, image.source_url, slug);
     assert.equal(record.media[0].license_url, image.license_url, slug);
-    assert.match(record.image_url, /^https:\/\/upload\.wikimedia\.org\//, slug);
+    assert.match(record.image_url, /^\/heritage-images\/[a-z0-9-]+\.jpg$/i, slug);
+    const assetPath = path.resolve(__dirname, "../../frontend/public", `.${record.image_url}`);
+    const bytes = fs.readFileSync(assetPath);
+    assert.ok(bytes.length > 0, `${slug} asset is nonempty`);
+    assert.equal(bytes[0], 0xff, `${slug} is a JPEG`);
+    assert.equal(bytes[1], 0xd8, `${slug} is a JPEG`);
     assert.equal(imageUrls.has(record.image_url), false, `duplicate photo URL for ${slug}`);
     imageUrls.add(record.image_url);
   }
@@ -48,6 +56,7 @@ test("curated fallback leaves unlisted records image-less and preserves database
   assert.equal(hasVerifiedPublicImage([{ ...existing.media[0], url: " " }]), false);
   assert.equal(hasVerifiedPublicImage([{ ...existing.media[0], url: "http://images.example/gateway.jpg" }]), false);
   assert.equal(hasVerifiedPublicImage([{ ...existing.media[0], media_role: "historical" }]), false);
+  assert.equal(hasVerifiedPublicImage([{ ...existing.media[0], url: "/heritage-images/gateway-of-india.jpg" }]), true);
 });
 
 test("public catalogue and verified-photo map return curated image_url and media fields", async (t) => {

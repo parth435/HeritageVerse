@@ -56,6 +56,16 @@ test("the four existing verified Commons photographs use exact local copies with
   }
 });
 
+test("same-origin curated public image paths resolve directly and fail to the image placeholder", async () => {
+  const { getHeritageImageSource, getHeritageImageFallback } = await imageHelpers;
+  const local = "/heritage-images/gateway-of-india.jpg";
+  assert.equal(getHeritageImageSource({ url: local }), local);
+  assert.equal(getHeritageImageFallback({ url: local }, local), "/heritage-image-fallback.svg");
+  assert.equal(getHeritageImageFallback({ url: local }, "/heritage-image-fallback.svg"), null);
+  assert.equal(getHeritageImageSource({ url: "/heritage-images/../private.jpg" }), null);
+  assert.equal(getHeritageImageSource({ url: "//untrusted.example/photo.jpg" }), null);
+});
+
 test("local image fallbacks do not apply to unrelated Wikimedia or other HTTPS URLs", async () => {
   const { getHeritageImageSource, getHeritageImageFallback } = await imageHelpers;
   const image = { url: "https://upload.wikimedia.org/wikipedia/commons/verified/another-place.jpg" };

@@ -7,8 +7,8 @@ import { HeritageMap } from "@/components/heritage/HeritageMap";
 import { HeritagePageHeader } from "@/components/heritage/HeritagePageHeader";
 import { getCategories, getHeritage, getHeritageFacets, getHeritageMapSites } from "@/lib/api";
 import type { HeritageCategoryView, HeritageMapView, HeritageView } from "@/lib/heritageAdapter";
-import { heritageMapToView, heritageToView } from "@/lib/heritageAdapter";
-import { filterUsableHeritageImages } from "@/lib/exploreImages";
+import { heritageMapToView } from "@/lib/heritageAdapter";
+import { prepareExplorePlaces } from "@/lib/exploreImages";
 
 const PAGE_SIZE = 24;
 const API_PAGE_SIZE = 100;
@@ -20,7 +20,7 @@ async function getAllMatchingPlaces(query: Parameters<typeof getHeritage>[0], si
 
   while (offset < total) {
     const response = await getHeritage(
-      { ...query, withVerifiedPhoto: true, limit: API_PAGE_SIZE, offset },
+      { ...query, limit: API_PAGE_SIZE, offset },
       { signal },
     );
     records.push(...response.items);
@@ -72,8 +72,8 @@ export function ExplorePage() {
     const controller = new AbortController();
     let active = true;
     void Promise.all([
-      getCategories({ signal: controller.signal }, { withVerifiedPhoto: true }),
-      getHeritageFacets(state, { signal: controller.signal }, { withVerifiedPhoto: true }),
+      getCategories({ signal: controller.signal }),
+      getHeritageFacets(state, { signal: controller.signal }),
     ])
       .then(([results, facets]) => {
         if (!active) return;
@@ -109,10 +109,9 @@ export function ExplorePage() {
       },
       controller.signal,
     )
-      .then((records) => filterUsableHeritageImages(records.map(heritageToView), undefined, controller.signal))
-      .then((availablePlaces) => {
+      .then((records) => {
         if (!active) return;
-        setItems(availablePlaces);
+        setItems(prepareExplorePlaces(records));
       })
       .catch((reason: unknown) => {
         if (!active) return;
@@ -137,7 +136,7 @@ export function ExplorePage() {
     setMapError(null);
 
     void getHeritageMapSites(
-      { q: debouncedSearch, category, state, district, withVerifiedPhoto: true },
+      { q: debouncedSearch, category, state, district },
       { signal: controller.signal },
     )
       .then((records) => {
@@ -176,14 +175,6 @@ export function ExplorePage() {
   }, [items, mapSites]);
   const pageItems = visibleItems.slice(0, visibleCount);
 
-  function removeUnavailableImage(routeId: string, failedImageUrl: string) {
-    setItems((current) => current.flatMap((item) => {
-      if (item.routeId !== routeId) return [item];
-      const gallery = item.gallery.filter((image) => image.src !== failedImageUrl);
-      return gallery.length > 0 ? [{ ...item, gallery }] : [];
-    }));
-  }
-
   function resetFilters() {
     setSearch("");
     setDebouncedSearch("");
@@ -220,7 +211,7 @@ export function ExplorePage() {
           </p>
           <h1 className="font-display mt-4 text-5xl leading-[0.98] text-parchment md:text-7xl">Explore the heritage atlas.</h1>
           <p className="mt-5 max-w-2xl text-sm leading-7 text-parchment/65 md:text-base">
-            Find published heritage places with verified photographs that load successfully. Search and filters cover the published collection.
+            Browse published heritage places across Maharashtra. Search and filters cover the full collection, with a photograph for every listed site.
           </p>
           <RouterLink to="/nearby" className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full border border-gold/40 px-5 py-3 text-xs font-semibold uppercase tracking-[0.13em] text-gold-bright transition hover:bg-gold/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Find nearby heritage</RouterLink>
         </div>
@@ -258,7 +249,7 @@ export function ExplorePage() {
                 <p className="text-[10px] uppercase tracking-[0.25em] text-gold">Explore by location</p>
                 <h2 id="heritage-map-heading" className="font-display mt-1 text-3xl text-parchment">Heritage map</h2>
               </div>
-              <p className="text-xs text-parchment/50">Pins include matching places with available photographs and source-verified coordinates.</p>
+              <p className="text-xs text-parchment/50">Pins include matching places with source-verified coordinates.</p>
             </div>
             {!loading && !error ? (
               <>
@@ -274,7 +265,6 @@ export function ExplorePage() {
                   mapSites={visibleMapSites}
                   catalogueStatus={loading ? "loading" : error ? "error" : "success"}
                   mapDataStatus={mapLoading ? "loading" : mapError ? "error" : "success"}
-                  verifiedPhotoOnly
                 />
               </>
             ) : null}
@@ -284,9 +274,7 @@ export function ExplorePage() {
             loading={loading}
             error={error}
             onRetry={() => setRetryKey((current) => current + 1)}
-            emptyMessage="No published places with usable photographs match these filters. Try another search or clear one of the filters."
-            verifiedPhotoOnly
-            onImageUnavailable={removeUnavailableImage}
+            emptyMessage="No published places match these filters. Try another search or clear one of the filters."
           />
         </div>
 
