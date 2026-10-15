@@ -21,6 +21,7 @@ const roles = new Map([[1, "user"], [2, "admin"]]);
 const calls = [];
 let failNextClientWrite = null;
 let failNextAdminList = false;
+let imageEligibleForApproval = true;
 
 function databaseError(code) {
   const error = new Error("mock database failure");
@@ -44,6 +45,9 @@ pool.query = async (sql, values = []) => {
   }
   if (String(sql).includes("m.id AS media_id")) {
     return { rows: [{ heritage_id: 14, media_id: 33, name: "Verified Test Place", slug: "verified-test-place", state: "Maharashtra", district: "Mumbai", url: "https://commons.wikimedia.org/example.jpg", thumbnail_url: "https://commons.wikimedia.org/thumb.jpg", creator: "Test Photographer", license: "CC BY-SA 4.0", license_url: "https://creativecommons.org/licenses/by-sa/4.0/", source_url: "https://commons.wikimedia.org/wiki/File:Example.jpg", provider: "wikimedia", verification_status: "verified" }] };
+  }
+  if (String(sql).startsWith("UPDATE heritage_media AS image")) {
+    return { rows: imageEligibleForApproval ? [{ media_id: Number(values[0]), heritage_id: 14, verification_status: "verified" }] : [] };
   }
   if (String(sql).includes("a.status AS acquisition_status")) {
     return { rows: [{ heritage_id: 15, name: "Review Test Place", slug: "review-test-place", state: "Maharashtra", district: "Pune", publication_status: "published", acquisition_status: "failed", error_code: "provider_network_error", error_message: "External request failed", last_checked_at: null, retry_count: 2, candidates: [], unverified_images: [] }] };
@@ -139,6 +143,8 @@ test("admin authorization and heritage CRUD use server roles and soft archive", 
       assert.equal((await request("/admin/dashboard", { as: token(1, "admin") })).status, 403);
       assert.equal((await request("/admin/images?view=verified")).status, 401);
       assert.equal((await request("/admin/images?view=verified", { as: token(1) })).status, 403);
+      assert.equal((await request("/admin/images/33/approve", { method: "POST", as: token(1) })).status, 403);
+      assert.equal((await request("/admin/images/33/approve", { method: "POST" })).status, 401);
       assert.equal((await request("/admin/heritage", { as: token(1) })).status, 403);
     });
 
@@ -161,6 +167,36 @@ test("admin authorization and heritage CRUD use server roles and soft archive", 
       const review = await request("/admin/images?view=review", { as: admin });
       assert.equal(review.status, 200);
       assert.equal(review.payload.images[0].error_code, "provider_network_error");
+      const updatesBeforeApproval = calls.filter((call) => call.sql.startsWith("UPDATE heritage_media AS image")).length;
+      const unconfirmedApproval = await request("/admin/images/33/approve", { method: "POST", as: admin });
+      assert.equal(unconfirmedApproval.status, 400);
+      assert.equal(calls.filter((call) => call.sql.startsWith("UPDATE heritage_media AS image")).length, updatesBeforeApproval);
+      imageEligibleForApproval = false;
+      const ineligibleApproval = await request("/admin/images/33/approve", {
+        method: "POST",
+        as: admin,
+        body: { visualMatchConfirmed: true, rightsConfirmed: true },
+      });
+      assert.equal(ineligibleApproval.status, 409);
+      imageEligibleForApproval = true;
+      const approvedImage = await request("/admin/images/33/approve", {
+        method: "POST",
+        as: admin,
+        body: { visualMatchConfirmed: true, rightsConfirmed: true },
+      });
+      assert.equal(approvedImage.status, 200);
+      assert.equal(approvedImage.payload.image.verification_status, "verified");
+      const approvalCall = calls.findLast((call) => call.sql.startsWith("UPDATE heritage_media AS image"));
+      assert.deepEqual(approvalCall.values, [33]);
+      assert.match(approvalCall.sql, /place\.publication_status = 'published'/);
+      assert.match(approvalCall.sql, /heritage_catalog_membership/);
+      assert.match(approvalCall.sql, /image\.verification_status = 'unverified'/);
+      assert.match(approvalCall.sql, /image\.is_illustrative = FALSE/);
+      assert.match(approvalCall.sql, /image\.media_role IN \('gallery', 'current'\)/);
+      assert.match(approvalCall.sql, /upload\.wikimedia\.org/);
+      assert.match(approvalCall.sql, /commons\.wikimedia\.org\/wiki\/File:/);
+      assert.match(approvalCall.sql, /image\.license_url LIKE 'https:\/\/creativecommons\.org\/%'/);
+      assert.match(approvalCall.sql, /NULLIF\(BTRIM\(image\.creator\), ''\) IS NOT NULL/);
       assert.equal((await request("/admin/images?view=all", { as: admin })).status, 400);
       const detail = await request("/admin/heritage/91", { as: admin });
       assert.equal(detail.status, 200);

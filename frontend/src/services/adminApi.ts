@@ -4,6 +4,7 @@
  * server's /api/admin routes.
  */
 export {
+  approveAdminImage,
   archiveAdminHeritage,
   createAdminCategory,
   createAdminHeritage,
@@ -26,6 +27,7 @@ export type {
   AdminHeritageQuery,
   AdminImage,
   AdminImageReview,
+  AdminReviewImage,
   AdminUser,
   AdminUserDetails,
   AdminUserQuery,

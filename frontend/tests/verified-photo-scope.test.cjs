@@ -7,7 +7,7 @@ const test = require("node:test");
 
 const root = path.resolve(__dirname, "../src");
 
-test("Explore scopes results to verified photos while Living Atlas retains the full catalogue and map safeguards", async () => {
+test("Explore catalogue, facets, and map include published places without photos and retain map safeguards", async () => {
   const [api, explore, atlas, map, card, grid, adapter] = await Promise.all([
     readFile(path.join(root, "lib/api.ts"), "utf8"),
     readFile(path.join(root, "pages/ExplorePage.tsx"), "utf8"),
@@ -21,26 +21,28 @@ test("Explore scopes results to verified photos while Living Atlas retains the f
   assert.match(api, /withVerifiedPhoto\?: boolean/);
   assert.match(api, /params\.set\("withVerifiedPhoto", String\(query\.withVerifiedPhoto\)\)/);
   assert.match(api, /if \(query\.withVerifiedPhoto !== undefined\) params\.set\("withVerifiedPhoto"/);
+  assert.doesNotMatch(explore, /withVerifiedPhoto\s*:\s*true/);
   assert.doesNotMatch(atlas, /withVerifiedPhoto\s*:\s*true/);
-  assert.match(explore, /getCategories\(\{ signal: controller\.signal \}, \{ withVerifiedPhoto: true \}\)/);
-  assert.match(explore, /getHeritageFacets\(state, \{ signal: controller\.signal \}, \{ withVerifiedPhoto: true \}\)/);
+  assert.match(explore, /getCategories\(\{ signal: controller\.signal \}\)/);
+  assert.match(explore, /getHeritageFacets\(state, \{ signal: controller\.signal \}\)/);
   assert.match(atlas, /getCategories\(\{ signal: controller\.signal \}\)/);
   assert.match(atlas, /getHeritageFacets\(undefined, \{ signal: controller\.signal \}\)/);
-  assert.match(explore, /getHeritage\([\s\S]{0,220}withVerifiedPhoto: true,[\s\S]{0,80}limit: PAGE_SIZE/);
+  assert.match(explore, /getHeritage\([\s\S]{0,180}limit: PAGE_SIZE/);
   assert.match(atlas, /getHeritage\(\{ q: query, category, state, limit: PAGE_SIZE/);
   assert.match(explore, /getHeritageMapSites\(/);
-  assert.match(explore, /\{ q: debouncedSearch, category, state, district, withVerifiedPhoto: true \}/);
+  assert.match(explore, /\{ q: debouncedSearch, category, state, district \}/);
   assert.match(atlas, /getHeritageMapSites\(\{ q: query, category, state \}/);
-  assert.match(explore, /<HeritageMap[^>]*verifiedPhotoOnly/);
   assert.match(atlas, /<HeritageMap[^>]*verifiedPhotoOnly/);
+  assert.doesNotMatch(explore, /<HeritageMap[\s\S]{0,500}verifiedPhotoOnly/);
   assert.match(explore, /setOffset\(items\.length\)/);
-  assert.match(explore, /No published places with verified, approved photographs match these filters/);
+  assert.match(explore, /No published places match these filters/);
   assert.match(grid, /items\.map\(\(item, index\)/);
-  assert.match(card, /No verified photograph/);
+  assert.match(card, /Image unavailable/);
   assert.match(atlas, /selectedImage\.sourceUrl/);
   assert.match(map, /if \(verifiedPhotoOnly\)/);
   assert.match(adapter, /coordinates_verified === true && validCoordinatePair/);
   assert.match(map, /filterMappableSites/);
+  assert.match(map, /placeholder\.textContent = "Image unavailable"/);
 });
 
 test("Living Atlas keeps successful catalogue results when category or facet loading fails", async () => {

@@ -46,7 +46,7 @@ export function HeritageCard({ item, index = 0, distanceKm, directionsOrigin, ve
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-gold/70" aria-label="Image unavailable">
               <Landmark className="h-10 w-10" aria-hidden="true" />
-              <span className="text-center text-[10px] uppercase tracking-[0.22em]">{image ? "Verified photograph unavailable" : "No verified photograph"}</span>
+              <span className="text-center text-[10px] uppercase tracking-[0.22em]">Image unavailable</span>
             </div>
           )}
           <div className="absolute inset-0 bg-linear-to-t from-ink/80 via-transparent to-transparent" />

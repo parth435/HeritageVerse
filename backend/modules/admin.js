@@ -273,6 +273,60 @@ router.get("/admin/images", authenticate, requireAdmin, async (req, res) => {
   }
 });
 
+router.post("/admin/images/:mediaId/approve", authenticate, requireAdmin, async (req, res) => {
+  const mediaId = readPositiveId(req.params.mediaId);
+  if (mediaId === null) return res.status(400).json({ success: false, message: "Image ID must be a positive integer" });
+  if (req.body?.visualMatchConfirmed !== true || req.body?.rightsConfirmed !== true) {
+    return res.status(400).json({ success: false, message: "Confirm the exact image match and its source and reuse rights before approval" });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE heritage_media AS image
+          SET verification_status = 'verified', source_accessed_on = CURRENT_DATE
+         FROM heritage AS place
+        WHERE image.id = $1
+          AND image.heritage_id = place.id
+          AND place.publication_status = 'published'
+          AND EXISTS (
+            SELECT 1 FROM heritage_catalog_membership membership
+             WHERE membership.heritage_id = place.id
+          )
+          AND image.media_type = 'image'
+          AND image.media_role IN ('gallery', 'current')
+          AND image.verification_status = 'unverified'
+          AND image.is_illustrative = FALSE
+          AND image.provider IN ('wikimedia', 'manual')
+          AND image.url LIKE 'https://upload.wikimedia.org/wikipedia/commons/%'
+          AND image.url NOT LIKE 'https://upload.wikimedia.org/wikipedia/commons/thumb/%'
+          AND image.source_url LIKE 'https://commons.wikimedia.org/wiki/File:%'
+          AND (image.license_url LIKE 'https://creativecommons.org/%' OR image.license_url LIKE 'https://www.gnu.org/licenses/%')
+          AND NULLIF(BTRIM(image.alt_text), '') IS NOT NULL
+          AND NULLIF(BTRIM(image.creator), '') IS NOT NULL
+          AND NULLIF(BTRIM(image.credit), '') IS NOT NULL
+          AND NULLIF(BTRIM(image.license), '') IS NOT NULL
+        RETURNING image.id AS media_id, image.heritage_id, image.verification_status`,
+      [mediaId],
+    );
+    if (!result.rows.length) {
+      return res.status(409).json({
+        success: false,
+        message: "This image is not eligible. It must be an unverified, non-illustrative Wikimedia image with complete attribution on a published catalogue place.",
+      });
+    }
+    const approved = result.rows[0];
+    console.info("Admin approved sourced heritage image", {
+      mediaId: approved.media_id,
+      heritageId: approved.heritage_id,
+      adminId: req.user.id,
+    });
+    return res.json({ success: true, message: "Image approved and published", image: approved });
+  } catch (error) {
+    console.error("Admin image approval failed:", error.code || "unknown error");
+    return res.status(500).json({ success: false, message: "Failed to approve image" });
+  }
+});
+
 router.get("/admin/heritage/:heritageId", authenticate, requireAdmin, async (req, res) => {
   const heritageId = readPositiveId(req.params.heritageId);
   if (heritageId === null) return res.status(400).json({ success: false, message: "Heritage ID must be a positive integer" });

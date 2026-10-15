@@ -108,6 +108,7 @@ test("heritage map API returns all verified valid sites through pages and honors
   assert.match(lastCountSql, /h\.longitude BETWEEN -180 AND 180/);
   assert.match(lastCountSql, /coordinate_source\.review_status = 'approved'/);
   assert.match(lastCountSql, /heritage_catalog_membership/);
+  assert.doesNotMatch(lastCountSql, /FROM heritage_media verified_photo/);
 
   const secondResponse = await fetch(origin + "/api/heritage-map?limit=2&offset=2");
   const second = await secondResponse.json();

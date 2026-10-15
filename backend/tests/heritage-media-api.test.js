@@ -63,12 +63,24 @@ test("heritage list and detail APIs preserve existing fields and add image metad
   let detailSql = "";
   let listSql = "";
   let omitImages = false;
+  let noPhotoCatalogue = false;
   pool.query = async (sql) => {
     const statement = String(sql);
-    if (statement.includes("SELECT COUNT(*) AS total")) return { rows: [{ total: 1 }] };
+    if (statement.includes("SELECT COUNT(*) AS total")) return { rows: [{ total: noPhotoCatalogue ? 30 : 1 }] };
     if (statement.startsWith("WITH requested_record AS (")) detailSql = statement;
     if (statement.includes("LEFT JOIN LATERAL")) {
       if (statement.includes("selected_image.url")) listSql = statement;
+      if (omitImages && noPhotoCatalogue) {
+        return { rows: Array.from({ length: 30 }, (_, index) => ({
+          ...baseHeritage,
+          id: index + 1,
+          slug: `maharashtra-heritage-${index + 1}`,
+          name: `Maharashtra Heritage ${index + 1}`,
+          state: "Maharashtra",
+          image_url: null,
+          media: [],
+        })) };
+      }
       return { rows: [{
         ...baseHeritage,
         image_url: omitImages ? null : media.url,
@@ -97,19 +109,24 @@ test("heritage list and detail APIs preserve existing fields and add image metad
   assert.equal(list.items[0].media[0].license, media.license);
   assert.equal(list.items[0].media[0].thumbnail_url, media.thumbnail_url);
   assert.equal(list.items[0].media[0].match_confidence, media.match_confidence);
+  assert.equal(list.items[0].media[0].verification_status, "verified");
+  assert.equal(list.items[0].media[0].is_illustrative, false);
   assert.match(listSql, /m\.media_role IN \('gallery', 'current'\)/);
   assert.match(listSql, /m\.verification_status = 'verified'/);
   assert.match(listSql, /m\.is_illustrative = FALSE/);
 
   omitImages = true;
-  const noPhotoResponse = await fetch(`${origin}/api/heritage?limit=10`);
+  noPhotoCatalogue = true;
+  const noPhotoResponse = await fetch(`${origin}/api/heritage?state=Maharashtra&limit=100&offset=0`);
   const noPhotoList = await noPhotoResponse.json();
   assert.equal(noPhotoResponse.status, 200);
-  assert.equal(noPhotoList.items.length, 1, "published catalogue records remain available without a verified image");
-  assert.equal(noPhotoList.items[0].image_url, null);
-  assert.deepEqual(noPhotoList.items[0].media, []);
+  assert.equal(noPhotoList.items.length, 30, "all published Maharashtra catalogue records remain available without verified images");
+  assert.equal(noPhotoList.pagination.total, 30);
+  assert.ok(noPhotoList.items.every((item) => item.state === "Maharashtra"));
+  assert.ok(noPhotoList.items.every((item) => item.image_url === null && item.media.length === 0));
 
   omitImages = false;
+  noPhotoCatalogue = false;
   const detailResponse = await fetch(`${origin}/api/heritage/1`);
   const detail = await detailResponse.json();
   assert.equal(detailResponse.status, 200);

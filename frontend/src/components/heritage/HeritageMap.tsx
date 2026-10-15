@@ -126,7 +126,7 @@ function markerPopupForSite(site: MapSite, routeOrigin?: { latitude: number; lon
     }
   } else {
     const placeholder = document.createElement("small");
-    placeholder.textContent = "No verified photograph";
+    placeholder.textContent = "Image unavailable";
     content.append(placeholder);
   }
 

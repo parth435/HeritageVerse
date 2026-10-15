@@ -53,11 +53,14 @@ test("cards, map popups, and detail pages use verified images and identify their
   assert.match(adapter, /item\.verification_status === "verified" && item\.is_illustrative !== true/);
   assert.match(card, /getVerifiedHeritageImages\(item\.gallery\)/);
   assert.match(card, /onError=\{\(\) => setFailedImageUrl\(imageSrc\)\}/);
-  assert.match(card, /No verified photograph/);
+  assert.match(card, /Image unavailable/);
+  assert.match(card, /image\.credit/);
+  assert.match(card, /image\.sourceUrl/);
+  assert.match(card, /image\.license/);
   assert.match(card, /Illustrative placeholder/);
   assert.match(map, /getVerifiedHeritageImages\(site\.gallery\)/);
   assert.match(map, /Verified photograph unavailable/);
-  assert.match(map, /No verified photograph/);
+  assert.match(map, /Image unavailable/);
   assert.match(detail, /getVerifiedHeritageImages\(item\.gallery\)/);
   assert.match(detail, /getHeritageHeroImage\(item\.gallery\)/);
   assert.match(detail, /onError=\{\(\) => setFailedUrl\(source\)\}/);

@@ -7,7 +7,7 @@ const express = require("express");
 const pool = require("../config/db");
 const heritageRouter = require("../modules/heritage");
 
-test("verified-photo public scope includes outside-catalogue places without leaking candidates", async (t) => {
+test("verified-photo public scope is opt-in and keeps photo metadata verified-only", async (t) => {
   const originalQuery = pool.query;
   const calls = [];
   const outsideCataloguePlace = {
@@ -72,6 +72,22 @@ test("verified-photo public scope includes outside-catalogue places without leak
   assert.deepEqual(facets.states, ["Maharashtra"]);
   assert.deepEqual(facets.districts, ["Pune"]);
 
+  const ordinaryCategories = await fetch(`${origin}/categories`).then((response) => response.json());
+  assert.deepEqual(ordinaryCategories.categories.map((category) => category.slug), ["monument"]);
+  const ordinaryCategoryQuery = calls.findLast(({ statement }) => statement.includes("FROM heritage_categories c")).statement;
+  assert.match(ordinaryCategoryQuery, /heritage_catalog_membership/);
+  assert.doesNotMatch(ordinaryCategoryQuery, /FROM heritage_media verified_photo/);
+
+  const ordinaryFacets = await fetch(`${origin}/heritage-facets?state=Maharashtra`).then((response) => response.json());
+  assert.deepEqual(ordinaryFacets.states, ["Maharashtra"]);
+  assert.deepEqual(ordinaryFacets.districts, ["Pune"]);
+  const ordinaryFacetQueries = calls.filter(({ statement }) =>
+    (statement.includes("SELECT DISTINCT state") || statement.includes("SELECT DISTINCT district")) &&
+    !statement.includes("FROM heritage_media verified_photo")
+  );
+  assert.equal(ordinaryFacetQueries.length, 2);
+  assert.ok(ordinaryFacetQueries.every(({ statement }) => statement.includes("heritage_catalog_membership")));
+
   const listResponse = await fetch(`${origin}/heritage?withVerifiedPhoto=true&limit=10&offset=20`);
   const list = await listResponse.json();
   assert.equal(listResponse.status, 200);
@@ -95,6 +111,15 @@ test("verified-photo public scope includes outside-catalogue places without leak
   const mapQuery = calls.find(({ statement }) => statement.includes("TRUE AS coordinates_verified, selected_image.media")).statement;
   assert.match(mapQuery, /verified_photo\.verification_status = 'verified'/);
   assert.match(mapQuery, /coordinate_source\.review_status = 'approved'/);
+
+  const ordinaryMapResponse = await fetch(`${origin}/heritage-map`);
+  const ordinaryMap = await ordinaryMapResponse.json();
+  assert.equal(ordinaryMapResponse.status, 200);
+  assert.equal(ordinaryMap.pagination.total, 24);
+  const ordinaryMapQuery = calls.findLast(({ statement }) => statement.includes("TRUE AS coordinates_verified, selected_image.media")).statement;
+  assert.match(ordinaryMapQuery, /heritage_catalog_membership/);
+  assert.match(ordinaryMapQuery, /coordinate_source\.review_status = 'approved'/);
+  assert.doesNotMatch(ordinaryMapQuery, /AND EXISTS \(\s*SELECT 1 FROM heritage_media verified_photo/);
 
   const detail = await fetch(`${origin}/heritage/900`);
   assert.equal(detail.status, 200);

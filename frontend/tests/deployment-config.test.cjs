@@ -63,6 +63,7 @@ test("admin service delegates to the shared API client without legacy route assu
   assert.match(adminSource, /from "@\/lib\/api"/);
   assert.match(adminSource, /updateAdminUserRole/);
   assert.match(adminSource, /updateAdminUserStatus/);
+  assert.match(adminSource, /approveAdminImage/);
   assert.doesNotMatch(adminSource, /admin\/(?:stats|sites|users\/\$\{id\}\/role)/);
 });
 
