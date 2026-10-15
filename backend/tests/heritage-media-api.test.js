@@ -61,11 +61,20 @@ const baseHeritage = {
 test("heritage list and detail APIs preserve existing fields and add image metadata", async (t) => {
   const previousQuery = pool.query;
   let detailSql = "";
+  let listSql = "";
+  let omitImages = false;
   pool.query = async (sql) => {
     const statement = String(sql);
     if (statement.includes("SELECT COUNT(*) AS total")) return { rows: [{ total: 1 }] };
     if (statement.startsWith("WITH requested_record AS (")) detailSql = statement;
-    if (statement.includes("LEFT JOIN LATERAL")) return { rows: [{ ...baseHeritage }] };
+    if (statement.includes("LEFT JOIN LATERAL")) {
+      if (statement.includes("selected_image.url")) listSql = statement;
+      return { rows: [{
+        ...baseHeritage,
+        image_url: omitImages ? null : media.url,
+        media: omitImages ? [] : [media],
+      }] };
+    }
     throw new Error(`Unexpected heritage API query: ${statement.slice(0, 80)}`);
   };
   const app = express();
@@ -88,7 +97,19 @@ test("heritage list and detail APIs preserve existing fields and add image metad
   assert.equal(list.items[0].media[0].license, media.license);
   assert.equal(list.items[0].media[0].thumbnail_url, media.thumbnail_url);
   assert.equal(list.items[0].media[0].match_confidence, media.match_confidence);
+  assert.match(listSql, /m\.media_role IN \('gallery', 'current'\)/);
+  assert.match(listSql, /m\.verification_status = 'verified'/);
+  assert.match(listSql, /m\.is_illustrative = FALSE/);
 
+  omitImages = true;
+  const noPhotoResponse = await fetch(`${origin}/api/heritage?limit=10`);
+  const noPhotoList = await noPhotoResponse.json();
+  assert.equal(noPhotoResponse.status, 200);
+  assert.equal(noPhotoList.items.length, 1, "published catalogue records remain available without a verified image");
+  assert.equal(noPhotoList.items[0].image_url, null);
+  assert.deepEqual(noPhotoList.items[0].media, []);
+
+  omitImages = false;
   const detailResponse = await fetch(`${origin}/api/heritage/1`);
   const detail = await detailResponse.json();
   assert.equal(detailResponse.status, 200);

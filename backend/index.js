@@ -7,6 +7,7 @@ require("dotenv").config({ path: path.resolve(__dirname, ".env") });
 const { authenticate, createAuthToken, getJwtSecret } = require("./middleware/auth");
 const { createAttemptLimiter } = require("./middleware/rate-limit");
 const { readTrustedProxyHops } = require("./middleware/trust-proxy");
+const { NORMALIZED_EMAIL_PREDICATE, normalizeEmail, selectUniqueAccount } = require("./modules/auth-identity");
 const pool = require("./config/db");
 const favoritesRouter = require("./modules/favorites");
 const heritageRouter = require("./modules/heritage");
@@ -128,7 +129,7 @@ app.get("/test-db", async (req, res) => {
 app.post("/api/auth/signup", async (req, res) => {
   try {
     const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
-    const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    const email = normalizeEmail(req.body?.email);
     const password = typeof req.body?.password === "string" ? req.body.password : "";
 
     if (!name || !email || !password) {
@@ -164,7 +165,7 @@ app.post("/api/auth/signup", async (req, res) => {
     if (rateLimited(res, signupLimiter.check(rateKey), "sign-up")) return;
 
     const existingUser = await pool.query(
-      "SELECT id FROM users WHERE email = $1",
+      `SELECT id FROM users WHERE ${NORMALIZED_EMAIL_PREDICATE} LIMIT 1`,
       [email]
     );
 
@@ -212,7 +213,7 @@ app.post("/api/auth/signup", async (req, res) => {
 
 app.post("/api/auth/signin", async (req, res) => {
   try {
-    const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    const email = normalizeEmail(req.body?.email);
     const password = typeof req.body?.password === "string" ? req.body.password : "";
 
     if (!email || !password || Buffer.byteLength(email, "utf8") > 254 || Buffer.byteLength(password, "utf8") > 72) {
@@ -229,11 +230,12 @@ app.post("/api/auth/signin", async (req, res) => {
       `SELECT id, name, email, password_hash,
               COALESCE(to_jsonb(users) ->> 'role', 'user') AS role,
               COALESCE(to_jsonb(users) ->> 'status', 'ACTIVE') AS status
-         FROM users WHERE email = $1`,
+         FROM users WHERE ${NORMALIZED_EMAIL_PREDICATE}
+         ORDER BY id ASC LIMIT 2`,
       [email]
     );
 
-    const user = result.rows[0];
+    const user = selectUniqueAccount(result.rows);
 
     if (!user) {
       return res.status(401).json({

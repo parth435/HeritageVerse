@@ -12,8 +12,8 @@ import {
 const SITE_PAGE_SIZE = 100;
 const SEARCH_DELAY_MS = 180;
 
-/** Search published places with verified photos and load the selected site's detail record. */
-export function useHeritageSelection({ hasTimeline = false }: { hasTimeline?: boolean } = {}) {
+/** Search the published catalogue and load the selected site's detail record. */
+export function useHeritageSelection() {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<HeritageView[]>([]);
   const [selectedSummary, setSelectedSummary] = useState<HeritageView | null>(null);
@@ -31,7 +31,7 @@ export function useHeritageSelection({ hasTimeline = false }: { hasTimeline?: bo
     setListLoading(true);
     setListError(null);
     const timer = window.setTimeout(() => {
-      void getHeritage({ q: query.trim() || undefined, hasTimeline: hasTimeline || undefined, withVerifiedPhoto: true, limit: SITE_PAGE_SIZE }, { signal: controller.signal })
+      void getHeritage({ q: query.trim() || undefined, limit: SITE_PAGE_SIZE }, { signal: controller.signal })
         .then((response) => {
           if (!active) return;
           const options = response.items.map(heritageToView);
@@ -40,7 +40,7 @@ export function useHeritageSelection({ hasTimeline = false }: { hasTimeline?: bo
           const selectedFromResults = options.find((option) => option.routeId === currentId);
           if (selectedFromResults) setSelectedSummary(selectedFromResults);
           if (!currentId && options.length) {
-            const preferred = getDefaultHeritageOption(options, { hasTimeline });
+            const preferred = getDefaultHeritageOption(options);
             if (preferred) {
               setSelectedSummary(preferred);
               setSiteId(preferred.routeId);
@@ -61,7 +61,7 @@ export function useHeritageSelection({ hasTimeline = false }: { hasTimeline?: bo
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [hasTimeline, query, retryKey]);
+  }, [query, retryKey]);
 
   useEffect(() => {
     if (!siteId) {

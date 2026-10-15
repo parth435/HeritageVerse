@@ -52,8 +52,8 @@ export function ExplorePage() {
     const controller = new AbortController();
     let active = true;
     void Promise.all([
-      getCategories({ signal: controller.signal }),
-      getHeritageFacets(state, { signal: controller.signal }),
+      getCategories({ signal: controller.signal }, { withVerifiedPhoto: true }),
+      getHeritageFacets(state, { signal: controller.signal }, { withVerifiedPhoto: true }),
     ])
       .then(([results, facets]) => {
         if (!active) return;
@@ -86,6 +86,7 @@ export function ExplorePage() {
         category,
         state,
         district,
+        withVerifiedPhoto: true,
         limit: PAGE_SIZE,
         offset,
       },
@@ -121,7 +122,7 @@ export function ExplorePage() {
     setMapError(null);
 
     void getHeritageMapSites(
-      { q: debouncedSearch, category, state, district },
+      { q: debouncedSearch, category, state, district, withVerifiedPhoto: true },
       { signal: controller.signal },
     )
       .then((records) => {
@@ -251,7 +252,7 @@ export function ExplorePage() {
             loading={loading && offset === 0}
             error={error}
             onRetry={() => setRetryKey((current) => current + 1)}
-            emptyMessage="No published places match these filters. Try another search or clear one of the filters."
+            emptyMessage="No published places with verified, approved photographs match these filters yet. The full published catalogue remains available in Living Atlas."
           />
         </div>
 

@@ -147,7 +147,7 @@ export function TimeMachineView({
 }
 
 export function TimeMachine() {
-  const selection = useHeritageSelection({ hasTimeline: true });
+  const selection = useHeritageSelection();
 
   return (
     <TimeMachineView
