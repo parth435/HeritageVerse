@@ -42,18 +42,18 @@ export function LivingAtlas() {
   useEffect(() => {
     const controller = new AbortController();
     let active = true;
-    void Promise.all([
+    void Promise.allSettled([
       getCategories({ signal: controller.signal }),
       getHeritageFacets(undefined, { signal: controller.signal }),
     ])
-      .then(([categoryOptions, facets]) => {
+      .then(([categoriesResult, facetsResult]) => {
         if (!active) return;
-        setCategories(categoryOptions);
-        setStates(facets.states);
-        setFiltersError(null);
-      })
-      .catch((reason: unknown) => {
-        if (active) setFiltersError(reason instanceof Error ? reason.message : "Atlas filters could not load.");
+        const errors: string[] = [];
+        if (categoriesResult.status === "fulfilled") setCategories(categoriesResult.value);
+        else errors.push(categoriesResult.reason instanceof Error ? categoriesResult.reason.message : "Categories could not load.");
+        if (facetsResult.status === "fulfilled") setStates(facetsResult.value.states);
+        else errors.push(facetsResult.reason instanceof Error ? facetsResult.reason.message : "Location filters could not load.");
+        setFiltersError(errors.length ? errors.join(" ") : null);
       });
     return () => {
       active = false;
@@ -182,7 +182,16 @@ export function LivingAtlas() {
                 <button type="button" onClick={() => setMapRetryKey((current) => current + 1)} className="text-gold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Retry map locations</button>
               </p>
             ) : null}
-            <HeritageMap sites={sites} mapSites={mapSites} label="Living Atlas map" selectedRouteId={selected?.routeId} onSiteSelect={selectSite} verifiedPhotoOnly />
+            <HeritageMap
+              sites={sites}
+              mapSites={mapSites}
+              label="Living Atlas map"
+              selectedRouteId={selected?.routeId}
+              onSiteSelect={selectSite}
+              catalogueStatus={loading ? "loading" : error ? "error" : "success"}
+              mapDataStatus={mapLoading ? "loading" : mapError ? "error" : "success"}
+              verifiedPhotoOnly
+            />
           </div>
           <div className="min-w-0 rounded-3xl border border-white/10 bg-white/[0.025] p-5">
             <div className="flex items-center justify-between gap-3">
@@ -221,7 +230,7 @@ export function LivingAtlas() {
                 </li>
               ))}
             </ul>
-            {!loading && sites.length === 0 ? <p className="mt-4 text-sm text-parchment/55">No records match these filters.</p> : null}
+            {!loading && !error && sites.length === 0 ? <p role="status" className="mt-4 text-sm text-parchment/55">No records match these filters.</p> : null}
             {sites.length < total ? <button type="button" disabled={loadingMore} onClick={() => setOffset((current) => current + PAGE_SIZE)} className="mt-4 w-full rounded-xl border border-gold/30 px-4 py-3 text-xs font-semibold uppercase tracking-[0.15em] text-gold-bright disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">{loadingMore ? "Loading…" : "Load more places"}</button> : null}
           </div>
         </div>

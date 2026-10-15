@@ -236,7 +236,13 @@ export function ExplorePage() {
                     <button type="button" onClick={() => setMapRetryKey((current) => current + 1)} className="text-gold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Retry map locations</button>
                   </p>
                 ) : null}
-                <HeritageMap sites={visibleItems} mapSites={mapSites} verifiedPhotoOnly />
+                <HeritageMap
+                  sites={visibleItems}
+                  mapSites={mapSites}
+                  catalogueStatus={loading ? "loading" : error ? "error" : "success"}
+                  mapDataStatus={mapLoading ? "loading" : mapError ? "error" : "success"}
+                  verifiedPhotoOnly
+                />
               </>
             ) : null}
           </section>

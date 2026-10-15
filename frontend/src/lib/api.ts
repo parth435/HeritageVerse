@@ -5,6 +5,7 @@ import type { AuthResponse, User } from "@/types/auth";
 import type { Heritage, HeritageCategory, HeritageMapRecord, HeritageMedia } from "@/types/heritage";
 
 export type ApiMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+export type ApiErrorClassification = "network" | "http" | "api" | "json" | "shape";
 
 export type ApiRequestOptions = {
   method?: ApiMethod;
@@ -25,14 +26,57 @@ export class ApiRequestError extends Error {
   readonly status: number;
   readonly code?: string;
   readonly payload: unknown;
+  readonly endpointPath?: string;
+  readonly classification?: ApiErrorClassification;
 
-  constructor(message: string, status: number, payload: unknown) {
-    super(message);
+  constructor(
+    message: string,
+    status: number,
+    payload: unknown,
+    details: {
+      endpointPath?: string;
+      classification?: ApiErrorClassification;
+      cause?: unknown;
+    } = {},
+  ) {
+    super(message, details.cause === undefined ? undefined : { cause: details.cause });
     this.name = "ApiRequestError";
     this.status = status;
     this.payload = payload;
+    this.endpointPath = details.endpointPath;
+    this.classification = details.classification;
     if (isApiError(payload) && payload.code) this.code = payload.code;
   }
+}
+
+function safeEndpointPath(url: string) {
+  try {
+    return new URL(url, "https://heritageverse.invalid").pathname;
+  } catch {
+    return "/api";
+  }
+}
+
+function reportApiFailure(error: ApiRequestError) {
+  if (!import.meta.env.DEV) return;
+  const cause = error.cause;
+  console.error("[HeritageVerse API] request failed", {
+    endpoint: error.endpointPath ?? "unknown",
+    classification: error.classification ?? "unknown",
+    ...(error.status ? { status: error.status } : {}),
+    causeName: cause instanceof Error ? cause.name : undefined,
+  });
+}
+
+function apiShapeError(endpointPath: string, expected: string) {
+  const error = new ApiRequestError(
+    `The server returned an unexpected response for ${endpointPath}; expected ${expected}.`,
+    502,
+    null,
+    { endpointPath, classification: "shape" },
+  );
+  reportApiFailure(error);
+  return error;
 }
 
 function isApiError(value: unknown): value is ApiErrorEnvelope {
@@ -72,9 +116,11 @@ export async function apiRequest<T>(
   const token = authenticated ? readAuthToken() : null;
   if (token) requestHeaders.set("Authorization", `Bearer ${token}`);
 
+  const requestUrl = buildApiUrl(path, API_BASE_URL);
+  const endpointPath = safeEndpointPath(requestUrl);
   let response: Response;
   try {
-    response = await fetch(buildApiUrl(path, API_BASE_URL), {
+    response = await fetch(requestUrl, {
       method,
       headers: requestHeaders,
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -84,31 +130,65 @@ export async function apiRequest<T>(
     if (signal?.aborted || (error instanceof DOMException && error.name === "AbortError")) {
       throw error;
     }
-    throw new ApiRequestError(
+    const apiError = new ApiRequestError(
       "Unable to reach the HeritageVerse API. Check your connection and try again.",
       0,
       null,
+      { endpointPath, classification: "network", cause: error },
     );
+    reportApiFailure(apiError);
+    throw apiError;
   }
 
   if (response.status === 204) return undefined as T;
 
-  const raw = await response.text();
+  let raw: string;
+  try {
+    raw = await response.text();
+  } catch (error) {
+    if (signal?.aborted || (error instanceof DOMException && error.name === "AbortError")) {
+      throw error;
+    }
+    const apiError = new ApiRequestError(
+      "The response from the HeritageVerse API could not be read.",
+      0,
+      null,
+      { endpointPath, classification: "network", cause: error },
+    );
+    reportApiFailure(apiError);
+    throw apiError;
+  }
+
   let payload: unknown;
-  if (raw) {
+  let parseError: unknown;
+  if (raw.trim()) {
     try {
       payload = JSON.parse(raw) as unknown;
-    } catch {
+    } catch (error) {
+      parseError = error;
       payload = undefined;
     }
   }
 
   if (!response.ok || isApiError(payload)) {
-    throw new ApiRequestError(getErrorMessage(payload, response.status), response.status, payload);
+    const apiError = new ApiRequestError(getErrorMessage(payload, response.status), response.status, payload, {
+      endpointPath,
+      classification: response.ok ? "api" : "http",
+      cause: parseError,
+    });
+    reportApiFailure(apiError);
+    throw apiError;
   }
 
-  if (payload === undefined) {
-    throw new ApiRequestError("The server returned an unreadable or empty response.", response.status, null);
+  if (parseError !== undefined) {
+    const apiError = new ApiRequestError(
+      "The server returned an invalid JSON response.",
+      response.status,
+      null,
+      { endpointPath, classification: "json", cause: parseError },
+    );
+    reportApiFailure(apiError);
+    throw apiError;
   }
 
   return payload as T;
@@ -145,7 +225,11 @@ export async function getCategories(
   const suffix = scope.withVerifiedPhoto === undefined
     ? ""
     : `?withVerifiedPhoto=${String(scope.withVerifiedPhoto)}`;
-  const response = await apiRequest<{ success: true; categories: HeritageCategory[] }>(`categories${suffix}`, requestOptions);
+  const response = await apiRequest<{ success: true; categories: HeritageCategory[] } | undefined>(`categories${suffix}`, requestOptions);
+  if (response === undefined) return [];
+  if (!response || response.success !== true || !Array.isArray(response.categories)) {
+    throw apiShapeError("/api/categories", "a successful response with a categories array");
+  }
   return response.categories;
 }
 
@@ -158,7 +242,12 @@ export async function getHeritageFacets(
   if (state?.trim()) params.set("state", state.trim());
   if (scope.withVerifiedPhoto !== undefined) params.set("withVerifiedPhoto", String(scope.withVerifiedPhoto));
   const suffix = params.size ? `?${params.toString()}` : "";
-  return apiRequest<{ success: true; states: string[]; districts: string[] }>(`heritage-facets${suffix}`, requestOptions);
+  const response = await apiRequest<{ success: true; states: string[]; districts: string[] } | undefined>(`heritage-facets${suffix}`, requestOptions);
+  if (response === undefined) return { success: true as const, states: [], districts: [] };
+  if (!response || response.success !== true || !Array.isArray(response.states) || !Array.isArray(response.districts)) {
+    throw apiShapeError("/api/heritage-facets", "a successful response with states and districts arrays");
+  }
+  return response;
 }
 
 export type HeritageQuery = {
@@ -180,7 +269,7 @@ function boundedInteger(value: number | undefined, fallback: number, minimum: nu
   return Math.max(minimum, Math.min(Math.floor(value), maximum));
 }
 
-export function getHeritage(query: HeritageQuery = {}, requestOptions: Pick<ApiRequestOptions, "signal" | "authenticated"> = {}) {
+export async function getHeritage(query: HeritageQuery = {}, requestOptions: Pick<ApiRequestOptions, "signal" | "authenticated"> = {}) {
   const params = new URLSearchParams();
   for (const key of ["q", "category", "state", "district"] as const) {
     const value = query[key]?.trim();
@@ -188,10 +277,21 @@ export function getHeritage(query: HeritageQuery = {}, requestOptions: Pick<ApiR
   }
   if (query.hasTimeline !== undefined) params.set("hasTimeline", String(query.hasTimeline));
   if (query.withVerifiedPhoto !== undefined) params.set("withVerifiedPhoto", String(query.withVerifiedPhoto));
-  params.set("limit", String(boundedInteger(query.limit, 24, 1, MAX_HERITAGE_LIMIT)));
-  params.set("offset", String(boundedInteger(query.offset, 0, 0, MAX_HERITAGE_OFFSET)));
+  const limit = boundedInteger(query.limit, 24, 1, MAX_HERITAGE_LIMIT);
+  const offset = boundedInteger(query.offset, 0, 0, MAX_HERITAGE_OFFSET);
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
 
-  return apiRequest<PaginatedApiResponse<Heritage>>(`heritage?${params.toString()}`, requestOptions);
+  const response = await apiRequest<PaginatedApiResponse<Heritage> | undefined>(`heritage?${params.toString()}`, requestOptions);
+  if (response === undefined) {
+    return { success: true as const, items: [], pagination: { limit, offset, total: 0 } };
+  }
+  if (!response || response.success !== true || !Array.isArray(response.items) || !response.pagination ||
+      !Number.isFinite(response.pagination.limit) || !Number.isFinite(response.pagination.offset) ||
+      !Number.isFinite(response.pagination.total)) {
+    throw apiShapeError("/api/heritage", "a successful response with items and pagination fields");
+  }
+  return response;
 }
 
 export type LocationSearchResult = {
@@ -231,9 +331,19 @@ export function getHeritageMapPage(
     if (value) params.set(key, value);
   }
   if (query.withVerifiedPhoto !== undefined) params.set("withVerifiedPhoto", String(query.withVerifiedPhoto));
-  params.set("limit", String(boundedInteger(query.limit, HERITAGE_MAP_PAGE_SIZE, 1, MAX_HERITAGE_LIMIT)));
-  params.set("offset", String(boundedInteger(query.offset, 0, 0, MAX_HERITAGE_OFFSET)));
-  return apiRequest<HeritageMapPage>("heritage-map?" + params.toString(), requestOptions);
+  const limit = boundedInteger(query.limit, HERITAGE_MAP_PAGE_SIZE, 1, MAX_HERITAGE_LIMIT);
+  const offset = boundedInteger(query.offset, 0, 0, MAX_HERITAGE_OFFSET);
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+  return apiRequest<HeritageMapPage | undefined>("heritage-map?" + params.toString(), requestOptions).then((response) => {
+    if (response === undefined) return { success: true as const, items: [], pagination: { limit, offset, total: 0 } };
+    if (!response || response.success !== true || !Array.isArray(response.items) || !response.pagination ||
+        !Number.isFinite(response.pagination.limit) || !Number.isFinite(response.pagination.offset) ||
+        !Number.isFinite(response.pagination.total)) {
+      throw apiShapeError("/api/heritage-map", "a successful response with items and pagination fields");
+    }
+    return response;
+  });
 }
 
 export async function getHeritageMapSites(

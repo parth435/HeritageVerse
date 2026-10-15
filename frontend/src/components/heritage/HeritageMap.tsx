@@ -180,6 +180,8 @@ export function HeritageMap({
   onSiteSelect,
   routeGeometry,
   routeOrigin,
+  catalogueStatus,
+  mapDataStatus,
   verifiedPhotoOnly = false,
 }: {
   sites: MapSite[];
@@ -191,6 +193,8 @@ export function HeritageMap({
   /** GeoJSON coordinate order: [longitude, latitude]. */
   routeGeometry?: [number, number][];
   routeOrigin?: { latitude: number; longitude: number; label?: string };
+  catalogueStatus?: "loading" | "error" | "success";
+  mapDataStatus?: "loading" | "error" | "success";
   verifiedPhotoOnly?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -337,6 +341,17 @@ export function HeritageMap({
   const externalMapUrl = fallbackPoint
     ? `https://www.openstreetmap.org/?mlat=${fallbackPoint.latitude}&mlon=${fallbackPoint.longitude}#map=12/${fallbackPoint.latitude}/${fallbackPoint.longitude}`
     : null;
+  const emptyMapMessage = catalogueStatus === "loading"
+    ? "Loading published heritage records…"
+    : catalogueStatus === "error"
+      ? "The heritage catalogue could not load. Retry the catalogue request to view record results."
+      : mapDataStatus === "loading"
+        ? "Loading source-verified map locations…"
+        : mapDataStatus === "error"
+          ? "Map locations could not load. The catalogue remains available."
+          : sites.length === 0
+            ? "No heritage records match the current filters."
+            : "No sites in these results have a complete coordinate pair with a supporting source yet. Other records remain listed without approximate pins.";
 
   useEffect(() => {
     if (!selectedRouteId) return;
@@ -350,9 +365,7 @@ export function HeritageMap({
     <section className={className} aria-label={label}>
       {mappedSites.length === 0 && !(routeGeometry && routeGeometry.length > 1) ? (
         <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-5 text-sm text-parchment/65" role="status">
-          {sites.length === 0
-            ? "No heritage records match the current filters."
-            : "No sites in these results have a complete coordinate pair with a supporting source yet. Other records remain listed without approximate pins."}
+          {emptyMapMessage}
         </div>
       ) : (
         <>
