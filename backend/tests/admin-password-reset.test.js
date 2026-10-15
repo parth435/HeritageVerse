@@ -78,7 +78,7 @@ function mockPool(userRows) {
       calls.push({ statement: String(statement), values });
       if (String(statement).includes("SELECT current_database()")) return { rows: [{ name: "heritageversedb" }] };
       if (String(statement).includes("FROM users")) return { rows: userRows };
-      if (String(statement).startsWith("UPDATE users SET password_hash")) return { rows: userRows.length === 1 ? [{ id: userRows[0].id }] : [] };
+      if (String(statement).startsWith("UPDATE users SET password_hash")) return { rows: userRows.length === 1 ? [{ id: userRows[0].id, role: userRows[0].role }] : [] };
       return { rows: [] };
     },
     release() { calls.push({ statement: "RELEASE", values: [] }); },
@@ -93,8 +93,8 @@ test("password reset updates only the exact active regular account and audits wi
 
   assert.equal(await resetAccountPassword(pool, options, passwordHash), 1);
   const update = pool.calls.find((call) => call.statement.startsWith("UPDATE users SET password_hash"));
-  assert.deepEqual(update.values, [passwordHash, 1, "parthbasarwadkar@gmail.com"]);
-  assert.match(update.statement, /id = \$2 AND LOWER\(BTRIM\(email\)\) = \$3 AND role = 'user'/);
+  assert.deepEqual(update.values, [passwordHash, 1, "parthbasarwadkar@gmail.com", "user"]);
+  assert.match(update.statement, /id = \$2 AND LOWER\(BTRIM\(email\)\) = \$3 AND role = \$4/);
   assert.match(update.statement, /status.*'ACTIVE'/s);
   const audit = pool.calls.find((call) => call.statement.startsWith("INSERT INTO activity_logs"));
   assert.ok(audit);
@@ -121,7 +121,7 @@ test("password reset refuses duplicate, inactive, elevated, and wrong-database t
       { id: 2, email: "PARTHBASARWADKAR@gmail.com", role: "user", status: "ACTIVE" },
     ],
     [{ id: 1, email: "parthbasarwadkar@gmail.com", role: "user", status: "SUSPENDED" }],
-    [{ id: 1, email: "parthbasarwadkar@gmail.com", role: "admin", status: "ACTIVE" }],
+    [{ id: 1, email: "parthbasarwadkar@gmail.com", role: "owner", status: "ACTIVE" }],
   ];
 
   for (const rows of unsafeAccounts) {
@@ -134,4 +134,16 @@ test("password reset refuses duplicate, inactive, elevated, and wrong-database t
   const wrongDatabase = mockPool([{ id: 1, email: "parthbasarwadkar@gmail.com", role: "user", status: "ACTIVE" }]);
   await assert.rejects(resetAccountPassword(wrongDatabase, { ...options, expectedDatabase: "staging" }, "test-hash-placeholder"), /database does not match/);
   assert.ok(!wrongDatabase.calls.some((call) => call.statement.startsWith("BEGIN")));
+});
+
+test("password reset preserves the administrator role for the exact active account", async () => {
+  const pool = mockPool([{ id: 1, email: "parthbasarwadkar@gmail.com", role: "admin", status: "ACTIVE" }]);
+  const options = { userId: 1, email: "parthbasarwadkar@gmail.com", operator: "Verified Operator", expectedDatabase: "heritageversedb" };
+
+  assert.equal(await resetAccountPassword(pool, options, "test-hash-placeholder"), 1);
+  const update = pool.calls.find((call) => call.statement.startsWith("UPDATE users SET password_hash"));
+  assert.deepEqual(update.values, ["test-hash-placeholder", 1, "parthbasarwadkar@gmail.com", "admin"]);
+  assert.match(update.statement, /WHERE id = \$2 AND LOWER\(BTRIM\(email\)\) = \$3 AND role = \$4/);
+  assert.ok(pool.calls.some((call) => call.statement === "COMMIT"));
+  assert.ok(!pool.calls.some((call) => call.statement.startsWith("UPDATE users SET role")));
 });

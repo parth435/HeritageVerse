@@ -101,8 +101,8 @@ function assertResetTargetAccount(rows, options) {
   if (!user || Number(user.id) !== options.userId) {
     throw new ResetError("The exact email must resolve to exactly the specified existing account; no change was made.");
   }
-  if (String(user.role).toLowerCase() !== "user" || String(user.status).toUpperCase() !== "ACTIVE") {
-    throw new ResetError("The specified account must be an active regular user; no change was made.");
+  if (!["user", "admin"].includes(String(user.role).toLowerCase()) || String(user.status).toUpperCase() !== "ACTIVE") {
+    throw new ResetError("The specified account must be an active user or administrator; no change was made.");
   }
   return user;
 }
@@ -120,7 +120,7 @@ async function verifyResetTarget(pool, options) {
 }
 
 function printHelp() {
-  process.stdout.write(`Reset the password for one existing active user after out-of-band identity verification.\n\nUsage:\n  node backend/database/reset-user-password.js --user-id <id> --email <exact-email> --identity-verified --operator <name> --expected-host <database-host> --expected-database <database-name> --allow-external-database --confirm RESET-PASSWORD\n\nThe command requires NODE_ENV=production and DATABASE_URL from the approved secret store. It never reads backend/.env, creates users, changes roles, or prints the password/hash.\n`);
+  process.stdout.write(`Reset the password for one existing active user or administrator after out-of-band identity verification.\n\nUsage:\n  node backend/database/reset-user-password.js --user-id <id> --email <exact-email> --identity-verified --operator <name> --expected-host <database-host> --expected-database <database-name> --allow-external-database --confirm RESET-PASSWORD\n\nThe command requires NODE_ENV=production and DATABASE_URL from the approved secret store. It never reads backend/.env, creates users, changes roles, or prints the password/hash.\n`);
 }
 
 function readHidden(prompt) {
@@ -189,16 +189,19 @@ async function resetAccountPassword(pool, options, passwordHash) {
         ORDER BY id ASC LIMIT 2 FOR UPDATE`,
       [options.email],
     );
-    assertResetTargetAccount(lookup.rows, options);
+    const user = assertResetTargetAccount(lookup.rows, options);
+    const targetRole = String(user.role).toLowerCase();
 
     const updated = await client.query(
       `UPDATE users SET password_hash = $1
-        WHERE id = $2 AND LOWER(BTRIM(email)) = $3 AND role = 'user'
+        WHERE id = $2 AND LOWER(BTRIM(email)) = $3 AND role = $4
           AND COALESCE(to_jsonb(users) ->> 'status', 'ACTIVE') = 'ACTIVE'
-        RETURNING id`,
-      [passwordHash, options.userId, options.email],
+        RETURNING id, role`,
+      [passwordHash, options.userId, options.email, targetRole],
     );
-    if (updated.rows.length !== 1) throw new ResetError("Password reset did not update exactly one active account.");
+    if (updated.rows.length !== 1 || String(updated.rows[0].role).toLowerCase() !== targetRole) {
+      throw new ResetError("Password reset did not update exactly one account while preserving its role.");
+    }
 
     await client.query(
       "INSERT INTO activity_logs (title, entity_type, entity_id, user_id) VALUES ($1, 'user', $2, NULL)",
@@ -251,7 +254,7 @@ async function main(argv = process.argv.slice(2)) {
 
     const userId = await resetAccountPassword(pool, options, passwordHash);
     passwordHash = "";
-    process.stdout.write(`Password reset completed for account ID ${userId}. The account role was not changed.\n`);
+    process.stdout.write(`Password reset completed for account ID ${userId}. The account role was preserved.\n`);
   } finally {
     password = "";
     confirmation = "";

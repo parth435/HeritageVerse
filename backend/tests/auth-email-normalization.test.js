@@ -28,3 +28,17 @@ test("signup duplicate checks and signin lookup match legacy email casing safely
   assert.match(backendSource, /selectUniqueAccount\(result\.rows\)/);
   assert.match(backendSource, /Invalid email or password/);
 });
+
+test("signin reads the same email and password fields sent by the frontend and verifies the stored bcrypt hash", () => {
+  const backendSource = fs.readFileSync(path.resolve(__dirname, "../index.js"), "utf8");
+  const apiSource = fs.readFileSync(path.resolve(__dirname, "../../frontend/src/lib/api.ts"), "utf8");
+  const authSource = fs.readFileSync(path.resolve(__dirname, "../../frontend/src/lib/auth.ts"), "utf8");
+  const adminLoginSource = fs.readFileSync(path.resolve(__dirname, "../../frontend/src/components/admin/AdminLoginPage.tsx"), "utf8");
+
+  assert.match(backendSource, /const email = normalizeEmail\(req\.body\?\.email\)/);
+  assert.match(backendSource, /const password = typeof req\.body\?\.password === "string" \? req\.body\.password : ""/);
+  assert.match(backendSource, /bcrypt\.compare\(\s*password,\s*user\.password_hash\s*\)/);
+  assert.match(authSource, /authSignin\(\{ email: email\.trim\(\), password \}\)/);
+  assert.match(apiSource, /"auth\/signin"[\s\S]*body: input/);
+  assert.match(adminLoginSource, /signIn\(email, password\)/);
+});

@@ -73,31 +73,33 @@ The migration gives every existing account the least-privileged `user` role. Aft
 
 ### Existing account password verification and reset
 
-The admin login uses the same `POST /api/auth/signin` flow as regular sign-in. For an active `user` account, a correct password authenticates as a regular user and the admin login displays a distinct “does not have active administrator access” message. The generic “Invalid email or password” response means the backend did not find one unique email row or bcrypt did not match; it does not identify which case. A bcrypt-looking stored value does not prove the entered password. Confirm that Render's `DATABASE_URL` targets the same database being inspected before deciding a password reset is needed.
+The admin login uses the same `POST /api/auth/signin` flow as regular sign-in. Email is trimmed and lowercased on signup and signin, and both paths use the `email` and `password` fields. The generic “Invalid email or password” response means signin did not find exactly one matching normalized email or bcrypt did not match. The role check runs only after bcrypt succeeds, so a role mismatch has a separate message. Confirm Render's `DATABASE_URL` targets the same database being inspected before deciding a password reset is needed.
 
-There is no public password-reset endpoint. If the owner cannot verify the existing password, an operator who has independently verified the account owner's identity can use the guarded one-time CLI below. It requires a production maintenance shell with `DATABASE_URL` injected from the approved secret store; it does not load `backend/.env`. The operator must copy the exact database host and name from the intended production database. The command checks both against the connection URL and checks `current_database()` before prompting. It accepts the new password twice through a hidden TTY prompt, uses the same `bcrypt.hash(password, 10)` and 8-character/72-byte limits as signup, updates only the specified active `user` row, and writes an activity log entry. It does not create an account, change a role, or change schema.
+When Render access is available, run the read-only diagnostic from a controlled shell for the deployed backend. It uses the process `DATABASE_URL` without loading `backend/.env`, pins the expected host and database, confirms `current_database()`, and runs the same normalized-email lookup as signin. It asks for the attempted password with hidden terminal input and reports only a category, account ID, role, and status; it never prints the email, password, hash, token, or connection URL. It does not expose a public endpoint or change data.
 
 ```powershell
 $env:NODE_ENV = "production"
-node backend/database/reset-user-password.js --user-id 1 --email "parthbasarwadkar@gmail.com" --identity-verified --operator "<verified operator name>" --expected-host "<exact production database host>" --expected-database "heritageversedb" --allow-external-database --confirm RESET-PASSWORD
+node backend/database/diagnose-signin.js --user-id <exact-user-id> --email "<exact-account-email>" --identity-verified --expected-host "<exact production database host>" --expected-database "<exact production database name>" --confirm CHECK-SIGNIN
 ```
 
-Do not place a connection URL or password in command arguments, source code, logs, or shell history. After a reset, sign in manually in the browser to verify the new password; the account should still report that it lacks admin access. Then, in the same controlled maintenance session with the same verified `DATABASE_URL`, use the documented promotion procedure below. The reset utility is an operator CLI and is not called by the backend at startup or by a public API.
+`password_mismatch` confirms that the attempted password does not match the hash in the verified Render database. `account_not_found`, `account_ambiguous`, and `account_id_mismatch` identify lookup mismatches. `credentials_valid_admin` confirms the entered credentials match the active administrator in that target; if the live site still rejects that login, compare the deployed commit and frontend request path.
+
+There is no public password-reset endpoint. If the owner cannot verify the existing password, an operator who has independently verified the account owner's identity can use the guarded one-time CLI below. It requires a production maintenance shell with `DATABASE_URL` injected from the approved secret store; it does not load `backend/.env`. The operator must copy the exact database host and name from the intended production database. The command checks both against the connection URL and checks `current_database()` before prompting. It accepts the new password twice through a hidden TTY prompt, uses the same `bcrypt.hash(password, 10)` and 8-character/72-byte limits as signup, updates only the specified active account with role `user` or `admin`, preserves that role, and writes an activity log entry. It does not create an account or change schema.
+
+```powershell
+$env:NODE_ENV = "production"
+node backend/database/reset-user-password.js --user-id <exact-user-id> --email "<exact-account-email>" --identity-verified --operator "<verified operator name>" --expected-host "<exact production database host>" --expected-database "<exact production database name>" --allow-external-database --confirm RESET-PASSWORD
+```
+
+Do not place a connection URL or password in command arguments, source code, logs, or shell history. After a reset, sign in manually in the browser. An already-promoted administrator should reach the dashboard; a regular user should receive the separate not-admin message. Promote a regular user only through the procedure below after password authentication and identity verification. The reset utility is an operator CLI and is not called by the backend at startup or by a public API.
 
 Manual administrator provisioning procedure: first verify the person's identity and exact existing account email out of band; never create an account or change a role through signup/profile APIs. Confirm the database target and account ID, then use the guarded script, which requires the verified identity flag, operator name, exact ID/email, explicit confirmation, a transaction, the same advisory lock as admin APIs, an active account, and an audit-log row:
 
 ```powershell
-node backend/database/promote-admin.js --user-id 123 --email "exact-existing-account@example.com" --identity-verified --operator "Verified operator" --confirm PROMOTE
+node backend/database/promote-admin.js --user-id <exact-user-id> --email "<exact-account-email>" --identity-verified --operator "<verified operator name>" --confirm PROMOTE
 ```
 
-The script defaults to loopback-only. A positively identified remote database also requires `--allow-external-database`, `--expected-host`, and `--expected-database`; the live connection's `current_database()` is checked before writes. The CLI uses only process environment values and does not load `backend/.env`. Never use the external-target flags casually. For the confirmed production account, run the following only after its password authenticates and identity is independently verified, from the same controlled shell that holds the intended `DATABASE_URL`:
-
-```powershell
-$env:NODE_ENV = "production"
-node backend/database/promote-admin.js --user-id 1 --email "parthbasarwadkar@gmail.com" --identity-verified --operator "<verified operator name>" --expected-host "<exact production database host>" --expected-database "heritageversedb" --allow-external-database --confirm PROMOTE
-```
-
-After provisioning, verify the role/status and audit row, sign out, and authenticate with a fresh session. Do not grant administrator access when identity or account ownership cannot be confirmed.
+The script defaults to loopback-only. A positively identified remote database also requires `--allow-external-database`, `--expected-host`, and `--expected-database`; the live connection's `current_database()` is checked before writes. The CLI uses only process environment values and does not load `backend/.env`. Never use the external-target flags casually. After authorized provisioning, verify role/status and the audit row, sign out, and authenticate with a fresh session. Do not grant administrator access when identity or account ownership cannot be confirmed.
 
 The unauthenticated admin API returns 401 and ordinary accounts receive 403. Verify administrator CRUD with a confirmed active administrator in a disposable or staging environment after following the provisioning procedure above. Do not promote an account solely to clear a verification gap.
 
