@@ -74,16 +74,15 @@ function markerPopupForSite(site: MapSite, routeOrigin?: { latitude: number; lon
     photo.className = "heritage-map-popup-image";
     let usingFallback = false;
     photo.onerror = () => {
+      if (verifiedPhotoOnly) {
+        const unavailable = document.createElement("small");
+        unavailable.textContent = "Verified photograph unavailable";
+        photo.replaceWith(unavailable);
+        return;
+      }
       const fallback = getHeritageImageFallback({ url: image.src }, photo.src);
       if (fallback && !usingFallback) {
         if (isHeritageImageFallback(fallback)) {
-          if (verifiedPhotoOnly) {
-            const unavailable = document.createElement("small");
-            unavailable.textContent = "Verified photograph unavailable";
-            photo.replaceWith(unavailable);
-            usingFallback = true;
-            return;
-          }
           usingFallback = true;
           photo.alt = `${site.name} illustrative placeholder; verified photograph unavailable`;
           const notice = document.createElement("small");
@@ -97,7 +96,7 @@ function markerPopupForSite(site: MapSite, routeOrigin?: { latitude: number; lon
         photo.replaceWith(unavailable);
       }
     };
-    const photoSource = getHeritageImageSource({ url: image.src, thumbnail_url: image.thumbnailSrc });
+    const photoSource = getHeritageImageSource({ url: image.src, thumbnail_url: image.thumbnailSrc, displaySrc: image.displaySrc });
     if (photoSource) {
       photo.src = photoSource;
       content.append(photo);

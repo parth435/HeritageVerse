@@ -7,14 +7,14 @@ import { formatApproxDistance } from "@/lib/nearby.js";
 import type { HeritageView } from "@/lib/heritageAdapter";
 import { getVerifiedHeritageImages, getHeritageImageFallback, getHeritageImageSource, isHeritageImageFallback } from "@/lib/image-assets.js";
 
-export function HeritageCard({ item, index = 0, distanceKm, directionsOrigin, verifiedPhotoOnly = false }: { item: HeritageView; index?: number; distanceKm?: number; directionsOrigin?: { latitude: number; longitude: number } | null; verifiedPhotoOnly?: boolean }) {
+export function HeritageCard({ item, index = 0, distanceKm, directionsOrigin, verifiedPhotoOnly = false, onImageUnavailable }: { item: HeritageView; index?: number; distanceKm?: number; directionsOrigin?: { latitude: number; longitude: number } | null; verifiedPhotoOnly?: boolean; onImageUnavailable?: (routeId: string, failedImageUrl: string) => void }) {
   const reduceMotion = useReducedMotion();
   const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
   const image = getVerifiedHeritageImages(item.gallery)[0];
   const imageSrc = image
     ? failedImageUrl
       ? getHeritageImageFallback({ url: image.src }, failedImageUrl)
-      : getHeritageImageSource({ url: image.src, thumbnail_url: image.thumbnailSrc })
+      : getHeritageImageSource({ url: image.src, thumbnail_url: image.thumbnailSrc, displaySrc: image.displaySrc })
     : null;
   const imageUnavailable = Boolean(image && (!imageSrc || (verifiedPhotoOnly && isHeritageImageFallback(imageSrc))));
 
@@ -40,7 +40,18 @@ export function HeritageCard({ item, index = 0, distanceKm, directionsOrigin, ve
               alt={isHeritageImageFallback(imageSrc) ? `Illustrative placeholder; verified photograph unavailable for ${item.name}` : image.alt}
               loading="lazy"
               referrerPolicy="no-referrer"
-              onError={() => setFailedImageUrl(imageSrc)}
+              onError={() => {
+                if (verifiedPhotoOnly) {
+                  onImageUnavailable?.(item.routeId, image.src);
+                  setFailedImageUrl(imageSrc);
+                  return;
+                }
+                const fallback = getHeritageImageFallback({ url: image.src }, imageSrc);
+                if (!fallback || isHeritageImageFallback(fallback)) {
+                  onImageUnavailable?.(item.routeId, image.src);
+                }
+                setFailedImageUrl(imageSrc);
+              }}
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
           ) : (

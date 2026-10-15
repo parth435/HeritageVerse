@@ -5,8 +5,9 @@ export type HeritageCategory = {
 };
 
 export type HeritageMedia = {
-  id: number;
-  heritage_id: number;
+  /** Omitted for curated static public media that has no database row. */
+  id?: number;
+  heritage_id?: number;
   media_type: "image" | "video" | "audio" | "document";
   url: string;
   caption: string | null;
@@ -101,6 +102,7 @@ export type Heritage = {
   publication_status?: HeritagePublicationStatus;
   created_at?: string;
   updated_at?: string;
+  image_url?: string | null;
   media?: HeritageMedia[];
   timeline_events?: HeritageTimelineEvent[];
   artifacts?: HeritageArtifact[];

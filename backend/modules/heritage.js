@@ -1,6 +1,7 @@
 const express = require("express");
 const pool = require("../config/db");
 const { authenticateOptional } = require("../middleware/auth");
+const { CURATED_IMAGE_SLUGS_SQL, applyCuratedImageFallback } = require("../utilities/curated-heritage-images");
 
 const router = express.Router();
 const DEFAULT_LIMIT = 20;
@@ -82,14 +83,15 @@ function addExactFilter(conditions, values, column, value) {
 
 function publicPlaceScope(alias, withVerifiedPhoto) {
   if (withVerifiedPhoto) {
-    return `EXISTS (
+    return `(EXISTS (
       SELECT 1 FROM heritage_media verified_photo
        WHERE verified_photo.heritage_id = ${alias}.id
          AND verified_photo.media_type = 'image'
          AND verified_photo.media_role IN ('gallery', 'current')
          AND verified_photo.verification_status = 'verified'
          AND verified_photo.is_illustrative = FALSE
-    )`;
+         AND NULLIF(BTRIM(verified_photo.url), '') IS NOT NULL
+    ) OR ${alias}.slug = ANY(ARRAY[${CURATED_IMAGE_SLUGS_SQL}]::TEXT[]))`;
   }
   return `EXISTS (
     SELECT 1 FROM heritage_catalog_membership membership
@@ -292,6 +294,7 @@ router.get("/heritage", async (req, res) => {
            AND m.media_role IN ('gallery', 'current')
            AND m.verification_status = 'verified'
            AND m.is_illustrative = FALSE
+            AND NULLIF(BTRIM(m.url), '') IS NOT NULL
          ORDER BY m.display_order ASC, m.id ASC
          LIMIT 1
        ) selected_image ON TRUE
@@ -303,7 +306,7 @@ router.get("/heritage", async (req, res) => {
 
     return res.json({
       success: true,
-      items: result.rows,
+      items: result.rows.map(applyCuratedImageFallback),
       pagination: {
         limit,
         offset,
@@ -407,6 +410,7 @@ router.get("/heritage-map", async (req, res) => {
       "    AND m.media_role IN ('gallery', 'current')",
       "    AND m.verification_status = 'verified'",
       "    AND m.is_illustrative = FALSE",
+      "    AND NULLIF(BTRIM(m.url), '') IS NOT NULL",
       "  ORDER BY m.display_order ASC, m.id ASC",
       "  LIMIT 1",
       ") selected_image ON TRUE",
@@ -418,7 +422,7 @@ router.get("/heritage-map", async (req, res) => {
 
     return res.json({
       success: true,
-      items: result.rows.map((row) => ({ ...row, media: row.media ?? [] })),
+      items: result.rows.map((row) => applyCuratedImageFallback({ ...row, media: row.media ?? [] })),
       pagination: {
         limit,
         offset,
@@ -660,7 +664,7 @@ router.get("/heritage/:id", authenticateOptional, async (req, res) => {
       });
     }
 
-    return res.json({ success: true, heritage: result.rows[0] });
+    return res.json({ success: true, heritage: applyCuratedImageFallback(result.rows[0]) });
   } catch (error) {
     console.error("Heritage detail query failed:", error.code || "unknown error");
     return res.status(500).json({

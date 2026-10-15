@@ -8,8 +8,30 @@ import { HeritagePageHeader } from "@/components/heritage/HeritagePageHeader";
 import { getCategories, getHeritage, getHeritageFacets, getHeritageMapSites } from "@/lib/api";
 import type { HeritageCategoryView, HeritageMapView, HeritageView } from "@/lib/heritageAdapter";
 import { heritageMapToView, heritageToView } from "@/lib/heritageAdapter";
+import { filterUsableHeritageImages } from "@/lib/exploreImages";
 
 const PAGE_SIZE = 24;
+const API_PAGE_SIZE = 100;
+
+async function getAllMatchingPlaces(query: Parameters<typeof getHeritage>[0], signal: AbortSignal) {
+  const records: Awaited<ReturnType<typeof getHeritage>>["items"] = [];
+  let offset = 0;
+  let total = Number.POSITIVE_INFINITY;
+
+  while (offset < total) {
+    const response = await getHeritage(
+      { ...query, withVerifiedPhoto: true, limit: API_PAGE_SIZE, offset },
+      { signal },
+    );
+    records.push(...response.items);
+    total = response.pagination.total;
+    const nextOffset = response.pagination.offset + response.items.length;
+    if (response.items.length === 0 || nextOffset <= offset) break;
+    offset = nextOffset;
+  }
+
+  return records;
+}
 
 function errorMessage(error: unknown) {
   return error instanceof Error
@@ -23,13 +45,11 @@ export function ExplorePage() {
   const [mapLoading, setMapLoading] = useState(true);
   const [mapError, setMapError] = useState<string | null>(null);
   const [mapRetryKey, setMapRetryKey] = useState(0);
-  const [total, setTotal] = useState(0);
   const [categories, setCategories] = useState<HeritageCategoryView[]>([]);
   const [states, setStates] = useState<string[]>([]);
   const [districts, setDistricts] = useState<string[]>([]);
   const [facetsError, setFacetsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -37,13 +57,13 @@ export function ExplorePage() {
   const [state, setState] = useState("");
   const [district, setDistrict] = useState("");
   const [sort, setSort] = useState<HeritageSort>("selected");
-  const [offset, setOffset] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setDebouncedSearch(search.trim());
-      setOffset(0);
+      setVisibleCount(PAGE_SIZE);
     }, 250);
     return () => window.clearTimeout(timer);
   }, [search]);
@@ -52,8 +72,8 @@ export function ExplorePage() {
     const controller = new AbortController();
     let active = true;
     void Promise.all([
-      getCategories({ signal: controller.signal }),
-      getHeritageFacets(state, { signal: controller.signal }),
+      getCategories({ signal: controller.signal }, { withVerifiedPhoto: true }),
+      getHeritageFacets(state, { signal: controller.signal }, { withVerifiedPhoto: true }),
     ])
       .then(([results, facets]) => {
         if (!active) return;
@@ -75,27 +95,24 @@ export function ExplorePage() {
   useEffect(() => {
     const controller = new AbortController();
     let active = true;
-    const append = offset > 0;
-    setLoading(!append);
-    setLoadingMore(append);
+    setLoading(true);
+    setItems([]);
+    setVisibleCount(PAGE_SIZE);
     setError(null);
 
-    void getHeritage(
+    void getAllMatchingPlaces(
       {
         q: debouncedSearch,
         category,
         state,
         district,
-        limit: PAGE_SIZE,
-        offset,
       },
-      { signal: controller.signal },
+      controller.signal,
     )
-      .then((response) => {
+      .then((records) => filterUsableHeritageImages(records.map(heritageToView), undefined, controller.signal))
+      .then((availablePlaces) => {
         if (!active) return;
-        const page = response.items.map(heritageToView);
-        setItems((current) => append ? [...current, ...page] : page);
-        setTotal(response.pagination.total);
+        setItems(availablePlaces);
       })
       .catch((reason: unknown) => {
         if (!active) return;
@@ -104,14 +121,13 @@ export function ExplorePage() {
       .finally(() => {
         if (!active) return;
         setLoading(false);
-        setLoadingMore(false);
       });
 
     return () => {
       active = false;
       controller.abort();
     };
-  }, [debouncedSearch, category, state, district, offset, retryKey]);
+  }, [debouncedSearch, category, state, district, retryKey]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -121,7 +137,7 @@ export function ExplorePage() {
     setMapError(null);
 
     void getHeritageMapSites(
-      { q: debouncedSearch, category, state, district },
+      { q: debouncedSearch, category, state, district, withVerifiedPhoto: true },
       { signal: controller.signal },
     )
       .then((records) => {
@@ -151,6 +167,23 @@ export function ExplorePage() {
     });
   }, [items, sort]);
 
+  const visibleMapSites = useMemo(() => {
+    const catalogueByRouteId = new Map(items.map((item) => [item.routeId, item]));
+    return mapSites.flatMap((site) => {
+      const catalogueItem = catalogueByRouteId.get(site.routeId);
+      return catalogueItem ? [{ ...site, gallery: catalogueItem.gallery }] : [];
+    });
+  }, [items, mapSites]);
+  const pageItems = visibleItems.slice(0, visibleCount);
+
+  function removeUnavailableImage(routeId: string, failedImageUrl: string) {
+    setItems((current) => current.flatMap((item) => {
+      if (item.routeId !== routeId) return [item];
+      const gallery = item.gallery.filter((image) => image.src !== failedImageUrl);
+      return gallery.length > 0 ? [{ ...item, gallery }] : [];
+    }));
+  }
+
   function resetFilters() {
     setSearch("");
     setDebouncedSearch("");
@@ -158,23 +191,23 @@ export function ExplorePage() {
     setState("");
     setDistrict("");
     setSort("selected");
-    setOffset(0);
+    setVisibleCount(PAGE_SIZE);
   }
 
   function updateCategory(value: string) {
     setCategory(value);
-    setOffset(0);
+    setVisibleCount(PAGE_SIZE);
   }
 
   function updateState(value: string) {
     setState(value);
     setDistrict("");
-    setOffset(0);
+    setVisibleCount(PAGE_SIZE);
   }
 
   function updateDistrict(value: string) {
     setDistrict(value);
-    setOffset(0);
+    setVisibleCount(PAGE_SIZE);
   }
 
   return (
@@ -187,7 +220,7 @@ export function ExplorePage() {
           </p>
           <h1 className="font-display mt-4 text-5xl leading-[0.98] text-parchment md:text-7xl">Explore the heritage atlas.</h1>
           <p className="mt-5 max-w-2xl text-sm leading-7 text-parchment/65 md:text-base">
-            Find published heritage places. Verified photo attribution appears when images are available. Search and filters can include records beyond the curated Maharashtra catalogue.
+            Find published heritage places with verified photographs that load successfully. Search and filters cover the published collection.
           </p>
           <RouterLink to="/nearby" className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full border border-gold/40 px-5 py-3 text-xs font-semibold uppercase tracking-[0.13em] text-gold-bright transition hover:bg-gold/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Find nearby heritage</RouterLink>
         </div>
@@ -208,7 +241,7 @@ export function ExplorePage() {
             categories={categories}
             states={states}
             districts={districts}
-            resultCount={loading ? 0 : total}
+            resultCount={loading ? 0 : items.length}
             onSearchChange={setSearch}
             onCategoryChange={updateCategory}
             onStateChange={updateState}
@@ -225,7 +258,7 @@ export function ExplorePage() {
                 <p className="text-[10px] uppercase tracking-[0.25em] text-gold">Explore by location</p>
                 <h2 id="heritage-map-heading" className="font-display mt-1 text-3xl text-parchment">Heritage map</h2>
               </div>
-              <p className="text-xs text-parchment/50">Pins and cards include matching published places. Map markers require source-verified coordinates.</p>
+              <p className="text-xs text-parchment/50">Pins include matching places with available photographs and source-verified coordinates.</p>
             </div>
             {!loading && !error ? (
               <>
@@ -238,31 +271,33 @@ export function ExplorePage() {
                 ) : null}
                 <HeritageMap
                   sites={visibleItems}
-                  mapSites={mapSites}
+                  mapSites={visibleMapSites}
                   catalogueStatus={loading ? "loading" : error ? "error" : "success"}
                   mapDataStatus={mapLoading ? "loading" : mapError ? "error" : "success"}
+                  verifiedPhotoOnly
                 />
               </>
             ) : null}
           </section>
           <HeritageGrid
-            items={visibleItems}
-            loading={loading && offset === 0}
+            items={pageItems}
+            loading={loading}
             error={error}
             onRetry={() => setRetryKey((current) => current + 1)}
-            emptyMessage="No published places match these filters. Try another search or clear one of the filters."
+            emptyMessage="No published places with usable photographs match these filters. Try another search or clear one of the filters."
+            verifiedPhotoOnly
+            onImageUnavailable={removeUnavailableImage}
           />
         </div>
 
-        {!loading && !error && items.length < total ? (
+        {!loading && !error && visibleCount < items.length ? (
           <div className="mt-8 text-center">
             <button
               type="button"
-              onClick={() => setOffset(items.length)}
-              disabled={loadingMore}
+              onClick={() => setVisibleCount((current) => Math.min(current + PAGE_SIZE, items.length))}
               className="rounded-full border border-gold/40 px-6 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-gold-bright hover:bg-gold/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold disabled:opacity-60"
             >
-              {loadingMore ? "Loading places…" : `Load more places (${items.length} of ${total})`}
+              {`Load more places (${pageItems.length} of ${items.length})`}
             </button>
           </div>
         ) : null}

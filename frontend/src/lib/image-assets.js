@@ -17,6 +17,8 @@ const secureUrl = (value) => {
 };
 
 export function getHeritageImageSource(image) {
+  const display = secureUrl(image?.displaySrc);
+  if (display) return display;
   const original = secureUrl(image?.url ?? image?.src);
   const thumbnail = secureUrl(image?.thumbnail_url ?? image?.thumbnailSrc);
   return localVerifiedPhoto(original) ?? localVerifiedPhoto(thumbnail) ?? thumbnail ?? original ?? null;

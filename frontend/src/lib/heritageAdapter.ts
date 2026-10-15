@@ -17,6 +17,8 @@ export type HeritageCategoryView = {
 export type HeritageGalleryImage = {
   src: string;
   thumbnailSrc?: string;
+  /** Exact image source that passed Explore's browser availability check. */
+  displaySrc?: string;
   alt: string;
   label?: string;
   creator?: string | null;

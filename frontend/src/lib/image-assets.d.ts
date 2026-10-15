@@ -1,6 +1,7 @@
 type HeritageImageLike = {
   url?: string | null;
   src?: string | null;
+  displaySrc?: string | null;
   thumbnail_url?: string | null;
   thumbnailSrc?: string | null;
 };

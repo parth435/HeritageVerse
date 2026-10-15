@@ -7,8 +7,8 @@ const test = require("node:test");
 
 const root = path.resolve(__dirname, "../src");
 
-test("Explore catalogue, facets, and map include published places without photos and retain map safeguards", async () => {
-  const [api, explore, atlas, map, card, grid, adapter] = await Promise.all([
+test("Explore lists only usable verified-image records while preserving map safeguards", async () => {
+  const [api, explore, atlas, map, card, grid, adapter, imageFilter] = await Promise.all([
     readFile(path.join(root, "lib/api.ts"), "utf8"),
     readFile(path.join(root, "pages/ExplorePage.tsx"), "utf8"),
     readFile(path.join(root, "components/LivingAtlas.tsx"), "utf8"),
@@ -16,28 +16,36 @@ test("Explore catalogue, facets, and map include published places without photos
     readFile(path.join(root, "components/heritage/HeritageCard.tsx"), "utf8"),
     readFile(path.join(root, "components/heritage/HeritageGrid.tsx"), "utf8"),
     readFile(path.join(root, "lib/heritageAdapter.ts"), "utf8"),
+    readFile(path.join(root, "lib/exploreImages.ts"), "utf8"),
   ]);
 
   assert.match(api, /withVerifiedPhoto\?: boolean/);
   assert.match(api, /params\.set\("withVerifiedPhoto", String\(query\.withVerifiedPhoto\)\)/);
   assert.match(api, /if \(query\.withVerifiedPhoto !== undefined\) params\.set\("withVerifiedPhoto"/);
-  assert.doesNotMatch(explore, /withVerifiedPhoto\s*:\s*true/);
+  assert.match(explore, /getCategories\(\{ signal: controller\.signal \}, \{ withVerifiedPhoto: true \}\)/);
+  assert.match(explore, /getHeritageFacets\(state, \{ signal: controller\.signal \}, \{ withVerifiedPhoto: true \}\)/);
+  assert.match(explore, /withVerifiedPhoto: true/);
   assert.doesNotMatch(atlas, /withVerifiedPhoto\s*:\s*true/);
-  assert.match(explore, /getCategories\(\{ signal: controller\.signal \}\)/);
-  assert.match(explore, /getHeritageFacets\(state, \{ signal: controller\.signal \}\)/);
   assert.match(atlas, /getCategories\(\{ signal: controller\.signal \}\)/);
   assert.match(atlas, /getHeritageFacets\(undefined, \{ signal: controller\.signal \}\)/);
-  assert.match(explore, /getHeritage\([\s\S]{0,180}limit: PAGE_SIZE/);
+  assert.match(explore, /limit: API_PAGE_SIZE/);
+  assert.match(explore, /filterUsableHeritageImages\(records\.map\(heritageToView\), undefined, controller\.signal\)/);
   assert.match(atlas, /getHeritage\(\{ q: query, category, state, limit: PAGE_SIZE/);
-  assert.match(explore, /getHeritageMapSites\(/);
-  assert.match(explore, /\{ q: debouncedSearch, category, state, district \}/);
+  assert.match(explore, /getHeritageMapSites\(\s*\{ q: debouncedSearch, category, state, district, withVerifiedPhoto: true \}/);
   assert.match(atlas, /getHeritageMapSites\(\{ q: query, category, state \}/);
   assert.match(atlas, /<HeritageMap[^>]*verifiedPhotoOnly/);
-  assert.doesNotMatch(explore, /<HeritageMap[\s\S]{0,500}verifiedPhotoOnly/);
-  assert.match(explore, /setOffset\(items\.length\)/);
-  assert.match(explore, /No published places match these filters/);
+  assert.match(explore, /<HeritageMap[\s\S]{0,500}verifiedPhotoOnly/);
+  assert.match(explore, /setVisibleCount\(\(current\) => Math\.min\(current \+ PAGE_SIZE, items\.length\)\)/);
+  assert.match(explore, /No published places with usable photographs match these filters/);
+  assert.match(explore, /resultCount=\{loading \? 0 : items\.length\}/);
   assert.match(grid, /items\.map\(\(item, index\)/);
+  assert.match(grid, /onImageUnavailable=\{onImageUnavailable\}/);
+  assert.match(explore, /mapSites\.flatMap\(\(site\) =>/);
+  assert.match(explore, /gallery: catalogueItem\.gallery/);
   assert.match(card, /Image unavailable/);
+  assert.match(card, /onImageUnavailable\?\.\(item\.routeId, image\.src\)/);
+  assert.match(imageFilter, /image\.naturalWidth > 0 && image\.naturalHeight > 0/);
+  assert.match(imageFilter, /getVerifiedHeritageImages/);
   assert.match(atlas, /selectedImage\.sourceUrl/);
   assert.match(map, /if \(verifiedPhotoOnly\)/);
   assert.match(adapter, /coordinates_verified === true && validCoordinatePair/);

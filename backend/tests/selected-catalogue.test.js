@@ -11,6 +11,7 @@ const pool = require("../config/db");
 const heritageRouter = require("../modules/heritage");
 const favoritesRouter = require("../modules/favorites");
 const reviewsRouter = require("../modules/reviews");
+const { CURATED_IMAGES } = require("../utilities/curated-heritage-images");
 
 const backendDirectory = path.resolve(__dirname, "..");
 const manifest = JSON.parse(fs.readFileSync(path.join(backendDirectory, "database/selected-catalogue.json"), "utf8"));
@@ -271,8 +272,9 @@ test("public catalogue APIs filter to membership while personal records and the 
   const list = await fetch(`${origin}/api/heritage`).then((response) => response.json());
   assert.equal(list.pagination.total, 30);
   assert.equal(list.items[0].country, "India");
-  assert.equal(list.items[0].image_url, null);
-  assert.deepEqual(list.items[0].media, []);
+  assert.equal(list.items[0].image_url, CURATED_IMAGES["ajanta-caves"].url);
+  assert.equal(list.items[0].media[0].source_url, CURATED_IMAGES["ajanta-caves"].source_url);
+  assert.equal(list.items[0].media[0].verification_status, "verified");
   const listSql = calls.find((call) => call.sql.includes("selected_image.url AS image_url")).sql;
   assert.match(listSql, /JOIN heritage_catalog_membership membership ON membership\.heritage_id = h\.id/);
   assert.match(listSql, /ORDER BY membership\.display_order ASC/);
@@ -283,7 +285,8 @@ test("public catalogue APIs filter to membership while personal records and the 
   const map = await fetch(`${origin}/api/heritage-map`).then((response) => response.json());
   assert.equal(map.pagination.total, 30);
   assert.equal(map.items[0].country, "India");
-  assert.deepEqual(map.items[0].media, []);
+  assert.equal(map.items[0].media[0].url, CURATED_IMAGES["ajanta-caves"].url);
+  assert.equal(map.items[0].media[0].verification_status, "verified");
   const mapSql = calls.find((call) => call.sql.includes("selected_image.media")).sql;
   assert.match(mapSql, /heritage_catalog_membership/);
   assert.match(mapSql, /m\.verification_status = 'verified'/);
@@ -293,7 +296,8 @@ test("public catalogue APIs filter to membership while personal records and the 
   const selected = await fetch(`${origin}/api/heritage/4`).then((response) => response.json());
   assert.equal(selected.heritage.id, 4);
   assert.equal(selected.heritage.country, "India");
-  assert.deepEqual(selected.heritage.media, []);
+  assert.equal(selected.heritage.image_url, CURATED_IMAGES["ajanta-caves"].url);
+  assert.equal(selected.heritage.media[0].source_url, CURATED_IMAGES["ajanta-caves"].source_url);
   const detailSql = calls.find((call) => call.sql.startsWith("WITH requested_record AS (")).sql;
   assert.match(detailSql, /m\.verification_status = 'verified' AND m\.is_illustrative = FALSE/);
   assert.doesNotMatch(detailSql, /provisional-user-supplied-candidate/);
