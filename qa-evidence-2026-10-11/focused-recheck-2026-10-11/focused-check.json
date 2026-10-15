@@ -1,0 +1,225 @@
+{
+  "startedAt": "2026-10-11T05:52:27.149Z",
+  "thenNow": {
+    "desktop": {
+      "heading": "A place, read across time.",
+      "selectedSite": "Taj Mahal",
+      "text": "n from the riverbed. This historical view is not camera-matched to the contemporary photograph.\n\nFrancis Frith; image courtesy of The J. Paul Getty Museum, Los Angeles (CC0 1.0 via Wikimedia Commons)\n\nSource and attribution details\nCC0 1.0 Universal Public Domain Dedication\n\nSource checked 2026-10-10\n\nCONTEMPORARY PHOTOGRAPH · 2025-10-04\n\nTaj Mahal in 2025\n\nThe Commons file record dates this photograph to 4 October 2025 and includes camera coordinates. It is a separately documented view, not a camera-matched comparison.\n\nDudva (CC0 1.0 via Wikimedia Commons)\n\nSource and attribution details\nCC0 1.0 Universal Public Domain Dedication\n\nSource checked 2026-10-10\n\nILLUSTRATIVE ONLY\n\nAI historical visualization\n\nAny generated image is an interpretation informed by cited records. It is not an authentic historical photograph or evidence of undocumented details.\n\nNo reconstruction provider is configured. For OpenAI, set HERITAGE_RECONSTRUCTION_PROVIDER=openai and OPENAI_API_KEY on the server. A compatible custom provider can use HERITAGE_RECONSTRUCTION_URL and HERITAGE_RECONSTRUCTION_API_KEY.",
+      "viewportWidth": 762,
+      "documentWidth": 747,
+      "overflow": false,
+      "images": [
+        {
+          "complete": true,
+          "width": 1280,
+          "alt": "The Taj Mahal viewed from the riverbed in a photograph dated about 1855 to 1865",
+          "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Taj_Mahal_about_1855%E2%80%931865.jpg/1280px-Taj_Mahal_about_1855%E2%80%931865.jpg"
+        },
+        {
+          "complete": true,
+          "width": 1280,
+          "alt": "The Taj Mahal photographed on 4 October 2025",
+          "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/00/Taj_Mahal_in_2025_1.jpg/1280px-Taj_Mahal_in_2025_1.jpg"
+        }
+      ]
+    },
+    "mobile": {
+      "heading": "A place, read across time.",
+      "selectedSite": "Taj Mahal",
+      "text": "n from the riverbed. This historical view is not camera-matched to the contemporary photograph.\n\nFrancis Frith; image courtesy of The J. Paul Getty Museum, Los Angeles (CC0 1.0 via Wikimedia Commons)\n\nSource and attribution details\nCC0 1.0 Universal Public Domain Dedication\n\nSource checked 2026-10-10\n\nCONTEMPORARY PHOTOGRAPH · 2025-10-04\n\nTaj Mahal in 2025\n\nThe Commons file record dates this photograph to 4 October 2025 and includes camera coordinates. It is a separately documented view, not a camera-matched comparison.\n\nDudva (CC0 1.0 via Wikimedia Commons)\n\nSource and attribution details\nCC0 1.0 Universal Public Domain Dedication\n\nSource checked 2026-10-10\n\nILLUSTRATIVE ONLY\n\nAI historical visualization\n\nAny generated image is an interpretation informed by cited records. It is not an authentic historical photograph or evidence of undocumented details.\n\nNo reconstruction provider is configured. For OpenAI, set HERITAGE_RECONSTRUCTION_PROVIDER=openai and OPENAI_API_KEY on the server. A compatible custom provider can use HERITAGE_RECONSTRUCTION_URL and HERITAGE_RECONSTRUCTION_API_KEY.",
+      "viewportWidth": 390,
+      "documentWidth": 390,
+      "overflow": false,
+      "images": [
+        {
+          "complete": true,
+          "width": 1280,
+          "alt": "The Taj Mahal viewed from the riverbed in a photograph dated about 1855 to 1865",
+          "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Taj_Mahal_about_1855%E2%80%931865.jpg/1280px-Taj_Mahal_about_1855%E2%80%931865.jpg"
+        },
+        {
+          "complete": true,
+          "width": 1280,
+          "alt": "The Taj Mahal photographed on 4 October 2025",
+          "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/00/Taj_Mahal_in_2025_1.jpg/1280px-Taj_Mahal_in_2025_1.jpg"
+        }
+      ]
+    }
+  },
+  "adminRoutes": {
+    "desktop": {
+      "/admin": {
+        "title": "HeritageVerse — Monuments in Motion",
+        "heading": "Sign in to open the admin workspace.",
+        "eyebrow": "SIGN IN REQUIRED",
+        "text": "SIGN IN REQUIRED\n\nSign in to open the admin workspace.\n\nAn administrator account is required to view this workspace.\n\nSIGN IN",
+        "viewportWidth": 762,
+        "documentWidth": 762,
+        "overflow": false,
+        "isNotFound": false,
+        "signInLink": true
+      },
+      "/admin/heritage": {
+        "title": "HeritageVerse — Monuments in Motion",
+        "heading": "Sign in to open the admin workspace.",
+        "eyebrow": "SIGN IN REQUIRED",
+        "text": "SIGN IN REQUIRED\n\nSign in to open the admin workspace.\n\nAn administrator account is required to view this workspace.\n\nSIGN IN",
+        "viewportWidth": 762,
+        "documentWidth": 762,
+        "overflow": false,
+        "isNotFound": false,
+        "signInLink": true
+      },
+      "/admin/categories": {
+        "title": "HeritageVerse — Monuments in Motion",
+        "heading": "Sign in to open the admin workspace.",
+        "eyebrow": "SIGN IN REQUIRED",
+        "text": "SIGN IN REQUIRED\n\nSign in to open the admin workspace.\n\nAn administrator account is required to view this workspace.\n\nSIGN IN",
+        "viewportWidth": 762,
+        "documentWidth": 762,
+        "overflow": false,
+        "isNotFound": false,
+        "signInLink": true
+      }
+    },
+    "mobile": {
+      "/admin": {
+        "title": "HeritageVerse — Monuments in Motion",
+        "heading": "Sign in to open the admin workspace.",
+        "eyebrow": "SIGN IN REQUIRED",
+        "text": "SIGN IN REQUIRED\n\nSign in to open the admin workspace.\n\nAn administrator account is required to view this workspace.\n\nSIGN IN",
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "overflow": false,
+        "isNotFound": false,
+        "signInLink": true
+      },
+      "/admin/heritage": {
+        "title": "HeritageVerse — Monuments in Motion",
+        "heading": "Sign in to open the admin workspace.",
+        "eyebrow": "SIGN IN REQUIRED",
+        "text": "SIGN IN REQUIRED\n\nSign in to open the admin workspace.\n\nAn administrator account is required to view this workspace.\n\nSIGN IN",
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "overflow": false,
+        "isNotFound": false,
+        "signInLink": true
+      },
+      "/admin/categories": {
+        "title": "HeritageVerse — Monuments in Motion",
+        "heading": "Sign in to open the admin workspace.",
+        "eyebrow": "SIGN IN REQUIRED",
+        "text": "SIGN IN REQUIRED\n\nSign in to open the admin workspace.\n\nAn administrator account is required to view this workspace.\n\nSIGN IN",
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "overflow": false,
+        "isNotFound": false,
+        "signInLink": true
+      }
+    }
+  },
+  "mapTiles": [
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    }
+  ],
+  "thenNowImageResponses": [
+    {
+      "status": 200,
+      "mimeType": "image/jpeg"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/jpeg"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/jpeg"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/jpeg"
+    }
+  ],
+  "consoleErrors": [],
+  "exceptions": [],
+  "httpErrors": [],
+  "finishedAt": "2026-10-11T05:52:58.839Z"
+}

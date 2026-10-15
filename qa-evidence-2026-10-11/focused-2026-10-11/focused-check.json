@@ -1,0 +1,164 @@
+{
+  "startedAt": "2026-10-11T05:50:21.587Z",
+  "thenNow": {
+    "desktop": {
+      "heading": "A place, read across time.",
+      "text": "05 · THEN / NOW\n\nA place, read across time.\n\nCompare sourced history with the current catalogue record and any verified, attributed image pair available for that site. Image viewpoints are identified clearly; unrelated or unverified photos are never paired.\n\nCHOOSE A HERITAGE SITE\nAgra Fort\nAjanta Caves\nArchaeological Site of Nalanda Mahavihara at Nalanda, Bihar\nBuddhist Monuments at Sanchi\nChampaner-Pavagadh Archaeological Park\nDholavira: a Harappan City\nElephanta Caves\nEllora Caves\nFatehpur Sikri\nGreat Living Chola Temples\nGroup of Monuments at Hampi\nGroup of Monuments at Mahabalipuram\nGroup of Monuments at Pattadakal\nHistoric City of Ahmadabad\nHumayun’s Tomb, Delhi\nIndian Museum, Kolkata\nKhajuraho Group of Monuments\nMahabodhi Temple Complex at Bodh Gaya\nNational Museum, New Delhi\nQutb Minar and its Monuments, Delhi\nRani-ki-Vav (the Queen’s Stepwell) at Patan, Gujarat\nRed Fort Complex\n",
+      "viewportWidth": 762,
+      "documentWidth": 747,
+      "overflow": false,
+      "images": []
+    },
+    "mobile": {
+      "heading": "A place, read across time.",
+      "text": "05 · THEN / NOW\n\nA place, read across time.\n\nCompare sourced history with the current catalogue record and any verified, attributed image pair available for that site. Image viewpoints are identified clearly; unrelated or unverified photos are never paired.\n\nCHOOSE A HERITAGE SITE\nAgra Fort\nAjanta Caves\nArchaeological Site of Nalanda Mahavihara at Nalanda, Bihar\nBuddhist Monuments at Sanchi\nChampaner-Pavagadh Archaeological Park\nDholavira: a Harappan City\nElephanta Caves\nEllora Caves\nFatehpur Sikri\nGreat Living Chola Temples\nGroup of Monuments at Hampi\nGroup of Monuments at Mahabalipuram\nGroup of Monuments at Pattadakal\nHistoric City of Ahmadabad\nHumayun’s Tomb, Delhi\nIndian Museum, Kolkata\nKhajuraho Group of Monuments\nMahabodhi Temple Complex at Bodh Gaya\nNational Museum, New Delhi\nQutb Minar and its Monuments, Delhi\nRani-ki-Vav (the Queen’s Stepwell) at Patan, Gujarat\nRed Fort Complex\n",
+      "viewportWidth": 390,
+      "documentWidth": 390,
+      "overflow": false,
+      "images": []
+    }
+  },
+  "adminRoutes": {
+    "desktop": {
+      "/admin": {
+        "title": "HeritageVerse — Monuments in Motion",
+        "heading": "Sign in to open the admin workspace.",
+        "eyebrow": "SIGN IN REQUIRED",
+        "text": "SIGN IN REQUIRED\n\nSign in to open the admin workspace.\n\nAn administrator account is required to view this workspace.\n\nSIGN IN",
+        "viewportWidth": 762,
+        "documentWidth": 762,
+        "overflow": false,
+        "isNotFound": false,
+        "signInLink": false
+      },
+      "/admin/heritage": {
+        "title": "HeritageVerse — Monuments in Motion",
+        "heading": "Sign in to open the admin workspace.",
+        "eyebrow": "SIGN IN REQUIRED",
+        "text": "SIGN IN REQUIRED\n\nSign in to open the admin workspace.\n\nAn administrator account is required to view this workspace.\n\nSIGN IN",
+        "viewportWidth": 762,
+        "documentWidth": 762,
+        "overflow": false,
+        "isNotFound": false,
+        "signInLink": false
+      },
+      "/admin/categories": {
+        "title": "HeritageVerse — Monuments in Motion",
+        "heading": "Sign in to open the admin workspace.",
+        "eyebrow": "SIGN IN REQUIRED",
+        "text": "SIGN IN REQUIRED\n\nSign in to open the admin workspace.\n\nAn administrator account is required to view this workspace.\n\nSIGN IN",
+        "viewportWidth": 762,
+        "documentWidth": 762,
+        "overflow": false,
+        "isNotFound": false,
+        "signInLink": false
+      }
+    },
+    "mobile": {
+      "/admin": {
+        "title": "HeritageVerse — Monuments in Motion",
+        "heading": "Sign in to open the admin workspace.",
+        "eyebrow": "SIGN IN REQUIRED",
+        "text": "SIGN IN REQUIRED\n\nSign in to open the admin workspace.\n\nAn administrator account is required to view this workspace.\n\nSIGN IN",
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "overflow": false,
+        "isNotFound": false,
+        "signInLink": false
+      },
+      "/admin/heritage": {
+        "title": "HeritageVerse — Monuments in Motion",
+        "heading": "Sign in to open the admin workspace.",
+        "eyebrow": "SIGN IN REQUIRED",
+        "text": "SIGN IN REQUIRED\n\nSign in to open the admin workspace.\n\nAn administrator account is required to view this workspace.\n\nSIGN IN",
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "overflow": false,
+        "isNotFound": false,
+        "signInLink": false
+      },
+      "/admin/categories": {
+        "title": "HeritageVerse — Monuments in Motion",
+        "heading": "Sign in to open the admin workspace.",
+        "eyebrow": "SIGN IN REQUIRED",
+        "text": "SIGN IN REQUIRED\n\nSign in to open the admin workspace.\n\nAn administrator account is required to view this workspace.\n\nSIGN IN",
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "overflow": false,
+        "isNotFound": false,
+        "signInLink": false
+      }
+    }
+  },
+  "mapTiles": [
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    },
+    {
+      "status": 200,
+      "mimeType": "image/png"
+    }
+  ],
+  "thenNowImageResponses": [],
+  "consoleErrors": [],
+  "exceptions": [],
+  "httpErrors": [],
+  "finishedAt": "2026-10-11T05:50:52.282Z"
+}

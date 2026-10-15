@@ -1,0 +1,716 @@
+﻿{
+    "mode":  "dry-run",
+    "database_mutated":  false,
+    "generated_at":  "2026-10-11T18:19:37.475Z",
+    "requested_state":  "Maharashtra",
+    "total_sites_without_approved_coordinates":  202,
+    "sites_sampled":  20,
+    "wikidata_searched_first":  true,
+    "geoapify_country_filter":  "countrycode:in",
+    "minimum_request_spacing_ms":  1000,
+    "timeout_ms":  12000,
+    "summary":  {
+                    "provider_error":  20
+                },
+    "records":  [
+                    {
+                        "site_id":  2,
+                        "site_slug":  "elephanta-caves",
+                        "site_name":  "Elephanta Caves",
+                        "state":  "Maharashtra",
+                        "district":  "Mumbai Suburban",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+                                                    {
+                                                        "qid":  "Q649384",
+                                                        "label":  "Elephanta Caves",
+                                                        "description":  "Shiva cave temples and UNESCO world heritage site on a Mumbai harbor island",
+                                                        "aliases":  [
+                                                                        "Gharapuri Caves"
+                                                                    ],
+                                                        "confidence":  0.915,
+                                                        "identity_exact":  true,
+                                                        "country_is_india":  true,
+                                                        "state_match":  false,
+                                                        "coordinate":  {
+                                                                           "latitude":  18.963333333333335,
+                                                                           "longitude":  72.93138888888889
+                                                                       },
+                                                        "coordinates_within_india":  true,
+                                                        "eligible":  false,
+                                                        "reasons":  [
+                                                                        "Wikidata entity description does not confirm the recorded state",
+                                                                        "Wikidata identity confidence is below 0.95"
+                                                                    ]
+                                                    },
+                                                    {
+                                                        "qid":  "Q71365335",
+                                                        "label":  "Elephanta Caves Po Branch Post Office",
+                                                        "description":  "",
+                                                        "aliases":  [
+
+                                                                    ],
+                                                        "confidence":  0.805,
+                                                        "identity_exact":  false,
+                                                        "country_is_india":  true,
+                                                        "state_match":  false,
+                                                        "coordinate":  null,
+                                                        "coordinates_within_india":  false,
+                                                        "eligible":  false,
+                                                        "reasons":  [
+                                                                        "Wikidata label or alias is not an exact heritage-site name match",
+                                                                        "Wikidata entity description does not confirm the recorded state",
+                                                                        "Wikidata entity has no valid P625 coordinate",
+                                                                        "Wikidata identity confidence is below 0.95"
+                                                                    ]
+                                                    }
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  22,
+                        "site_slug":  "mumbai-victorian-art-deco",
+                        "site_name":  "Victorian Gothic and Art Deco Ensembles of Mumbai",
+                        "state":  "Maharashtra",
+                        "district":  "Mumbai City",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1146,
+                        "site_slug":  "asi-damri-masjid-ahmednagar-ahmednagar-maharashtra-f81e92bcd8",
+                        "site_name":  "Damri Masjid",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1147,
+                        "site_slug":  "asi-gate-near-niyamat-khan-s-palace-ahmednagar-ahmednagar-maharashtra-b04ed7f652",
+                        "site_name":  "Gate near Niyamat Khan\u0027s Palace",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1148,
+                        "site_slug":  "asi-kotla-of-twelve-imams-ahmednagar-ahmednagar-maharashtra-3309f832d8",
+                        "site_name":  "Kotla of Twelve Imams",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1149,
+                        "site_slug":  "asi-macca-masjid-ahmednagar-ahmednagar-maharashtra-0841154a73",
+                        "site_name":  "Macca Masjid",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1150,
+                        "site_slug":  "asi-the-tomb-of-nizam-ahmedshah-ahmednagar-ahmednagar-maharashtra-680b70c2d9",
+                        "site_name":  "The Tomb of Nizam Ahmedshah",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1151,
+                        "site_slug":  "asi-dhokeshvar-cave-dhoke-ahmednagar-maharashtra-994515819e",
+                        "site_name":  "Dhokeshvar Cave",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1152,
+                        "site_slug":  "asi-jain-temple-ghotan-ahmednagar-maharashtra-2a28b93838",
+                        "site_name":  "Jain Temple",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1153,
+                        "site_slug":  "asi-temple-of-malikarjuna-ghotan-ahmednagar-maharashtra-041689fa82",
+                        "site_name":  "Temple of Malikarjuna",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1154,
+                        "site_slug":  "asi-caves-and-temple-harishchandragad-ahmednagar-maharashtra-2e0f25a6d4",
+                        "site_name":  "Caves and Temple",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1155,
+                        "site_slug":  "asi-jarasangh-nagari-jorve-ahmednagar-maharashtra-d058a5f0a8",
+                        "site_name":  "Jarasangh Nagari",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1156,
+                        "site_slug":  "asi-the-temple-of-malikarjuna-karjat-ahmednagar-maharashtra-330dff9340",
+                        "site_name":  "The temple of Malikarjuna",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1157,
+                        "site_slug":  "asi-temple-of-shiva-called-naktichedeul-karjat-ahmednagar-maharashtra-b4150692ac",
+                        "site_name":  "Temple of Shiva called Naktichedeul",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1158,
+                        "site_slug":  "asi-an-old-temple-kokamthan-ahmednagar-maharashtra-5808d67ef2",
+                        "site_name":  "An Old Temple",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1159,
+                        "site_slug":  "asi-salabatkhan-s-tomb-mohekari-ahmednagar-maharashtra-43d05976db",
+                        "site_name":  "Salabatkhan\u0027s Tomb",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1160,
+                        "site_slug":  "asi-ancient-site-locally-known-as-ladmod-newasa-ahmednagar-maharashtra-c88e0ec366",
+                        "site_name":  "Ancient site locally known as Ladmod",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1161,
+                        "site_slug":  "asi-baleshwar-temple-pedgaon-ahmednagar-maharashtra-9fc1664118",
+                        "site_name":  "Baleshwar Temple",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1162,
+                        "site_slug":  "asi-the-temple-of-lakshmi-narayan-pedgaon-ahmednagar-maharashtra-0a87f9225f",
+                        "site_name":  "The Temple of Lakshmi Narayan",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    },
+                    {
+                        "site_id":  1163,
+                        "site_slug":  "asi-the-temple-of-amriteshwar-ratanwadi-ahmednagar-maharashtra-97f479a665",
+                        "site_name":  "The Temple of Amriteshwar",
+                        "state":  "Maharashtra",
+                        "district":  "Ahmednagar",
+                        "existing_coordinates":  null,
+                        "proposed_coordinates":  null,
+                        "source":  null,
+                        "wikidata_candidates":  [
+
+                                                ],
+                        "candidates":  [
+
+                                       ],
+                        "match_status":  "provider_error",
+                        "review_status":  "pending",
+                        "review_reasons":  [
+                                               "No reliable Wikidata coordinate was available and Geoapify did not return a usable response."
+                                           ],
+                        "provider_errors":  [
+                                                {
+                                                    "provider":  "Wikidata",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Wikimedia request failed"
+                                                },
+                                                {
+                                                    "provider":  "Geoapify",
+                                                    "code":  "provider_network_error",
+                                                    "message":  "Geoapify request failed"
+                                                }
+                                            ]
+                    }
+                ],
+    "superseded_by":  "coordinate-enrichment-maharashtra-20-2026-10-11-reviewed-run.json",
+    "note":  "Initial restricted-network attempt; no database writes. The linked retry completed with Wikidata and Geoapify access."
+}

@@ -1,0 +1,82 @@
+{
+  "startedAt": "2026-10-11T06:14:19.828Z",
+  "routes": {
+    "/admin": {
+      "direct": {
+        "path": "/admin",
+        "heading": "Enter HeritageVerse.",
+        "hasSignInForm": true,
+        "isNotFound": false,
+        "overflow": false
+      },
+      "afterRefresh": {
+        "path": "/admin",
+        "heading": "Enter HeritageVerse.",
+        "hasSignInForm": true,
+        "isNotFound": false,
+        "overflow": false
+      }
+    },
+    "/admin/heritage": {
+      "direct": {
+        "path": "/admin/heritage",
+        "heading": "Enter HeritageVerse.",
+        "hasSignInForm": true,
+        "isNotFound": false,
+        "overflow": false
+      },
+      "afterRefresh": {
+        "path": "/admin/heritage",
+        "heading": "Enter HeritageVerse.",
+        "hasSignInForm": true,
+        "isNotFound": false,
+        "overflow": false
+      }
+    },
+    "/admin/categories": {
+      "direct": {
+        "path": "/admin/categories",
+        "heading": "Enter HeritageVerse.",
+        "hasSignInForm": true,
+        "isNotFound": false,
+        "overflow": false
+      },
+      "afterRefresh": {
+        "path": "/admin/categories",
+        "heading": "Enter HeritageVerse.",
+        "hasSignInForm": true,
+        "isNotFound": false,
+        "overflow": false
+      }
+    }
+  },
+  "history": {
+    "afterInAppNavigate": {
+      "path": "/admin",
+      "heading": "Enter HeritageVerse.",
+      "hasSignInForm": true,
+      "isNotFound": false,
+      "overflow": false
+    },
+    "afterBack": {
+      "path": "/admin/categories",
+      "heading": "Enter HeritageVerse.",
+      "hasSignInForm": true,
+      "isNotFound": false,
+      "overflow": false
+    },
+    "afterForward": {
+      "path": "/admin",
+      "heading": "Enter HeritageVerse.",
+      "hasSignInForm": true,
+      "isNotFound": false,
+      "overflow": false
+    }
+  },
+  "consoleErrors": [
+    "WebSocket connection to 'ws://127.0.0.1:5173/?token=RKuHwaYaivkv' failed: Page entered Back-Forward Cache.",
+    "WebSocket connection to 'ws://127.0.0.1:5173/?token=RKuHwaYaivkv' failed: Page entered Back-Forward Cache."
+  ],
+  "exceptions": [],
+  "finishedAt": "2026-10-11T06:14:28.229Z"
+}

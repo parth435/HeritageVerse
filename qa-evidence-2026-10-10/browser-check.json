@@ -1,0 +1,383 @@
+[
+  {
+    "page": "home-desktop",
+    "title": "HeritageVerse — Monuments in Motion",
+    "ready": "complete",
+    "viewportWidth": 1440,
+    "documentWidth": 1425,
+    "horizontalOverflow": false,
+    "rootPresent": true,
+    "rootTextLength": 16869,
+    "apiErrorVisible": false,
+    "paragraphMetrics": {
+      "text": "Scroll through HeritageVerse — atlas, museum, time machine, and the anatomy of a mausoleum.",
+      "clientWidth": 576,
+      "scrollWidth": 576,
+      "lineRects": [
+        {
+          "x": 96,
+          "width": 555,
+          "y": 750
+        },
+        {
+          "x": 96,
+          "width": 206,
+          "y": 778
+        }
+      ]
+    },
+    "apiResponses": [
+      {
+        "url": "http://127.0.0.1:5173/api/categories",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?limit=1&offset=0",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?category=museum&limit=1&offset=0",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/categories",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?limit=100&offset=0",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?hasTimeline=true&limit=100&offset=0",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?limit=100&offset=0",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?hasTimeline=true&limit=100&offset=0",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage/16",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage-facets",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?category=museum&limit=100&offset=0",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage/16",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage/2180",
+        "status": 200
+      }
+    ],
+    "failedApiRequests": [
+      {
+        "url": "http://127.0.0.1:5173/api/categories",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage-facets",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?limit=100&offset=0",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?category=museum&limit=100&offset=0",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?hasTimeline=true&limit=100&offset=0",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?limit=100&offset=0",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?hasTimeline=true&limit=100&offset=0",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?limit=1&offset=0",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?category=museum&limit=1&offset=0",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/categories",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      }
+    ],
+    "consoleErrors": [],
+    "exceptions": []
+  },
+  {
+    "page": "home-mobile",
+    "title": "HeritageVerse — Monuments in Motion",
+    "ready": "complete",
+    "viewportWidth": 390,
+    "documentWidth": 390,
+    "horizontalOverflow": false,
+    "rootPresent": true,
+    "rootTextLength": 16797,
+    "apiErrorVisible": false,
+    "paragraphMetrics": {
+      "text": "Scroll through HeritageVerse — atlas, museum, time machine, and the anatomy of a mausoleum.",
+      "clientWidth": 342,
+      "scrollWidth": 342,
+      "lineRects": [
+        {
+          "x": 24,
+          "width": 332,
+          "y": 617
+        },
+        {
+          "x": 24,
+          "width": 255,
+          "y": 641
+        },
+        {
+          "x": 24,
+          "width": 86,
+          "y": 665
+        }
+      ]
+    },
+    "apiResponses": [
+      {
+        "url": "http://127.0.0.1:5173/api/categories",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage-facets",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?category=museum&limit=100&offset=0",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?category=museum&limit=1&offset=0",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?limit=1&offset=0",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?limit=100&offset=0",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/categories",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?hasTimeline=true&limit=100&offset=0",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?limit=100&offset=0",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?hasTimeline=true&limit=100&offset=0",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage/16",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage/2180",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage/16",
+        "status": 200
+      }
+    ],
+    "failedApiRequests": [
+      {
+        "url": "http://127.0.0.1:5173/api/categories",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage-facets",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?limit=100&offset=0",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?category=museum&limit=100&offset=0",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?hasTimeline=true&limit=100&offset=0",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?limit=100&offset=0",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?hasTimeline=true&limit=100&offset=0",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?limit=1&offset=0",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?category=museum&limit=1&offset=0",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/categories",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      }
+    ],
+    "consoleErrors": [],
+    "exceptions": []
+  },
+  {
+    "page": "explore-mobile",
+    "title": "HeritageVerse — Monuments in Motion",
+    "ready": "complete",
+    "viewportWidth": 390,
+    "documentWidth": 390,
+    "horizontalOverflow": false,
+    "rootPresent": true,
+    "rootTextLength": 8285,
+    "apiErrorVisible": false,
+    "paragraphMetrics": null,
+    "apiResponses": [
+      {
+        "url": "http://127.0.0.1:5173/api/categories",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage-facets",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?limit=24&offset=0",
+        "status": 200
+      }
+    ],
+    "failedApiRequests": [
+      {
+        "url": "http://127.0.0.1:5173/api/categories",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage-facets",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage?limit=24&offset=0",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      }
+    ],
+    "consoleErrors": [],
+    "exceptions": []
+  },
+  {
+    "page": "detail-mobile",
+    "title": "HeritageVerse — Monuments in Motion",
+    "ready": "complete",
+    "viewportWidth": 390,
+    "documentWidth": 390,
+    "horizontalOverflow": false,
+    "rootPresent": true,
+    "rootTextLength": 2306,
+    "apiErrorVisible": false,
+    "paragraphMetrics": null,
+    "apiResponses": [
+      {
+        "url": "http://127.0.0.1:5173/api/heritage/15",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage/15/reviews",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:5173/api/heritage/15/reviews",
+        "status": 200
+      }
+    ],
+    "failedApiRequests": [
+      {
+        "url": "http://127.0.0.1:5173/api/heritage/15",
+        "error": "net::ERR_ABORTED",
+        "canceled": true,
+        "blockedReason": null
+      }
+    ],
+    "consoleErrors": [],
+    "exceptions": []
+  }
+]

@@ -1,0 +1,185 @@
+{
+  "title": "HeritageVerse — Monuments in Motion",
+  "mapPresent": true,
+  "markers": [
+    "Agra Fort",
+    "Ajanta Caves"
+  ],
+  "markerCount": 2,
+  "attribution": " Leaflet | © OpenStreetMap contributors",
+  "mapStatus": [],
+  "placeCount": "01 · LIVING ATLAS",
+  "coordinateRows": 2,
+  "viewport": 1425,
+  "document": 1425,
+  "visibleMap": {
+    "width": 751.59375,
+    "height": 448
+  },
+  "markerPopup": "Agra Fort\n\nA Mughal citadel containing palaces, audience halls and mosques within red sandstone walls.\n\nAgra, Uttar Pradesh",
+  "tileResponses": [
+    {
+      "url": "https://tile.openstreetmap.org/6/45/27.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/46/27.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/45/26.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/46/26.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/45/28.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/46/28.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/44/27.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/47/27.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/44/26.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/47/26.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/44/28.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/47/28.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1467/863.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1468/863.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1467/862.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1468/862.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1467/864.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1468/864.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1466/863.png",
+      "status": 200,
+      "mime": "image/png"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1469/863.png",
+      "status": 200,
+      "mime": "image/png"
+    }
+  ],
+  "tileFailures": [
+    {
+      "url": "https://tile.openstreetmap.org/5/22/13.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/23/13.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/22/12.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/23/12.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/22/14.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/23/14.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/21/13.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/24/13.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/21/12.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/24/12.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/21/14.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/24/14.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    }
+  ],
+  "startedAt": "2026-10-10T17:55:06.357Z"
+}
