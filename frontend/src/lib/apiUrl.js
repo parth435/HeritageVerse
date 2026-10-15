@@ -17,6 +17,16 @@ export function getApiBaseUrl(configuredBaseUrl) {
 }
 
 /**
+ * Use the same-origin Vercel proxy in production while preserving configured
+ * backend origins for local development.
+ * @param {string | undefined | null} configuredBaseUrl
+ * @param {boolean} isProduction
+ */
+export function getRuntimeApiBaseUrl(configuredBaseUrl, isProduction) {
+  return isProduction ? "/api" : getApiBaseUrl(configuredBaseUrl);
+}
+
+/**
  * Join an API endpoint to a normalized API base without duplicating /api.
  * @param {string} endpoint
  * @param {string} apiBaseUrl

@@ -95,11 +95,11 @@ database safety guidance.
   `npm --prefix frontend run build`, and Output Directory to `dist`. The
   separate frontend and backend lockfiles mean the frontend install command
   must use `frontend/package-lock.json`; there is no root lockfile.
-- The root `vercel.json` rewrites browser-history routes to `/index.html` and
-  excludes `/api` paths. Set `VITE_API_BASE_URL` in both Vercel Production and
-  Preview environments to the public backend origin. The frontend adds one
-  `/api` segment, so the value may be the origin or an origin ending in `/api`.
-  Do not put backend secrets in `VITE_` variables.
+- The root `vercel.json` proxies `/api/:path*` to the Render API and rewrites
+  browser-history routes to `/index.html`. Production requests use the
+  same-origin `/api` path, so Vercel Production and Preview do not need
+  `VITE_API_BASE_URL`. Local development can still set that public variable to
+  use a specific backend; never put secrets in `VITE_` variables.
 - Local development can omit `VITE_API_BASE_URL`: Vite proxies same-origin
   `/api` requests to `http://127.0.0.1:5000`. The local value in
   `frontend/.env.example` is an alternative for direct local API requests.
@@ -120,18 +120,20 @@ database safety guidance.
   direct connection only for separately reviewed migration work. The pool has
   a 10-connection cap, a bounded connect timeout, and idle-client cleanup.
   Production rejects loopback database hosts and explicitly insecure TLS modes.
-- `CORS_ORIGIN` is a comma-separated allowlist of exact HTTPS frontend origins.
-  Add the deployed Vercel origin and any stable preview origins explicitly;
-  wildcard origins are rejected. Dynamic preview domains need a fixed allowed
-  origin or a separately reviewed CORS policy.
+- `CORS_ORIGIN` is a comma-separated allowlist of exact HTTPS origins for
+  direct cross-origin API clients; wildcard origins are rejected. The Vercel
+  same-origin proxy does not require browser CORS access to Render. Dynamic
+  preview domains need a fixed allowed origin or a separately reviewed CORS
+  policy when they call Render directly.
 - Heritage maps use Leaflet with OpenStreetMap tiles and attribution. A site is
   pinned only when it has a complete coordinate pair and a source reference
   explicitly supporting those coordinates; other records remain available in
   the list without approximate pins.
 - Install API dependencies with `npm --prefix backend ci` and start with
   `npm --prefix backend start`.
-- Configure the frontend build's `VITE_API_BASE_URL` to the deployed API
-  origin. Vite variables prefixed `VITE_` are public; never put secrets there.
+- Production frontend builds use the `/api` proxy from `vercel.json`; local
+  builds may set `VITE_API_BASE_URL` to a backend origin. Vite variables
+  prefixed `VITE_` are public; never put secrets there.
 - Maps default to `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. To use a
   different provider, set the public build-time `VITE_MAP_TILE_URL` together
   with `VITE_MAP_TILE_ATTRIBUTION`; optionally set

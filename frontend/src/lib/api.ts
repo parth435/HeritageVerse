@@ -1,5 +1,5 @@
 import { readAuthToken } from "@/lib/sessionToken";
-import { buildApiUrl, getApiBaseUrl } from "@/lib/apiUrl.js";
+import { buildApiUrl, getRuntimeApiBaseUrl } from "@/lib/apiUrl.js";
 import type { ApiErrorEnvelope, PaginatedApiResponse } from "@/types/api";
 import type { AuthResponse, User } from "@/types/auth";
 import type { Heritage, HeritageCategory, HeritageMapRecord, HeritageMedia } from "@/types/heritage";
@@ -20,7 +20,10 @@ export type PublicHeritageScope = {
   withVerifiedPhoto?: boolean;
 };
 
-const API_BASE_URL = getApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
+const API_BASE_URL = getRuntimeApiBaseUrl(
+  import.meta.env.VITE_API_BASE_URL,
+  import.meta.env.PROD,
+);
 
 export class ApiRequestError extends Error {
   readonly status: number;

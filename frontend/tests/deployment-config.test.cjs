@@ -26,6 +26,20 @@ test("API base URL adds one /api segment and accepts existing API suffixes", asy
   assert.equal(getApiBaseUrl("https://api.example.test/api/api/auth"), "https://api.example.test/api");
 });
 
+test("production API base uses the same-origin proxy and local development keeps its configured backend", async () => {
+  const { getRuntimeApiBaseUrl } = await apiUrl;
+
+  assert.equal(
+    getRuntimeApiBaseUrl("https://heritageverse-backend.onrender.com/api", true),
+    "/api",
+  );
+  assert.equal(
+    getRuntimeApiBaseUrl("http://localhost:5000", false),
+    "http://localhost:5000/api",
+  );
+  assert.equal(getRuntimeApiBaseUrl(undefined, false), "/api");
+});
+
 test("API URL joining preserves endpoint queries and avoids duplicate /api segments", async () => {
   const { buildApiUrl, getApiBaseUrl } = await apiUrl;
   const base = getApiBaseUrl("https://api.example.test/api/");
@@ -41,7 +55,9 @@ test("admin service delegates to the shared API client without legacy route assu
     readFile(path.join(frontendRoot, "src/services/adminApi.ts"), "utf8"),
   ]);
 
-  assert.match(apiSource, /getApiBaseUrl\(import\.meta\.env\.VITE_API_BASE_URL\)/);
+  assert.match(apiSource, /getRuntimeApiBaseUrl\(/);
+  assert.match(apiSource, /import\.meta\.env\.VITE_API_BASE_URL/);
+  assert.match(apiSource, /import\.meta\.env\.PROD/);
   assert.match(apiSource, /buildApiUrl\(/);
   assert.doesNotMatch(apiSource, /["']https?:\/\/localhost(?::\d+)?/i);
   assert.match(adminSource, /from "@\/lib\/api"/);
@@ -50,13 +66,18 @@ test("admin service delegates to the shared API client without legacy route assu
   assert.doesNotMatch(adminSource, /admin\/(?:stats|sites|users\/\$\{id\}\/role)/);
 });
 
-test("Vercel SPA rewrite handles browser routes but excludes API paths", async () => {
+test("Vercel proxies API requests to Render before the SPA fallback", async () => {
   const config = JSON.parse(await readFile(path.resolve(frontendRoot, "../vercel.json"), "utf8"));
 
-  assert.equal(config.rewrites.length, 1);
-  const [rewrite] = config.rewrites;
-  assert.equal(rewrite.destination, "/index.html");
-  const routePattern = new RegExp(`^${rewrite.source}$`);
+  assert.equal(config.rewrites.length, 2);
+  const [apiRewrite, spaRewrite] = config.rewrites;
+  assert.equal(apiRewrite.source, "/api/:path*");
+  assert.equal(
+    apiRewrite.destination,
+    "https://heritageverse-backend.onrender.com/api/:path*",
+  );
+  assert.equal(spaRewrite.destination, "/index.html");
+  const routePattern = new RegExp(`^${spaRewrite.source}$`);
   assert.equal(routePattern.test("/explore/ajanta-caves"), true);
   assert.equal(routePattern.test("/api"), false);
   assert.equal(routePattern.test("/api/heritage"), false);
