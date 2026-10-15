@@ -127,8 +127,10 @@ Paths, credentials, query strings, and fragments are rejected.
 date, license, license URL, comparison role, context, verification status, and
 illustrative status. Image metadata also includes `thumbnail_url`, `provider`,
 `wikimedia_filename`, and `match_confidence` when those values are recorded.
-These fields are additive to the existing media contract. The collection and
-favorites responses include the same metadata for their selected image. Then &
+These fields are additive to the existing media contract. Public collection,
+map, detail, and favorites responses include only verified, non-illustrative
+image records; unverified acquisition candidates remain in admin review data.
+The collection and favorites responses include the same metadata for their selected image. Then &
 Now uses only verified, attributed historical and current images; undated
 catalogue images are displayed separately and are not presented as historical.
 It does not use illustrative output as an authentic photograph.
@@ -168,7 +170,10 @@ charges; the API key must remain server-side.
 
 ## Administrator API
 
-`GET /api/admin/dashboard`, `GET /api/admin/heritage`,
+`GET /api/admin/dashboard`, `GET /api/admin/users`,
+`GET /api/admin/users/:userId`, `PATCH /api/admin/users/:userId/role`,
+`PATCH /api/admin/users/:userId/status`, `GET /api/admin/images`,
+`GET /api/admin/heritage`,
 `GET /api/admin/heritage/:heritageId`, `POST /api/admin/heritage`, and
 `PATCH /api/admin/heritage/:heritageId` require an authenticated user whose
 current `users.role` in PostgreSQL is `admin`. Client-supplied role values and
@@ -194,6 +199,20 @@ publication status and preserves relationships and historical data.
 `DELETE /api/admin/categories/:categoryId` only removes an unused category and
 returns `409` while any heritage entry still references it.
 
+`GET /api/admin/users` accepts `q`, `role` (`user` or `admin`), `status`
+(`ACTIVE` or `SUSPENDED`), `limit` (1–100, default 25), and `offset` (0–1,000,000).
+It returns only account ID, name, email, role, status, and creation time.
+`GET /api/admin/users/:userId` adds counts of the user's favorites, visits,
+reviews, and journeys; neither endpoint returns password hashes or tokens.
+`PATCH /api/admin/users/:userId/role` accepts `{ "role": "admin" }` to promote
+an active registered account or `{ "role": "user" }` to demote an admin.
+`PATCH /api/admin/users/:userId/status` accepts `{ "status": "SUSPENDED" }`
+or `{ "status": "ACTIVE" }`. Both mutation endpoints validate account IDs
+and values, write an `activity_logs` entry in the same transaction, and return
+`409` for ineligible accounts, self-demotion/self-suspension, or attempts that
+would remove the last active administrator. An administrator must first
+reactivate a suspended account before promoting it.
+
 ## Favorites
 
 All Favorites endpoints require a valid `Authorization: Bearer <token>` header. The authenticated user ID is taken only from the verified JWT.
@@ -218,7 +237,10 @@ Removes only the authenticated user's favorite for the positive numeric heritage
 
 ### `GET /api/categories`
 
-Returns all rows in `heritage_categories`, ordered by name and ID:
+Returns categories represented by the published 30-place Maharashtra catalogue,
+ordered by name and ID. Add `withVerifiedPhoto=true` to restrict categories to
+those containing a published place with a verified, non-illustrative
+`gallery` or `current` photograph:
 
 ```json
 { "success": true, "categories": [{ "id": 1, "name": "...", "slug": "..." }] }
@@ -226,23 +248,40 @@ Returns all rows in `heritage_categories`, ordered by name and ID:
 
 ### `GET /api/heritage-facets`
 
-Returns every state/territory represented by published records. Add an exact
+Returns the state/territory and district facets represented by published
+catalogue members. The current state list is only `Maharashtra`. Add an exact
 `state` query to return district options for that state. Facets come from the
-full published catalogue, not the current paginated result page.
+full curated catalogue, not the current paginated result page. Add
+`withVerifiedPhoto=true` to derive facets from published places with an
+eligible verified, non-illustrative `gallery` or `current` photograph.
 
 ### `GET /api/heritage`
 
-Returns only published heritage records. Optional query parameters:
+Returns only published records in `heritage_catalog_membership`. The current
+curated membership contains 30 Maharashtra destinations. Optional query
+parameters:
 
 - `q`: case-insensitive search across name, description, history, and cultural significance
 - `category`: exact category slug
 - `state`: exact state value from the database
 - `district`: exact district value from the database
 - `hasTimeline`: `true` or `false` to filter records by whether sourced timeline events are present
+- `withVerifiedPhoto`: `true` to include all published places with at least one verified, non-illustrative `gallery` or `current` photograph, including places outside the curated membership. Multiple photographs do not duplicate a place; one primary image is selected by display order.
 - `limit`: integer from 1 to 100; defaults to 20
 - `offset`: integer from 0 to 1,000,000; defaults to 0
 
-Items are ordered by name and ID. Each item contains the heritage fields, a `category` object, `image_url` for the first image by display order when available, and a `media` array containing that selected image (or an empty array).
+Curated items are ordered by the catalogue's stable display order. In the
+verified-photo scope, curated items are followed by outside-catalogue places
+ordered by name and ID. Each curated item includes `country: "India"` alongside
+its state and locality fields. Items also
+contain heritage identity, a `category` object, coordinates with a
+`coordinates_verified` flag, `image_url` for the first eligible image when
+available, and a `media` array containing that selected image (or an empty
+array). Public collection responses include only verified, non-illustrative
+images. Pending and unverified candidates remain in admin review data and are
+not returned as catalogue photographs. The optional `withVerifiedPhoto=true`
+scope removes the curated-membership restriction while using the same image
+eligibility rules.
 
 ```json
 {
@@ -254,9 +293,26 @@ Items are ordered by name and ID. Each item contains the heritage fields, a `cat
 
 Invalid or repeated text filters and invalid/out-of-range pagination values return `400`.
 
+### `GET /api/heritage-map`
+
+Returns published places with valid coordinates supported by an approved
+coordinate citation. It accepts the same search and location filters as the
+collection plus `limit` and `offset`. Add `withVerifiedPhoto=true` to use the
+same verified-photo place scope as the collection. Places without approved
+coordinate evidence remain available in Explore's list but do not get map
+markers.
+
 ### `GET /api/heritage/:id`
 
-Returns a published heritage record by positive numeric database ID. The `heritage` object includes its category and ordered arrays for media, timeline events, artifacts, architectural layers, and sources.
+Returns a published catalogue member by positive numeric database ID. A
+published out-of-catalogue record is also public when it has an eligible
+verified photograph; an authenticated user may additionally resolve a
+published out-of-catalogue heritage record when an existing favorite or
+visited-place relationship links it. The
+`heritage` object includes its category and ordered arrays for media, timeline
+events, artifacts, architectural layers, and sources.
+Media includes verified, non-illustrative images. Pending image candidates do
+not appear in this public response.
 
 Malformed IDs return `400`; missing or unpublished records return `404`; unexpected database errors return `500`.
 

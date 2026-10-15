@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export type AuthMode = "signin" | "signup";
 
@@ -82,13 +83,14 @@ export function AuthPage({
             Enter HeritageVerse.
           </h1>
           <p className="mt-3 max-w-md text-parchment/70">
-            Atlas, museum, time machine, and the anatomy of monuments — unlocked
-            for those who sign in.
+            Atlas, museum, time machine, and the anatomy of monuments are open
+            to everyone. Sign in to save your travels and build personal journeys.
           </p>
         </div>
       </motion.aside>
 
       <main className="relative flex items-center justify-center px-6 py-16">
+        <div className="absolute right-4 top-4 z-10 sm:right-6 sm:top-6"><ThemeToggle compact /></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(212,175,122,0.12),transparent_45%)]" />
         <motion.div
           initial={{ opacity: 0, y: 24 }}

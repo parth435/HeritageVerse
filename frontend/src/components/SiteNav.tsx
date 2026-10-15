@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { Compass, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/context/AuthContext";
 import { RouterLink } from "@/lib/router";
 
@@ -41,6 +42,7 @@ export function SiteNav() {
           >
             Explore
           </RouterLink>
+          <RouterLink to="/nearby" className="text-xs uppercase tracking-[0.2em] text-parchment/70 hover:text-gold-bright focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Nearby</RouterLink>
           {links.map((link) => (
             <a
               key={link.href}
@@ -52,6 +54,7 @@ export function SiteNav() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
+          <ThemeToggle compact />
           {user ? (
             <>
               <span className="hidden max-w-32 truncate text-xs text-parchment/60 sm:block">{user.name}</span>
@@ -90,6 +93,7 @@ export function SiteNav() {
           >
             Explore
           </RouterLink>
+          <RouterLink to="/nearby" onClick={() => setOpen(false)} className="text-sm uppercase tracking-[0.18em] text-parchment/80">Nearby heritage</RouterLink>
           {links.map((link) => (
             <a
               key={link.href}

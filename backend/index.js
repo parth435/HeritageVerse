@@ -17,6 +17,8 @@ const journeysRouter = require("./modules/journeys");
 const adminRouter = require("./modules/admin");
 const reconstructionRouter = require("./modules/reconstruction-routes");
 const routePreviewRouter = require("./modules/route-preview").createRoutePreviewRouter();
+const locationSearchRouter = require("./modules/location-search");
+const { createIntegrationSmokeTargetRouter } = require("./modules/integration-smoke-target");
 
 const app = express();
 const configuredPort = typeof process.env.PORT === "string" ? process.env.PORT.trim() : "";
@@ -101,6 +103,8 @@ app.get("/readyz", async (req, res) => {
     return res.status(503).json({ success: false, status: "not_ready" });
   }
 });
+
+app.use(createIntegrationSmokeTargetRouter({ pool }));
 
 app.get("/test-db", async (req, res) => {
   try {
@@ -318,6 +322,7 @@ app.use("/api", reviewsRouter);
 app.use("/api", usersRouter);
 app.use("/api", journeysRouter);
 app.use("/api", routePreviewRouter);
+app.use("/api", locationSearchRouter);
 app.use("/api", adminRouter);
 app.use("/api", heritageRouter);
 app.use("/api", reconstructionRouter);

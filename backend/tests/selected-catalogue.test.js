@@ -19,12 +19,22 @@ test("selected catalogue manifest and migration use stable identity keys and pre
   const migration = fs.readFileSync(path.join(backendDirectory, "database/migrations/009_selected_30_catalogue_data.sql"), "utf8");
   const canonicalSchema = fs.readFileSync(path.join(backendDirectory, "database/schema.sql"), "utf8");
   const sourceReviewMigration = fs.readFileSync(path.join(backendDirectory, "database/migrations/005_verified_media_and_coordinate_review.sql"), "utf8");
+  const countryMigration = fs.readFileSync(path.join(backendDirectory, "database/migrations/014_add_heritage_country.sql"), "utf8");
+  const chronologyMigration = fs.readFileSync(path.join(backendDirectory, "database/migrations/015_correct_cave_chronologies.sql"), "utf8");
   const schemaMigration = fs.readFileSync(path.join(backendDirectory, "database/migrations/008_selected_catalogue_membership.sql"), "utf8");
   const manifestText = fs.readFileSync(path.join(backendDirectory, "database/selected-catalogue.json"), "utf8");
   assert.equal(manifest.places.length, 30);
   assert.deepEqual(manifest.places.map((place) => place.order), Array.from({ length: 30 }, (_, index) => index + 1));
   assert.equal(new Set(manifest.places.map((place) => place.slug)).size, 30);
-  assert.equal(manifest.places.filter((place) => place.state === "Maharashtra").length, 22);
+  assert.equal(manifest.expectedCount, 30);
+  assert.equal(manifest.places.filter((place) => place.state === "Maharashtra").length, 30);
+  assert.ok(manifest.places.every((place) => place.country === "India"));
+  assert.match(countryMigration, /ADD COLUMN IF NOT EXISTS country TEXT/);
+  assert.match(countryMigration, /SET country = 'India'/);
+  assert.ok(manifest.places.every((place) => place.coordinates?.status === "verified" &&
+    Number.isFinite(place.coordinates.latitude) && place.coordinates.latitude >= -90 && place.coordinates.latitude <= 90 &&
+    Number.isFinite(place.coordinates.longitude) && place.coordinates.longitude >= -180 && place.coordinates.longitude <= 180 &&
+    place.coordinates.sourceUrl.startsWith("https://")));
   assert.ok(manifest.places.every((place) => !Object.hasOwn(place, "recordId")));
   assert.deepEqual(manifest.duplicateAliases.map((alias) => alias.canonicalSlug), ["ajanta-caves", "ellora-caves"]);
   assert.ok(manifest.duplicateAliases.every((alias) => alias.identity.name && alias.identity.locality && alias.identity.category));
@@ -64,6 +74,11 @@ test("selected catalogue manifest and migration use stable identity keys and pre
   assert.doesNotMatch(konarkSourceCorrection, /review_status\s*=/i);
   assert.doesNotMatch(canonicalSchema, /UPDATE heritage_sources[\s\S]*?SET review_status\s*=\s*'approved'/i);
   assert.doesNotMatch(sourceReviewMigration, /UPDATE heritage_sources[\s\S]*?SET review_status\s*=\s*'approved'/i);
+  assert.match(chronologyMigration, /Ajanta was excavated in two phases/);
+  assert.match(chronologyMigration, /6th to the 12th centuries CE/);
+  assert.match(chronologyMigration, /AND historical_period = '2nd century BCE–5th century CE'/);
+  assert.match(chronologyMigration, /AND historical_period = '6th–10th centuries CE'/);
+  assert.doesNotMatch(chronologyMigration, /heritage_sources|favorites|visited_places|reviews|journeys|journey_stops/i);
 });
 
 test("catalogue migrations follow the schema, data, then address dependency order", () => {
@@ -74,14 +89,19 @@ test("catalogue migrations follow the schema, data, then address dependency orde
   const schemaMigration = fs.readFileSync(path.join(migrationsDirectory, "008_selected_catalogue_membership.sql"), "utf8");
   const dataMigration = fs.readFileSync(path.join(migrationsDirectory, "009_selected_30_catalogue_data.sql"), "utf8");
   const addressMigration = fs.readFileSync(path.join(migrationsDirectory, "010_selected_catalogue_addresses.sql"), "utf8");
+  const curatedMigration = fs.readFileSync(path.join(migrationsDirectory, "013_maharashtra_curated_catalogue.sql"), "utf8");
   const smoke = fs.readFileSync(path.join(backendDirectory, "database/migration-smoke.js"), "utf8");
   const canonicalSchema = fs.readFileSync(path.join(backendDirectory, "database/schema.sql"), "utf8");
   const canonicalSeed = fs.readFileSync(path.join(backendDirectory, "database/seed.sql"), "utf8");
 
-  assert.deepEqual(migrationFiles.slice(-3), [
-    "008_selected_catalogue_membership.sql",
+  assert.deepEqual(migrationFiles.slice(-7), [
     "009_selected_30_catalogue_data.sql",
     "010_selected_catalogue_addresses.sql",
+    "011_add_user_status.sql",
+    "012_add_activity_logs.sql",
+    "013_maharashtra_curated_catalogue.sql",
+    "014_add_heritage_country.sql",
+    "015_correct_cave_chronologies.sql",
   ]);
   assert.match(schemaMigration, /CREATE TABLE IF NOT EXISTS heritage_catalog_membership/);
   assert.match(schemaMigration, /display_order SMALLINT NOT NULL UNIQUE[\s\S]*?CHECK \(display_order BETWEEN 1 AND 30\)/);
@@ -98,6 +118,15 @@ test("catalogue migrations follow the schema, data, then address dependency orde
   assert.match(dataMigration, /'raigad-fort'/);
   assert.match(dataMigration, /'murud-janjira-fort'/);
   assert.match(addressMigration, /FROM heritage_catalog_membership membership[\s\S]*?NULLIF\(BTRIM\(h\.address\), ''\) IS NULL/);
+  assert.match(curatedMigration, /DELETE FROM heritage_catalog_membership/);
+  assert.doesNotMatch(curatedMigration, /\bDELETE\s+FROM\s+heritage\b/i);
+  assert.doesNotMatch(curatedMigration, /\b(?:INSERT|UPDATE|DELETE)\s+(?:INTO\s+)?(?:users|favorites|visited_places|reviews|journeys|journey_stops)\b/i);
+  assert.match(curatedMigration, /'Maharashtra', a\.district/);
+  assert.match(curatedMigration, /panhala-fort/);
+  assert.match(curatedMigration, /https:\/\/whc\.unesco\.org\/en\/list\/1739\/maps\//);
+  assert.match(curatedMigration, /Tentative List submission[\s\S]*?not an inscribed World Heritage property/);
+  assert.match(curatedMigration, /Every curated member must be a published Maharashtra record with coordinates/);
+  assert.match(curatedMigration, /Curated coordinate evidence is missing for/);
 
   const addressUpdates = [...addressMigration.matchAll(/UPDATE heritage SET address='([^']+)'[\s\S]*?WHERE slug='([^']+)'/g)]
     .map(([, address, slug]) => ({ slug, address }));
@@ -141,6 +170,7 @@ test("public catalogue APIs filter to membership while personal records and the 
     publication_status: "published",
     category: { id: 2, slug: "cave-rock-cut" },
     state: "Maharashtra",
+    country: "India",
     district: "Chhatrapati Sambhajinagar",
     latitude: 20.553111,
     longitude: 75.70025,
@@ -151,14 +181,28 @@ test("public catalogue APIs filter to membership while personal records and the 
     architectural_layers: [],
     sources: [],
   };
+  const unverifiedCandidate = {
+      id: 300,
+      heritage_id: 4,
+      media_type: "image",
+      url: "https://upload.wikimedia.org/wikipedia/commons/0/00/provisional-test.jpg",
+      caption: "Test provisional image candidate. Not verified.",
+      alt_text: "Test provisional image candidate",
+      display_order: 0,
+      media_role: "gallery",
+      media_context: "provisional-user-supplied-candidate",
+      verification_status: "unverified",
+      is_illustrative: false,
+      provider: "wikimedia",
+  };
   const ensembleDetail = {
     ...selectedDetail,
     id: 22,
-    slug: "mumbai-heritage-ensemble",
+    slug: "mumbai-victorian-art-deco",
     name: "Victorian Gothic and Art Deco Ensembles of Mumbai",
     category: { id: 7, slug: "historic-urban" },
   };
-  const media = [];
+  const unverifiedCandidateUrl = unverifiedCandidate.url;
 
   pool.query = async (sql, values = []) => {
     const statement = String(sql);
@@ -169,25 +213,28 @@ test("public catalogue APIs filter to membership while personal records and the 
     if (statement.includes("SELECT DISTINCT state")) return { rows: [{ state: "Maharashtra" }] };
     if (statement.includes("SELECT DISTINCT district")) return { rows: [{ district: "Chhatrapati Sambhajinagar" }] };
     if (statement.includes("SELECT COUNT(*) AS total")) {
-      return { rows: [{ total: statement.includes("h.latitude IS NOT NULL") ? 8 : 30 }] };
+      return { rows: [{ total: 30 }] };
     }
     if (statement.includes("selected_image.url AS image_url")) {
-      return { rows: [{ ...selectedDetail, image_url: null, media }] };
+      return { rows: [{ ...selectedDetail, image_url: null, media: [] }] };
     }
     if (statement.includes("TRUE AS coordinates_verified, selected_image.media")) {
-      return { rows: [{ id: 4, slug: "ajanta-caves", name: "Ajanta Caves", state: "Maharashtra", district: "Chhatrapati Sambhajinagar", latitude: 20.553111, longitude: 75.70025, coordinates_verified: true, media }] };
+      return { rows: [{ id: 4, slug: "ajanta-caves", name: "Ajanta Caves", state: "Maharashtra", country: "India", district: "Chhatrapati Sambhajinagar", latitude: 20.553111, longitude: 75.70025, coordinates_verified: true, media: [] }] };
     }
     if (statement.startsWith("WITH requested_record AS (")) {
       const recordId = Number(values[0]);
       const userId = values[1] === null ? null : Number(values[1]);
       if (recordId === 1169) return { rows: [selectedDetail] };
       if (recordId === 4) return { rows: [selectedDetail] };
-      if (recordId === 22 && userId === 7) return { rows: [ensembleDetail] };
+      if (recordId === 22) return { rows: [ensembleDetail] };
       return { rows: [] };
     }
     if (statement.includes("FROM favorites f") && statement.includes("selected_image")) {
       assert.equal(values[0], 7);
       assert.doesNotMatch(statement, /heritage_catalog_membership/);
+      assert.match(statement, /m\.verification_status = 'verified'/);
+      assert.match(statement, /m\.is_illustrative = FALSE/);
+      assert.doesNotMatch(statement, /provisional-user-supplied-candidate/);
       return { rows: [{ id: 22, slug: "mumbai-heritage-ensemble", name: ensembleDetail.name, state: "Maharashtra", district: "Mumbai City", category: ensembleDetail.category, media: [] }] };
     }
     if (statement.includes("SELECT id FROM heritage WHERE id = $1")) return { rows: [{ id: Number(values[0]) }] };
@@ -223,24 +270,43 @@ test("public catalogue APIs filter to membership while personal records and the 
 
   const list = await fetch(`${origin}/api/heritage`).then((response) => response.json());
   assert.equal(list.pagination.total, 30);
+  assert.equal(list.items[0].country, "India");
+  assert.equal(list.items[0].image_url, null);
+  assert.deepEqual(list.items[0].media, []);
   const listSql = calls.find((call) => call.sql.includes("selected_image.url AS image_url")).sql;
   assert.match(listSql, /JOIN heritage_catalog_membership membership ON membership\.heritage_id = h\.id/);
   assert.match(listSql, /ORDER BY membership\.display_order ASC/);
+  assert.match(listSql, /m\.verification_status = 'verified'/);
+  assert.match(listSql, /m\.is_illustrative = FALSE/);
+  assert.doesNotMatch(listSql, /provisional-user-supplied-candidate/);
 
   const map = await fetch(`${origin}/api/heritage-map`).then((response) => response.json());
-  assert.equal(map.pagination.total, 8);
-  assert.match(calls.find((call) => call.sql.includes("selected_image.media")).sql, /heritage_catalog_membership/);
+  assert.equal(map.pagination.total, 30);
+  assert.equal(map.items[0].country, "India");
+  assert.deepEqual(map.items[0].media, []);
+  const mapSql = calls.find((call) => call.sql.includes("selected_image.media")).sql;
+  assert.match(mapSql, /heritage_catalog_membership/);
+  assert.match(mapSql, /m\.verification_status = 'verified'/);
+  assert.match(mapSql, /m\.is_illustrative = FALSE/);
+  assert.doesNotMatch(mapSql, /provisional-user-supplied-candidate/);
 
   const selected = await fetch(`${origin}/api/heritage/4`).then((response) => response.json());
   assert.equal(selected.heritage.id, 4);
+  assert.equal(selected.heritage.country, "India");
+  assert.deepEqual(selected.heritage.media, []);
+  const detailSql = calls.find((call) => call.sql.startsWith("WITH requested_record AS (")).sql;
+  assert.match(detailSql, /m\.verification_status = 'verified' AND m\.is_illustrative = FALSE/);
+  assert.doesNotMatch(detailSql, /provisional-user-supplied-candidate/);
+  assert.equal(JSON.stringify([list, map, selected]).includes(unverifiedCandidateUrl), false);
   const duplicate = await fetch(`${origin}/api/heritage/1169`).then((response) => response.json());
   assert.equal(duplicate.heritage.id, 4);
-  const privateOutsideDetail = await fetch(`${origin}/api/heritage/22`);
-  assert.equal(privateOutsideDetail.status, 404);
+  const publicEnsembleDetail = await fetch(`${origin}/api/heritage/22`);
+  assert.equal(publicEnsembleDetail.status, 200);
+  assert.equal((await publicEnsembleDetail.json()).heritage.slug, "mumbai-victorian-art-deco");
 
   const userToken = jwt.sign({}, secret, { algorithm: "HS256", subject: "7", expiresIn: "5m" });
-  const ownedOutsideDetail = await fetch(`${origin}/api/heritage/22`, { headers: { Authorization: `Bearer ${userToken}` } }).then((response) => response.json());
-  assert.equal(ownedOutsideDetail.heritage.id, 22);
+  const authenticatedEnsembleDetail = await fetch(`${origin}/api/heritage/22`, { headers: { Authorization: `Bearer ${userToken}` } }).then((response) => response.json());
+  assert.equal(authenticatedEnsembleDetail.heritage.id, 22);
 
   const favorites = await fetch(`${origin}/api/favorites`, { headers: { Authorization: `Bearer ${userToken}` } }).then((response) => response.json());
   assert.equal(favorites.favorites[0].heritage.id, 22, JSON.stringify({ favorites, lastQueries: calls.slice(-3).map((call) => call.sql.slice(0, 110)) }));

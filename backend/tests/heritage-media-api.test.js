@@ -100,4 +100,5 @@ test("heritage list and detail APIs preserve existing fields and add image metad
   assert.match(detailSql, /COALESCE\(media_owner\.wikidata_qid, owner_acquisition\.matched_qid\)/);
   assert.match(detailSql, /current_acquisition\.matched_qid/);
   assert.match(detailSql, /m\.verification_status = 'verified'/);
+  assert.match(detailSql, /m\.is_illustrative = FALSE/);
 });

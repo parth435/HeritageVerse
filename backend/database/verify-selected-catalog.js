@@ -15,6 +15,7 @@ const expectedRows = manifest.places.map((place) => ({
   slug: place.slug,
   category_slug: place.category,
   state: place.state,
+  country: place.country,
   district: place.district,
   locality: place.locality,
   expected_latitude: place.coordinates.latitude,
@@ -33,15 +34,17 @@ async function main() {
       SELECT
         to_regclass('heritage_catalog_membership') IS NOT NULL AS membership_table,
         to_regclass('heritage_catalog_aliases') IS NOT NULL AS aliases_table,
-        to_regclass('heritage_slug_aliases') IS NOT NULL AS slug_aliases_table
+        to_regclass('heritage_slug_aliases') IS NOT NULL AS slug_aliases_table,
+        EXISTS (SELECT 1 FROM information_schema.columns
+          WHERE table_schema = current_schema() AND table_name = 'heritage' AND column_name = 'country') AS country_column
     `);
     const schema = schemaState.rows[0];
-    if (!schema.membership_table || !schema.aliases_table || !schema.slug_aliases_table) {
+    if (!schema.membership_table || !schema.aliases_table || !schema.slug_aliases_table || !schema.country_column) {
       console.log(JSON.stringify({
         status: "NOT_READY",
         reason: "The reversible catalogue schema migration has not been applied to the database being inspected.",
         schema,
-        migration: "008_selected_catalogue_membership.sql",
+        migration: "014_add_heritage_country.sql",
         transaction: "read-only; rolled back",
       }, null, 2));
       process.exitCode = 2;
@@ -58,6 +61,7 @@ async function main() {
           slug TEXT,
           category_slug TEXT,
           state TEXT,
+          country TEXT,
           district TEXT,
           locality TEXT,
           expected_latitude NUMERIC,
@@ -74,6 +78,7 @@ async function main() {
         h.slug,
         c.slug AS category_slug,
         h.state,
+        h.country,
         h.district,
         h.locality,
         h.latitude,
@@ -110,6 +115,7 @@ async function main() {
           AND h.slug = e.slug
           AND c.slug = e.category_slug
           AND h.state = e.state
+          AND h.country = e.country
           AND h.district = e.district
           AND h.locality = e.locality
           AND NULLIF(BTRIM(h.address), '') IS NOT NULL
@@ -123,8 +129,10 @@ async function main() {
       LEFT JOIN LATERAL (
         SELECT
           COUNT(*) FILTER (WHERE media.media_type = 'image')::INTEGER AS image_count,
-          COUNT(*) FILTER (WHERE media.media_type = 'image' AND media.verification_status = 'verified')::INTEGER AS verified_image_count,
+          COUNT(*) FILTER (WHERE media.media_type = 'image' AND media.verification_status = 'verified'
+            AND media.is_illustrative = FALSE)::INTEGER AS verified_image_count,
           COUNT(*) FILTER (WHERE media.media_type = 'image'
+            AND media.verification_status = 'verified' AND media.is_illustrative = FALSE
             AND NULLIF(BTRIM(media.alt_text), '') IS NOT NULL
             AND NULLIF(BTRIM(COALESCE(media.credit, media.creator)), '') IS NOT NULL
             AND NULLIF(BTRIM(media.license), '') IS NOT NULL
@@ -153,6 +161,12 @@ async function main() {
         (SELECT COUNT(DISTINCT h.state)::INTEGER FROM heritage_catalog_membership membership
           JOIN heritage h ON h.id = membership.heritage_id
           WHERE h.publication_status = 'published') AS states_count,
+        (SELECT COUNT(DISTINCT h.country)::INTEGER FROM heritage_catalog_membership membership
+          JOIN heritage h ON h.id = membership.heritage_id
+          WHERE h.publication_status = 'published') AS countries_count,
+        (SELECT COUNT(*)::INTEGER FROM heritage_catalog_membership membership
+          JOIN heritage h ON h.id = membership.heritage_id
+          WHERE h.publication_status = 'published' AND h.country = 'India') AS india_country_count,
         (SELECT COUNT(DISTINCT h.district)::INTEGER FROM heritage_catalog_membership membership
           JOIN heritage h ON h.id = membership.heritage_id
           WHERE h.publication_status = 'published' AND NULLIF(BTRIM(h.district), '') IS NOT NULL) AS districts_count,
@@ -201,13 +215,25 @@ async function main() {
     const expectedCount = manifest.expectedCount;
     const identityMismatchCount = rows.filter((row) => row.identity_matches !== true).length;
     const coordinateVerifiedCount = rows.filter((row) => row.coordinates_verified === true).length;
+    const placesWithAttributedImage = rows.filter((row) => Number(row.complete_image_metadata_count) > 0).length;
+    const placesWithSupportingReference = rows.filter((row) => row.has_supporting_reference === true).length;
     const coordinateIncorrectCount = rows.filter((row) =>
       row.id !== null && row.latitude !== null && row.longitude !== null && row.coordinates_verified !== true
     ).length;
     const imageRecordCount = Number(imageCounts.rows[0].total);
     const report = {
       status: catalogue.rows[0].membership_count === expectedCount &&
-        catalogue.rows[0].addressed_places === expectedCount && identityMismatchCount === 0 ? "PASS" : "FAIL",
+        catalogue.rows[0].published_list_count === expectedCount &&
+        catalogue.rows[0].states_count === 1 &&
+        catalogue.rows[0].countries_count === 1 &&
+        catalogue.rows[0].india_country_count === expectedCount &&
+        catalogue.rows[0].unique_keys === expectedCount &&
+        catalogue.rows[0].unique_orders === expectedCount &&
+        catalogue.rows[0].addressed_places === expectedCount &&
+        identityMismatchCount === 0 &&
+        coordinateVerifiedCount === expectedCount &&
+        placesWithSupportingReference === expectedCount &&
+        placesWithAttributedImage === expectedCount ? "PASS" : "INCOMPLETE",
       transaction: "read-only; rolled back",
       catalogue: {
         expected_count: expectedCount,
@@ -224,7 +250,10 @@ async function main() {
       },
       images: {
         ...imageCounts.rows[0],
-        places_without_images: rows.filter((row) => Number(row.image_count) === 0).map((row) => row.name || row.catalogue_key),
+        places_with_verified_attributed_image: placesWithAttributedImage,
+        places_without_images: rows.filter((row) => Number(row.verified_image_count) === 0).map((row) => row.name || row.catalogue_key),
+        places_with_images_missing_attribution: rows.filter((row) => Number(row.verified_image_count) > 0 &&
+          Number(row.verified_image_count) !== Number(row.complete_image_metadata_count)).map((row) => row.name || row.catalogue_key),
         accessibility_checked: false,
         visual_match_checked: false,
       },

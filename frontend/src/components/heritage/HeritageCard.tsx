@@ -2,19 +2,21 @@ import { useEffect, useState } from "react";
 import { ArrowUpRight, Landmark, MapPin } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { RouterLink } from "@/lib/router";
+import { buildGoogleMapsDirectionsUrl } from "@/lib/directions.js";
+import { formatApproxDistance } from "@/lib/nearby.js";
 import type { HeritageView } from "@/lib/heritageAdapter";
-import { getHeritageImageFallback, getHeritageImageSource } from "@/lib/image-assets.js";
+import { getVerifiedHeritageImages, getHeritageImageFallback, getHeritageImageSource, isHeritageImageFallback } from "@/lib/image-assets.js";
 
-export function HeritageCard({ item, index = 0 }: { item: HeritageView; index?: number }) {
+export function HeritageCard({ item, index = 0, distanceKm, directionsOrigin, verifiedPhotoOnly = false }: { item: HeritageView; index?: number; distanceKm?: number; directionsOrigin?: { latitude: number; longitude: number } | null; verifiedPhotoOnly?: boolean }) {
   const reduceMotion = useReducedMotion();
   const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
-  const image = item.gallery[0];
+  const image = getVerifiedHeritageImages(item.gallery)[0];
   const imageSrc = image
     ? failedImageUrl
       ? getHeritageImageFallback({ url: image.src }, failedImageUrl)
       : getHeritageImageSource({ url: image.src, thumbnail_url: image.thumbnailSrc })
     : null;
-  const imageFailed = Boolean(failedImageUrl && !imageSrc);
+  const imageUnavailable = Boolean(image && (!imageSrc || (verifiedPhotoOnly && isHeritageImageFallback(imageSrc))));
 
   useEffect(() => setFailedImageUrl(null), [image?.src, image?.thumbnailSrc]);
 
@@ -32,10 +34,10 @@ export function HeritageCard({ item, index = 0 }: { item: HeritageView; index?: 
         className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold"
       >
         <div className="relative aspect-[4/3] overflow-hidden bg-[#17120e]">
-          {image && imageSrc && !imageFailed ? (
+          {image && imageSrc && !imageUnavailable ? (
             <img
               src={imageSrc}
-              alt={image.alt}
+              alt={isHeritageImageFallback(imageSrc) ? `Illustrative placeholder; verified photograph unavailable for ${item.name}` : image.alt}
               loading="lazy"
               referrerPolicy="no-referrer"
               onError={() => setFailedImageUrl(imageSrc)}
@@ -44,10 +46,11 @@ export function HeritageCard({ item, index = 0 }: { item: HeritageView; index?: 
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-gold/70" aria-label="Image unavailable">
               <Landmark className="h-10 w-10" aria-hidden="true" />
-              <span className="text-[10px] uppercase tracking-[0.22em]">Image coming soon</span>
+              <span className="text-center text-[10px] uppercase tracking-[0.22em]">{image ? "Verified photograph unavailable" : "No verified photograph"}</span>
             </div>
           )}
           <div className="absolute inset-0 bg-linear-to-t from-ink/80 via-transparent to-transparent" />
+          {image && imageSrc && isHeritageImageFallback(imageSrc) && !verifiedPhotoOnly ? <span className="absolute bottom-3 right-3 rounded-full border border-white/20 bg-ink/80 px-2.5 py-1 text-[9px] uppercase tracking-[0.15em] text-parchment/75">Illustrative placeholder</span> : null}
           {item.category ? (
             <span className="absolute left-4 top-4 rounded-full border border-white/20 bg-ink/75 px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-parchment backdrop-blur">
               {item.category.name}
@@ -75,8 +78,16 @@ export function HeritageCard({ item, index = 0 }: { item: HeritageView; index?: 
               {item.historicalPeriod}
             </p>
           ) : null}
+          {distanceKm !== undefined ? (
+            <p className="mt-3 text-xs font-medium text-gold-bright">Approx. {formatApproxDistance(distanceKm)} straight-line</p>
+          ) : null}
         </div>
       </RouterLink>
+      {directionsOrigin && item.hasCoordinates && item.latitude !== null && item.longitude !== null ? (
+        <div className="border-t border-white/10 px-5 py-3">
+          <a href={buildGoogleMapsDirectionsUrl({ latitude: item.latitude, longitude: item.longitude }, directionsOrigin)} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-gold-bright underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Directions in Google Maps</a>
+        </div>
+      ) : null}
       {image?.credit || image?.sourceUrl || image?.license ? (
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-white/10 px-5 py-3 text-[10px] leading-4 text-parchment/50">
           {image.credit ? <span>{image.credit}</span> : null}
@@ -87,6 +98,7 @@ export function HeritageCard({ item, index = 0 }: { item: HeritageView; index?: 
     </motion.article>
   );
 }
+
 
 function safeExternalUrl(value: string | null | undefined) {
   if (!value) return null;

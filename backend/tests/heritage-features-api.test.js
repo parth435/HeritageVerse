@@ -151,6 +151,9 @@ test("heritage APIs provide site-specific feature data and safe empty, invalid, 
   assert.match(detailQuery, /heritage_catalog_membership/);
   assert.match(detailQuery, /favorites f WHERE f\.heritage_id = h\.id AND f\.user_id = \$2/);
 
+  const invalidTokenResponse = await fetch(`${origin}/api/heritage/1`, { headers: { Authorization: "Bearer invalid-token" } });
+  assert.equal(invalidTokenResponse.status, 401, "optional authentication must reject an invalid token rather than treating it as anonymous");
+
   const secondResponse = await fetch(`${origin}/api/heritage/2`);
   const second = await secondResponse.json();
   assert.equal(secondResponse.status, 200);

@@ -73,7 +73,9 @@ export type HeritageView = {
 export type HeritageMapView = Pick<
   HeritageView,
   "routeId" | "name" | "description" | "location" | "latitude" | "longitude" | "hasCoordinates" | "gallery"
->;
+> & { distanceKm?: number; category?: HeritageCategoryView };
+
+export type NearbyHeritageMapView = HeritageMapView & { distanceKm: number };
 
 /**
  * Nullable adapter boundary for API records. The legacy Monument shape requires
@@ -147,7 +149,7 @@ function makeLocation(locality?: string | null, district?: string | null, state?
 function galleryFromMedia(name: string, media: HeritageMedia[] = []): HeritageGalleryImage[] {
   return [...media]
     .sort((a, b) => a.display_order - b.display_order)
-    .filter((item) => item.media_type === "image" && Boolean(safeImageUrl(item.url?.trim())))
+    .filter((item) => item.media_type === "image" && item.verification_status === "verified" && item.is_illustrative !== true && Boolean(safeImageUrl(item.url?.trim())))
     .map((item) => ({
       src: safeImageUrl(item.url.trim())!,
       thumbnailSrc: safeImageUrl(item.thumbnail_url?.trim()) ?? undefined,

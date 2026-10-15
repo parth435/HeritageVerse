@@ -2,6 +2,8 @@
 
 const assert = require("node:assert/strict");
 const test = require("node:test");
+const path = require("node:path");
+const zlib = require("node:zlib");
 const {
   acquireImageForHeritage,
   allowedWikimediaImageUrl,
@@ -12,11 +14,13 @@ const {
   parseCommonsImageInfo,
   parseEntityBatch,
   parseRetryAfter,
+  inspectImageBytes,
   parseWikidataEntityData,
   MINIMUM_MATCH_CONFIDENCE,
   scoreEntityMatch,
 } = require("../database/wikimedia-images");
-const { exitCodeForSummary, parseArguments, processRecord, saveOutcome, selectImportRecords } = require("../database/import-wikimedia-images");
+const { buildQueuedCandidateOutcome, exitCodeForSummary, loadCandidateManifest, loadCoverageReport, loadHeritageRecords, parseArguments, prioritizeCommonsSearchRecords, processRecord, saveOutcome, selectImportRecords } = require("../database/import-wikimedia-images");
+const pool = require("../config/db");
 const discoveryCli = require("../database/discover-wikidata-entities");
 
 const taj = {
@@ -54,8 +58,47 @@ function mockClient(overrides = {}) {
     loadEntityData: async () => ({ qid: "Q9141", label: "Taj Mahal", aliases: [], description: "mausoleum in India", countryIsIndia: true, coordinate: { latitude: 27.175, longitude: 78.042 }, imageFiles: [] }),
     loadCommonsFile: async () => null,
     searchCommons: async () => [],
+    verifyImageBytes: async () => ({ format: "jpeg", mime: "image/jpeg", width: 1, height: 1, byteLength: 64, sha256: "a".repeat(64) }),
     ...overrides,
   };
+}
+
+function verifiedImageInfo(page = commonsPage, heritageName = taj.name) {
+  return {
+    ...parseCommonsImageInfo(page, heritageName),
+    binaryVerified: true,
+    byteVerification: { format: "jpeg", mime: "image/jpeg", width: 1, height: 1, byteLength: 64, sha256: "a".repeat(64) },
+  };
+}
+
+function makePngFixture() {
+  const crc32 = (data) => {
+    let crc = 0xffffffff;
+    for (const byte of data) {
+      crc ^= byte;
+      for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+    }
+    return (crc ^ 0xffffffff) >>> 0;
+  };
+  const chunk = (type, data) => {
+    const typeBytes = Buffer.from(type, "ascii");
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    const checksum = Buffer.alloc(4);
+    checksum.writeUInt32BE(crc32(Buffer.concat([typeBytes, data])));
+    return Buffer.concat([length, typeBytes, data, checksum]);
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(1, 0);
+  header.writeUInt32BE(1, 4);
+  header[8] = 8;
+  header[9] = 6;
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk("IHDR", header),
+    chunk("IDAT", zlib.deflateSync(Buffer.from([0, 0, 0, 0, 255]))),
+    chunk("IEND", Buffer.alloc(0)),
+  ]);
 }
 
 function mockResponse({ status = 200, payload = {}, retryAfter = null } = {}) {
@@ -265,6 +308,8 @@ test("five-site mocked API diagnostic records queries, P18 candidates, metadata,
       },
     });
 
+    client.verifyImageBytes = async () => ({ format: "jpeg", mime: "image/jpeg", width: 800, height: 600, byteLength: 1200, sha256: "c".repeat(64) });
+
     const outcome = await acquireImageForHeritage(fixture.site, client);
     const metadata = parseCommonsImageInfo(commonsPage, fixture.site.name);
     const afterConfidence = outcome.entityConfidence ?? outcome.candidates[0]?.confidence ?? null;
@@ -394,6 +439,169 @@ test("stored Wikidata IDs below the unchanged confidence threshold are review-on
   assert.equal(commonsReads, 0);
 });
 
+test("an explicitly reviewed candidate is resolved from Commons and its image bytes are checked", async () => {
+  let fallbackSearches = 0;
+  const site = { ...taj, candidateImageFilename: "Taj Mahal.jpg", candidateImageIsApproved: true };
+  const result = await acquireImageForHeritage(site, mockClient({
+    loadCommonsFile: async () => parseCommonsImageInfo(commonsPage, site.name),
+    searchWikidata: async () => { fallbackSearches += 1; return []; },
+    verifyImageBytes: async () => ({ format: "jpeg", mime: "image/jpeg", width: 800, height: 600, byteLength: 1200, sha256: "b".repeat(64) }),
+  }));
+  assert.equal(result.status, "verified");
+  assert.equal(result.image.filename, "Taj_Mahal.jpg");
+  assert.equal(result.image.binaryVerified, true);
+  assert.equal(result.image.byteVerification.sha256, "b".repeat(64));
+  assert.equal(fallbackSearches, 0);
+});
+
+test("candidate image imports remain review-only until visual match approval is recorded", async () => {
+  const site = {
+    ...taj,
+    candidateImageFilename: "Taj Mahal.jpg",
+    candidateImageIsApproved: false,
+    candidateImage: {
+      submittedFilename: "Taj_Mahal.jpg",
+      url: "https://upload.wikimedia.org/wikipedia/commons/a/ab/Taj_Mahal.jpg",
+      claimedCreator: "Unverified Creator Claim",
+      claimedLicense: "CC BY-SA 2.5",
+    },
+  };
+  const client = mockClient({ loadCommonsFile: async () => parseCommonsImageInfo(commonsPage, site.name) });
+  const preview = await processRecord(site, { apply: false, candidateManifest: "candidate-manifest.json" }, client);
+  assert.equal(preview.status, "needs_review");
+  assert.equal(preview.errorCode, "visual_match_review_required");
+  assert.equal(preview.image.binaryVerified, true);
+  assert.equal(preview.candidates[0].candidate_image_url, site.candidateImage.url);
+  assert.equal(preview.candidates[0].creator, "Example Photographer");
+  assert.equal(preview.candidates[0].submitted_creator_claim, "Unverified Creator Claim");
+  assert.equal(preview.candidates[0].creator_claim_matches, false);
+
+  const statements = [];
+  const database = { connect: async () => ({
+    query: async (sql) => { statements.push(String(sql)); return { rows: [] }; },
+    release() {},
+  }) };
+  const saved = await processRecord(site, { apply: true, candidateManifest: "candidate-manifest.json" }, client, database);
+  assert.equal(saved.status, "needs_review");
+  assert.ok(!statements.some((sql) => /INSERT INTO heritage_media/i.test(sql)));
+  assert.ok(statements.some((sql) => /INSERT INTO heritage_image_acquisition/i.test(sql)));
+
+  const approvedStatements = [];
+  const approvedDatabase = { connect: async () => ({
+    query: async (sql) => {
+      approvedStatements.push(String(sql));
+      return /INSERT INTO heritage_media/i.test(String(sql)) ? { rows: [{ id: 301 }] } : { rows: [] };
+    },
+    release() {},
+  }) };
+  const approved = await processRecord({ ...site, candidateImageIsApproved: true }, {
+    apply: true,
+    candidateManifest: "candidate-manifest.json",
+  }, mockClient({ loadCommonsFile: async () => parseCommonsImageInfo(commonsPage, site.name) }), approvedDatabase);
+  assert.equal(approved.status, "verified");
+  assert.equal(approved.newlyVerifiedImageCount, 1);
+  assert.ok(approvedStatements.some((sql) => /INSERT INTO heritage_media[\s\S]*'verified', FALSE/.test(sql)));
+});
+
+test("destination-by-destination Commons search queues attributable files for visual review without publishing media", async () => {
+  const candidate = parseCommonsImageInfo(commonsPage, taj.name);
+  let byteChecks = 0;
+  const statements = [];
+  const database = { connect: async () => ({
+    query: async (sql, values) => { statements.push({ sql: String(sql), values }); return { rows: [] }; },
+    release() {},
+  }) };
+  const result = await processRecord(taj, { apply: true, commonsSearch: true }, mockClient({
+    searchCommons: async () => [{ image: candidate, confidence: 0.97, coordinate: { latitude: 27.175, longitude: 78.042 } }],
+    verifyImageBytes: async () => { byteChecks += 1; return { format: "jpeg", mime: "image/jpeg", width: 800, height: 600, byteLength: 1200, sha256: "c".repeat(64) }; },
+  }), database);
+  assert.equal(result.status, "needs_review");
+  assert.equal(result.errorCode, "visual_match_review_required");
+  assert.equal(byteChecks, 0);
+  assert.ok(!statements.some((entry) => /INSERT INTO heritage_media/i.test(entry.sql)));
+  const acquisition = statements.find((entry) => /INSERT INTO heritage_image_acquisition/i.test(entry.sql));
+  assert.ok(acquisition);
+  assert.equal(acquisition.values[1], "needs_review");
+  const queued = JSON.parse(acquisition.values[4]);
+  assert.equal(queued[0].image_url, candidate.url);
+  assert.equal(queued[0].source_url, candidate.sourceUrl);
+  assert.equal(queued[0].creator, candidate.creator);
+  assert.equal(queued[0].license, candidate.license);
+  assert.equal(queued[0].destination_match, true);
+});
+
+test("missing supplied Commons candidates remain in the review queue without searching for replacement images", async () => {
+  let searches = 0;
+  const site = {
+    ...taj,
+    candidateImageFilename: "Missing Candidate.jpg",
+    candidateImageIsApproved: false,
+    candidateImage: {
+      submittedFilename: "Missing_Candidate.jpg",
+      url: "https://upload.wikimedia.org/wikipedia/commons/a/ab/Missing_Candidate.jpg",
+      claimedCreator: "Unverified Creator",
+      claimedLicense: "CC BY-SA 4.0",
+    },
+  };
+  const outcome = await processRecord(site, { apply: false, candidateManifest: "candidate-manifest.json" }, mockClient({
+    loadCommonsFile: async () => null,
+    searchWikidata: async () => { searches += 1; return []; },
+    searchCommons: async () => { searches += 1; return []; },
+  }));
+  assert.equal(outcome.status, "needs_review");
+  assert.equal(outcome.errorCode, "candidate_commons_file_missing");
+  assert.equal(outcome.candidates[0].candidate_resolution_status, "commons_page_not_found");
+  assert.equal(outcome.candidates[0].candidate_image_url, site.candidateImage.url);
+  assert.equal(searches, 0);
+});
+
+test("queued candidate URLs persist only to the review acquisition record without contacting Wikimedia", async () => {
+  let providerCalls = 0;
+  const record = {
+    ...taj,
+    candidateImage: {
+      submittedFilename: "Daulatabad_Fort_Aurangabad.jpg",
+      url: "https://upload.wikimedia.org/wikipedia/commons/8/82/Daulatabad_Fort_Aurangabad.jpg",
+      claimedCreator: "Abhijeet Safai",
+      claimedLicense: "CC BY-SA 4.0",
+      commonsAudit: {
+        commonsPageStatus: "resolved",
+        suppliedUrlHttpStatus: 429,
+        resolvedFilename: "Daulatabad Fort Aurangabad.jpg",
+        sourcePage: "https://commons.wikimedia.org/wiki/File:Daulatabad_Fort_Aurangabad.jpg",
+        canonicalImageUrl: "https://upload.wikimedia.org/wikipedia/commons/3/38/Daulatabad_Fort_Aurangabad.jpg",
+        creator: "Lakshmeesha BS",
+        license: "CC BY-SA 4.0",
+        creatorClaimMatches: false,
+        licenseClaimMatches: true,
+      },
+    },
+  };
+  const writes = [];
+  const database = { connect: async () => ({
+    query: async (sql, values) => { writes.push({ sql: String(sql), values }); return { rows: [] }; },
+    release() {},
+  }) };
+  const result = await processRecord(record, { apply: true, queueCandidates: true, candidateManifest: "candidate-manifest.json" }, mockClient({
+    loadCommonsFile: async () => { providerCalls += 1; throw new Error("must not contact Wikimedia"); },
+    verifyImageBytes: async () => { providerCalls += 1; throw new Error("must not download image bytes"); },
+  }), database);
+  assert.equal(result.status, "needs_review");
+  assert.equal(result.candidates[0].candidate_image_url, record.candidateImage.url);
+  assert.equal(result.candidates[0].creator, "Lakshmeesha BS");
+  assert.equal(result.candidates[0].creator_claim_matches, false);
+  assert.equal(result.candidates[0].candidate_url_matches_commons, false);
+  assert.equal(providerCalls, 0);
+  assert.ok(!writes.some((entry) => /INSERT INTO heritage_media/i.test(entry.sql)));
+  const acquisition = writes.find((entry) => /INSERT INTO heritage_image_acquisition/i.test(entry.sql));
+  assert.ok(acquisition);
+  assert.equal(acquisition.values[1], "needs_review");
+  assert.equal(JSON.parse(acquisition.values[4])[0].candidate_image_url, record.candidateImage.url);
+
+  const preview = buildQueuedCandidateOutcome(record);
+  assert.equal(preview.errorCode, "candidate_manifest_review_required");
+});
+
 test("verified Wikidata P18 images retain documented historical and current roles while incomplete files stay review-only", async () => {
   const site = { ...taj, wikidata_qid: "Q9141" };
   const entity = { qid: "Q9141", label: "Taj Mahal", aliases: [], description: "mausoleum in India", countryIsIndia: true, coordinate: { latitude: 27.175, longitude: 78.042 }, imageFiles: ["Old.jpg", "New.jpg", "Unknown.jpg"] };
@@ -434,6 +642,24 @@ test("Commons image metadata parser extracts attribution, license, and documente
   assert.equal(result.documentedDate, "1855–1865");
   assert.equal(result.documentedDateSource, "DateTimeOriginal");
   assert.equal(classifyMediaRole(result), "historical");
+});
+
+test("selected-catalogue candidate manifest is constrained to 26 existing place identities", () => {
+  const manifestPath = path.join(__dirname, "../database/source-data/selected-catalogue-wikimedia-candidates.json");
+  const manifest = loadCandidateManifest(manifestPath);
+  assert.equal(manifest.entries, 26);
+  assert.equal(manifest.bySlug.size, 26);
+  assert.equal(manifest.bySlug.get("daulatabad-fort").filename, "Daulatabad_Fort_Aurangabad.jpg");
+  assert.equal(manifest.bySlug.get("daulatabad-fort").url, "https://upload.wikimedia.org/wikipedia/commons/8/82/Daulatabad_Fort_Aurangabad.jpg");
+  assert.equal(manifest.bySlug.get("daulatabad-fort").claimedCreator, "Abhijeet Safai");
+  assert.equal(manifest.bySlug.get("daulatabad-fort").commonsAudit.creator, "Lakshmeesha BS");
+  assert.equal(manifest.bySlug.get("daulatabad-fort").commonsAudit.suppliedUrlHttpStatus, 429);
+  assert.equal(manifest.bySlug.get("daulatabad-fort").visualMatchConfirmed, false);
+});
+
+test("image byte inspection rejects HTML and truncated image responses", () => {
+  assert.throws(() => inspectImageBytes(Buffer.from("<html>not an image response</html>"), "text/html"), { code: "image_bytes_invalid" });
+  assert.throws(() => inspectImageBytes(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]), "image/jpeg"), { code: "image_bytes_invalid" });
 });
 
 test("media roles use documented photo dates and never confuse Commons upload dates with capture dates", () => {
@@ -520,6 +746,59 @@ test("429 retry honors Retry-After and sends the configured User-Agent", async (
   assert.equal(parseRetryAfter("3", 0), 3000);
 });
 
+test("maxlag retry honors the API lag hint with recovery headroom", async () => {
+  let calls = 0;
+  const delays = [];
+  const client = createWikimediaClient({
+    userAgent: "HeritageVerseImageImporter/1.0 (images@example.org)",
+    delayMs: 0,
+    maxRetries: 1,
+    sleepImpl: async (ms) => { delays.push(ms); },
+    fetchImpl: async () => {
+      calls += 1;
+      return calls === 1
+        ? mockResponse({ payload: { error: { code: "maxlag", lag: 7, info: "database replica lagged" } } })
+        : mockResponse({ payload: { success: true } });
+    },
+  });
+  const payload = await client.requestJson(new URL("https://commons.wikimedia.org/w/api.php?action=test"));
+  assert.deepEqual(payload, { success: true });
+  assert.equal(calls, 2);
+  assert.deepEqual(delays, [8000]);
+});
+
+test("image byte fetch honors Retry-After and validates the fetched PNG data", async () => {
+  const bytes = makePngFixture();
+  const delays = [];
+  let calls = 0;
+  const client = createWikimediaClient({
+    userAgent: "HeritageVerseImageImporter/1.0 (images@example.org)",
+    delayMs: 0,
+    maxRetries: 1,
+    sleepImpl: async (ms) => { delays.push(ms); },
+    fetchImpl: async (_url, init) => {
+      calls += 1;
+      assert.equal(init.redirect, "error");
+      assert.match(init.headers.Accept, /image\/png/);
+      if (calls === 1) return { ok: false, status: 429, headers: { get: (name) => name.toLowerCase() === "retry-after" ? "2" : null }, body: { cancel: async () => {} } };
+      return {
+        ok: true,
+        status: 200,
+        headers: { get: (name) => name.toLowerCase() === "content-type" ? "image/png" : null },
+        arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+      };
+    },
+  });
+  const checked = await client.verifyImageBytes({ url: "https://upload.wikimedia.org/wikipedia/commons/a/test.png" });
+  assert.equal(calls, 2);
+  assert.deepEqual(delays, [2000]);
+  assert.equal(checked.format, "png");
+  assert.equal(checked.width, 1);
+  assert.equal(checked.height, 1);
+  assert.equal(checked.byteLength, bytes.length);
+  assert.match(checked.sha256, /^[a-f0-9]{64}$/);
+});
+
 test("network failures preserve only a sanitized underlying diagnostic code", async () => {
   const client = createWikimediaClient({
     userAgent: "HeritageVerseImageImporter/1.0 (images@example.org)",
@@ -556,7 +835,7 @@ test("upstream requests stay spaced when several records run concurrently", asyn
 
 test("CLI validates batches, IDs, concurrency, and provider-safe request delays", () => {
   assert.deepEqual(parseArguments(["--ids", "4,8", "--batch-size", "5", "--concurrency", "2"]), {
-    apply: false, refresh: false, retryFailed: false, resume: false, limit: null, heritageId: null, batchSize: 5, delayMs: 1000, concurrency: 2, ids: [4, 8], help: false,
+    apply: false, queueCandidates: false, commonsSearch: false, refresh: false, retryFailed: false, resume: false, limit: null, heritageId: null, batchSize: 5, delayMs: 1000, concurrency: 2, ids: [4, 8], candidateManifest: null, help: false,
   });
   const scoped = parseArguments(["--dry-run", "--limit", "5", "--heritage-id", "42", "--resume", "--retry-failed"]);
   assert.equal(scoped.limit, 5);
@@ -570,6 +849,11 @@ test("CLI validates batches, IDs, concurrency, and provider-safe request delays"
   assert.throws(() => parseArguments(["--delay-ms", "500"]), /at least 1000 ms/);
   assert.throws(() => parseArguments(["--retry-failed", "--refresh"]), /separate selection modes/);
   assert.throws(() => parseArguments(["--resume", "--refresh"]), /separate selection modes/);
+  assert.throws(() => parseArguments(["--queue-candidates"]), /requires --apply/);
+  assert.throws(() => parseArguments(["--apply", "--queue-candidates"]), /requires --candidate-manifest/);
+  assert.equal(parseArguments(["--apply", "--candidate-manifest", "candidates.json", "--queue-candidates"]).queueCandidates, true);
+  assert.throws(() => parseArguments(["--display-provisional-candidates"]), /Unknown option/);
+  assert.equal(parseArguments(["--commons-search"]).commonsSearch, true);
 });
 
 test("batch selection targets incomplete image coverage so each place can acquire historical and current images", () => {
@@ -593,6 +877,53 @@ test("batch selection targets incomplete image coverage so each place can acquir
   const bounded = selectImportRecords(records, { refresh: false, retryFailed: false, limit: 1 });
   assert.deepEqual(bounded.records.map((record) => record.id), [2]);
   assert.equal(bounded.skipped.limited, 2);
+});
+
+test("Commons search begins with Deekshabhoomi, the Mumbai ensemble, and Panhala", () => {
+  const ordered = prioritizeCommonsSearchRecords([
+    { id: 100, slug: "other-place" },
+    { id: 1205, slug: "panhala-fort" },
+    { id: 22, slug: "mumbai-victorian-art-deco" },
+    { id: 13053, slug: "deekshabhoomi" },
+  ]);
+  assert.deepEqual(ordered.map((record) => record.slug), [
+    "deekshabhoomi",
+    "mumbai-victorian-art-deco",
+    "panhala-fort",
+    "other-place",
+  ]);
+});
+
+test("default Wikimedia import scope is limited to the selected public catalogue", async () => {
+  const originalQuery = pool.query;
+  let observed;
+  pool.query = async (sql, values) => {
+    observed = { sql: String(sql), values };
+    return { rows: [{ id: 1 }, { id: 2 }] };
+  };
+  try {
+    const records = await loadHeritageRecords(null);
+    assert.equal(records.length, 2);
+    assert.deepEqual(observed.values, [null]);
+    assert.match(observed.sql, /heritage_catalog_membership/);
+    assert.match(observed.sql, /membership\.heritage_id = h\.id/);
+  } finally {
+    pool.query = originalQuery;
+  }
+});
+
+test("image coverage reports only destinations and assets in the selected catalogue", async () => {
+  let statement;
+  const report = await loadCoverageReport({
+    query: async (sql) => {
+      statement = String(sql);
+      return { rows: [{ total_places: "30", verified_image_assets: "3" }] };
+    },
+  });
+  assert.equal(report.total_places, 30);
+  assert.equal(report.verified_image_assets, 3);
+  assert.match(statement, /FROM heritage_catalog_membership membership[\s\S]*JOIN heritage h ON h\.id = membership\.heritage_id/);
+  assert.match(statement, /JOIN heritage_catalog_membership selected ON selected\.heritage_id = acquisition\.heritage_id/);
 });
 
 test("dry-run processing returns candidates without invoking database persistence", async () => {
@@ -659,7 +990,7 @@ test("verified asset persistence is idempotent and preserves any existing media 
     confidence: 0.98,
     matchedQid: "Q9141",
     candidates: [],
-    image: parseCommonsImageInfo(commonsPage, taj.name),
+    image: verifiedImageInfo(),
   }, database);
   assert.ok(statements.some((sql) => /INSERT INTO heritage_media[\s\S]*ON CONFLICT DO NOTHING/.test(sql)));
   assert.ok(statements.some((sql) => /INSERT INTO heritage_image_acquisition/.test(sql)));
@@ -683,7 +1014,7 @@ test("image persistence stores Commons photo dates and role labels even when sib
     }),
   };
   const makeImage = (filename, role, date) => ({
-    ...parseCommonsImageInfo(commonsPage, taj.name), filename,
+    ...verifiedImageInfo(), filename,
     url: `https://upload.wikimedia.org/wikipedia/commons/a/${filename}`,
     documentedDate: date,
     documentedDateSource: "DateTimeOriginal",
@@ -715,7 +1046,7 @@ test("an existing verified duplicate is preserved without updating its media met
     }),
   };
   const outcome = await saveOutcome(taj, {
-    status: "verified", confidence: 0.98, matchedQid: "Q9141", candidates: [], image: parseCommonsImageInfo(commonsPage, taj.name),
+    status: "verified", confidence: 0.98, matchedQid: "Q9141", candidates: [], image: verifiedImageInfo(),
   }, database);
   assert.equal(outcome.status, "verified");
   assert.ok(!statements.some((sql) => /UPDATE heritage_media/i.test(sql)));
@@ -735,7 +1066,7 @@ test("same-QID heritage records share an existing Wikimedia asset instead of ins
   };
   const result = await saveOutcome({ ...taj, id: 1169 }, {
     status: "verified", confidence: 0.98, matchedQid: "Q9141", candidates: [],
-    image: parseCommonsImageInfo(commonsPage, taj.name),
+    image: verifiedImageInfo(),
   }, database);
   assert.equal(result.status, "verified");
   assert.ok(statements.some((sql) => /JOIN heritage owner/.test(sql)));
@@ -757,7 +1088,7 @@ test("a globally duplicated Wikimedia asset with a different or unknown entity s
   };
   const result = await saveOutcome({ ...taj, id: 1169 }, {
     status: "verified", confidence: 0.98, matchedQid: "Q9141", candidates: [],
-    image: parseCommonsImageInfo(commonsPage, taj.name),
+    image: verifiedImageInfo(),
   }, database);
   assert.equal(result.status, "needs_review");
   assert.equal(result.errorCode, "duplicate_asset_linked_elsewhere");
@@ -773,4 +1104,17 @@ test("dry-run processing does not persist acquisition or image records", async (
   }), { connect: async () => { writes += 1; throw new Error("dry-run must not connect for writes"); } });
   assert.equal(result.status, "verified");
   assert.equal(writes, 0);
+});
+
+test("an empty failed search preserves the previous acquisition candidates", async () => {
+  const statements = [];
+  const database = { connect: async () => ({
+    query: async (sql) => { statements.push(String(sql)); return { rows: [] }; },
+    release() {},
+  }) };
+  await saveOutcome(taj, { status: "failed", confidence: null, candidates: [], errorCode: "provider_network_error" }, database);
+  const upsert = statements.find((sql) => /INSERT INTO heritage_image_acquisition/.test(sql));
+  assert.ok(upsert);
+  assert.match(upsert, /jsonb_array_length\(EXCLUDED\.candidates\) > 0[\s\S]*THEN EXCLUDED\.candidates ELSE heritage_image_acquisition\.candidates/);
+  assert.ok(!statements.some((sql) => /DELETE FROM heritage_media/i.test(sql)));
 });

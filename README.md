@@ -67,9 +67,21 @@ npm.cmd run build
 rg --files backend -g '*.js' -g '!node_modules/**' | ForEach-Object { node --check $_ }
 ```
 
-There is no configured lint script. With the local API and database running,
-`node backend/scripts/integration-smoke.js` runs the cleanup-aware API smoke
-test; it creates and removes two temporary ordinary accounts. See
+There is no configured lint script. The API smoke test is restricted to an
+explicitly isolated PostgreSQL database named `heritageverse_smoke_test` on a
+loopback address and a loopback HTTP API running with `NODE_ENV=development` or
+`NODE_ENV=test`; for that run, the API's `DATABASE_URL` must point to the same
+dedicated database. Configure `HERITAGEVERSE_SMOKE_TARGET_TOKEN` with the same
+local-only value of at least 32 characters in the API and smoke-test process,
+and set `HERITAGEVERSE_SMOKE_DATABASE_URL` to that dedicated database in the
+smoke-test process. The API reports its live database identity through a
+token-protected local-only endpoint; the script compares it to the cleanup
+connection before any mutation and again before cleanup. It never falls back
+to `DATABASE_URL` and refuses production or remote targets. Provision the
+isolated database with the required application schema and curated test data;
+do not use a production database or production data copy. The smoke test
+creates and removes two temporary ordinary accounts only after verification.
+See
 [backend/API.md](backend/API.md) for API contracts and
 [backend/database/README.md](backend/database/README.md) for schema details and
 database safety guidance.
@@ -241,8 +253,7 @@ lack of availability guarantees make it unsuitable as an unqualified
 production dependency. Set `ROUTING_BASE_URL` to a permitted self-hosted or
 contracted OSRM-compatible service before enabling the authenticated journey
 route workflow. A real AI image call still needs an OpenAI key (or a configured
-compatible provider) and may require account verification/billing. The live
-local database check on 11 October 2026 found 14 ordinary accounts and no
-administrator account; do not promote an account until its owner is verified
-using the documented procedure. AI answers, recognition, voice, translation,
-and personalized recommendations remain unconfigured.
+compatible provider) and may require account verification/billing. Do not
+promote an account until its owner is verified using the documented procedure.
+AI answers, recognition, voice, translation, and personalized recommendations
+remain unconfigured.

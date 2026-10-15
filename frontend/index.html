@@ -1,6 +1,15 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      let savedTheme = null;
+      let systemDark = false;
+      try {
+        savedTheme = localStorage.getItem("heritageverse-theme");
+      } catch { /* The system preference remains available when storage is blocked. */ }
+      try { systemDark = Boolean(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches); } catch { /* Use the light default when preferences are unavailable. */ }
+      document.documentElement.dataset.theme = savedTheme === "light" || savedTheme === "dark" ? savedTheme : systemDark ? "dark" : "light";
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

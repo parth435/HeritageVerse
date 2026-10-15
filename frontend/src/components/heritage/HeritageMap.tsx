@@ -3,7 +3,9 @@ import type * as Leaflet from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { HeritageMapView } from "@/lib/heritageAdapter";
 import { buildGoogleMapsDirectionsUrl } from "@/lib/directions.js";
-import { getHeritageImageFallback, getHeritageImageSource } from "@/lib/image-assets.js";
+import { formatApproxDistance } from "@/lib/nearby.js";
+import { filterMappableSites, groupCoordinateSites } from "@/lib/map-utils";
+import { getVerifiedHeritageImages, getHeritageImageFallback, getHeritageImageSource, isHeritageImageFallback } from "@/lib/image-assets.js";
 import "./HeritageMap.css";
 
 const DEFAULT_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -48,32 +50,7 @@ function mapTileSettings() {
 
 type MapSite = HeritageMapView;
 
-function coordinateSites(sites: MapSite[]) {
-  return sites.filter((site) =>
-    site.hasCoordinates &&
-    site.latitude !== null &&
-    site.longitude !== null &&
-    Number.isFinite(site.latitude) &&
-    Number.isFinite(site.longitude) &&
-    site.latitude >= -90 &&
-    site.latitude <= 90 &&
-    site.longitude >= -180 &&
-    site.longitude <= 180,
-  );
-}
-
-export function groupCoordinateSites(sites: MapSite[]) {
-  const groups = new Map<string, MapSite[]>();
-  for (const site of sites) {
-    const key = String(site.latitude) + "," + String(site.longitude);
-    const group = groups.get(key);
-    if (group) group.push(site);
-    else groups.set(key, [site]);
-  }
-  return [...groups.values()];
-}
-
-function markerPopupForSite(site: MapSite) {
+function markerPopupForSite(site: MapSite, routeOrigin?: { latitude: number; longitude: number; label?: string }, verifiedPhotoOnly = false) {
   const content = document.createElement("article");
   content.className = "heritage-map-popup";
 
@@ -83,18 +60,40 @@ function markerPopupForSite(site: MapSite) {
   link.textContent = site.name;
   content.append(link);
 
-  const image = site.gallery[0];
+  if (site.category?.name) {
+    const category = document.createElement("small");
+    category.textContent = site.category.name;
+    content.append(category);
+  }
+
+  const image = getVerifiedHeritageImages(site.gallery)[0];
   if (image) {
     const photo = document.createElement("img");
     photo.alt = image.alt;
     photo.loading = "lazy";
     photo.className = "heritage-map-popup-image";
+    let usingFallback = false;
     photo.onerror = () => {
       const fallback = getHeritageImageFallback({ url: image.src }, photo.src);
-      if (fallback) photo.src = fallback;
-      else {
+      if (fallback && !usingFallback) {
+        if (isHeritageImageFallback(fallback)) {
+          if (verifiedPhotoOnly) {
+            const unavailable = document.createElement("small");
+            unavailable.textContent = "Verified photograph unavailable";
+            photo.replaceWith(unavailable);
+            usingFallback = true;
+            return;
+          }
+          usingFallback = true;
+          photo.alt = `${site.name} illustrative placeholder; verified photograph unavailable`;
+          const notice = document.createElement("small");
+          notice.textContent = "Illustrative placeholder; verified photograph unavailable";
+          content.append(notice);
+        }
+        photo.src = fallback;
+      } else {
         const unavailable = document.createElement("small");
-        unavailable.textContent = "Image unavailable";
+        unavailable.textContent = "Verified photograph unavailable";
         photo.replaceWith(unavailable);
       }
     };
@@ -104,7 +103,7 @@ function markerPopupForSite(site: MapSite) {
       content.append(photo);
     } else {
       const unavailable = document.createElement("small");
-      unavailable.textContent = "Image unavailable";
+      unavailable.textContent = "Verified photograph unavailable";
       content.append(unavailable);
     }
     const attribution = document.createElement("small");
@@ -125,6 +124,10 @@ function markerPopupForSite(site: MapSite) {
       source.textContent = "Image source and license";
       content.append(source);
     }
+  } else {
+    const placeholder = document.createElement("small");
+    placeholder.textContent = "No verified photograph";
+    content.append(placeholder);
   }
 
   const description = document.createElement("p");
@@ -135,6 +138,12 @@ function markerPopupForSite(site: MapSite) {
   location.textContent = site.location;
   content.append(location);
 
+  if (site.distanceKm !== undefined && Number.isFinite(site.distanceKm)) {
+    const distance = document.createElement("small");
+    distance.textContent = `Approx. ${formatApproxDistance(site.distanceKm)} straight-line`;
+    content.append(distance);
+  }
+
   const directions = document.createElement("a");
   directions.href = `/heritage/${encodeURIComponent(site.routeId)}#directions`;
   directions.className = "heritage-map-popup-directions";
@@ -142,7 +151,7 @@ function markerPopupForSite(site: MapSite) {
   content.append(directions);
 
   const externalDirections = document.createElement("a");
-  externalDirections.href = buildGoogleMapsDirectionsUrl({ latitude: site.latitude!, longitude: site.longitude! });
+  externalDirections.href = buildGoogleMapsDirectionsUrl({ latitude: site.latitude!, longitude: site.longitude! }, routeOrigin ?? null);
   externalDirections.target = "_blank";
   externalDirections.rel = "noopener noreferrer";
   externalDirections.className = "heritage-map-popup-directions";
@@ -151,14 +160,14 @@ function markerPopupForSite(site: MapSite) {
   return content;
 }
 
-function markerPopup(sites: MapSite[]) {
-  if (sites.length === 1) return markerPopupForSite(sites[0]);
+function markerPopup(sites: MapSite[], routeOrigin?: { latitude: number; longitude: number; label?: string }, verifiedPhotoOnly = false) {
+  if (sites.length === 1) return markerPopupForSite(sites[0], routeOrigin, verifiedPhotoOnly);
   const content = document.createElement("section");
   content.className = "heritage-map-popup";
   const heading = document.createElement("strong");
   heading.textContent = sites.length + " heritage sites share this location";
   content.append(heading);
-  for (const site of sites) content.append(markerPopupForSite(site));
+  for (const site of sites) content.append(markerPopupForSite(site, routeOrigin, verifiedPhotoOnly));
   return content;
 }
 
@@ -171,6 +180,7 @@ export function HeritageMap({
   onSiteSelect,
   routeGeometry,
   routeOrigin,
+  verifiedPhotoOnly = false,
 }: {
   sites: MapSite[];
   mapSites?: MapSite[];
@@ -181,6 +191,7 @@ export function HeritageMap({
   /** GeoJSON coordinate order: [longitude, latitude]. */
   routeGeometry?: [number, number][];
   routeOrigin?: { latitude: number; longitude: number; label?: string };
+  verifiedPhotoOnly?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Leaflet.Map | null>(null);
@@ -188,7 +199,7 @@ export function HeritageMap({
   const [mapError, setMapError] = useState<string | null>(null);
   const [mapLoading, setMapLoading] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
-  const mappedSites = useMemo(() => coordinateSites(mapSites ?? sites), [mapSites, sites]);
+  const mappedSites = useMemo(() => filterMappableSites(mapSites ?? sites), [mapSites, sites]);
   const markerGroups = useMemo(() => groupCoordinateSites(mappedSites), [mappedSites]);
 
   useEffect(() => {
@@ -260,7 +271,7 @@ export function HeritageMap({
             title: siteGroup.length === 1 ? site.name : siteGroup.length + " heritage sites at this location",
             alt: siteGroup.length === 1 ? site.name : siteGroup.length + " heritage sites at this location",
             icon: markerIcon,
-          }).bindPopup(markerPopup(siteGroup)).addTo(map!);
+          }).bindPopup(markerPopup(siteGroup, routeOrigin, verifiedPhotoOnly)).addTo(map!);
           marker.on("click", () => onSiteSelect?.(site.routeId));
           for (const groupedSite of siteGroup) markersRef.current.set(groupedSite.routeId, marker);
           return marker;
@@ -315,7 +326,7 @@ export function HeritageMap({
       if (mapRef.current === map) mapRef.current = null;
       markersRef.current.clear();
     };
-  }, [mappedSites, markerGroups, onSiteSelect, retryKey, routeGeometry, routeOrigin]);
+  }, [mappedSites, markerGroups, onSiteSelect, retryKey, routeGeometry, routeOrigin, verifiedPhotoOnly]);
 
   const fallbackSite = mappedSites.find((site) => site.routeId === selectedRouteId) ?? mappedSites[0];
   const fallbackPoint = fallbackSite

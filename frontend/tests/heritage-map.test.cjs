@@ -1,6 +1,7 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
 
@@ -40,7 +41,8 @@ async function loadMapModules() {
     React: react.default,
     renderToStaticMarkup: renderer.renderToStaticMarkup,
     HeritageMap: (await server.ssrLoadModule("/src/components/heritage/HeritageMap.tsx")).HeritageMap,
-    groupCoordinateSites: (await server.ssrLoadModule("/src/components/heritage/HeritageMap.tsx")).groupCoordinateSites,
+    groupCoordinateSites: (await server.ssrLoadModule("/src/lib/map-utils.ts")).groupCoordinateSites,
+    filterMappableSites: (await server.ssrLoadModule("/src/lib/map-utils.ts")).filterMappableSites,
     heritageMapToView: (await server.ssrLoadModule("/src/lib/heritageAdapter.ts")).heritageMapToView,
     getHeritageMapSites: (await server.ssrLoadModule("/src/lib/api.ts")).getHeritageMapSites,
     ApiRequestError: (await server.ssrLoadModule("/src/lib/api.ts")).ApiRequestError,
@@ -76,7 +78,11 @@ test("map API loads every bounded page and preserves search and location filters
     const limit = Number(url.searchParams.get("limit"));
     return new Response(JSON.stringify({
       success: true,
-      items: records.slice(offset, offset + limit),
+      items: offset === 100
+        ? [records[99], ...records.slice(100, 199)]
+        : offset === 200
+          ? records.slice(199)
+          : records.slice(offset, offset + limit),
       pagination: { limit, offset, total: records.length },
     }), { status: 200, headers: { "Content-Type": "application/json" } });
   };
@@ -89,6 +95,7 @@ test("map API loads every bounded page and preserves search and location filters
       district: "Pune",
     });
     assert.equal(result.length, 205);
+    assert.equal(new Set(result.map((site) => site.id)).size, 205);
     assert.deepEqual(result.slice(0, 2).map((site) => [site.latitude, site.longitude]), [["18.5", "73.8"], ["18.5", "73.8"]]);
     assert.deepEqual(requests.map((url) => url.searchParams.get("offset")), ["0", "100", "200"]);
     for (const url of requests) {
@@ -98,14 +105,15 @@ test("map API loads every bounded page and preserves search and location filters
       assert.equal(url.searchParams.get("category"), "fort");
       assert.equal(url.searchParams.get("state"), "Maharashtra");
       assert.equal(url.searchParams.get("district"), "Pune");
+      assert.equal(url.searchParams.get("withVerifiedPhoto"), null);
     }
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
-test("map coordinate adaptation rejects missing and invalid values, keeps string coordinates, and counts duplicate sites", async () => {
-  const { React, renderToStaticMarkup, HeritageMap, groupCoordinateSites, heritageMapToView } = await loadMapModules();
+test("map coordinate adaptation rejects missing and invalid values, maps all 30 valid places, and groups duplicate coordinates", async () => {
+  const { React, renderToStaticMarkup, HeritageMap, filterMappableSites, groupCoordinateSites, heritageMapToView } = await loadMapModules();
   const views = [
     heritageMapToView(mapRecord(1, "18.5", "73.8")),
     heritageMapToView(mapRecord(2, "18.5", "73.8")),
@@ -116,7 +124,7 @@ test("map coordinate adaptation rejects missing and invalid values, keeps string
     heritageMapToView(mapRecord(7, 18, 181)),
     heritageMapToView(mapRecord(8, 19, 73, false)),
   ];
-  const eligible = views.filter((site) => site.hasCoordinates);
+  const eligible = filterMappableSites(views);
   assert.equal(eligible.length, 2);
   assert.equal(eligible[0].latitude, 18.5);
   assert.equal(eligible[0].longitude, 73.8);
@@ -124,8 +132,42 @@ test("map coordinate adaptation rejects missing and invalid values, keeps string
   assert.equal(groups.length, 1);
   assert.deepEqual(groups[0].map((site) => site.routeId), ["1", "2"]);
 
+  const catalogueViews = Array.from({ length: 30 }, (_, index) =>
+    heritageMapToView(mapRecord(index + 100, String(16 + index / 10), String(72 + index / 10))));
+  const mappableCatalogue = filterMappableSites([...catalogueViews, ...views.slice(2)]);
+  assert.equal(mappableCatalogue.length, 30);
+  assert.equal(groupCoordinateSites(mappableCatalogue).length, 30);
+
   const html = renderToStaticMarkup(React.createElement(HeritageMap, { sites: views }));
   assert.match(html, /2 mapped sites/);
+  const catalogueMarkup = renderToStaticMarkup(React.createElement(HeritageMap, { sites: views.slice(0, 1), mapSites: mappableCatalogue }));
+  assert.match(catalogueMarkup, /30 mapped sites/);
+
+  const mapSource = fs.readFileSync(path.join(sourceRoot, "components", "heritage", "HeritageMap.tsx"), "utf8");
+  assert.match(mapSource, /const markers = markerGroups\.map\(\(siteGroup\)/);
+  assert.match(mapSource, /\.bindPopup\(markerPopup\(siteGroup/);
+  assert.match(mapSource, /marker\.on\("click", \(\) => onSiteSelect\?\.\(site\.routeId\)\)/);
+  assert.match(mapSource, /for \(const groupedSite of siteGroup\) markersRef\.current\.set/);
+  assert.match(mapSource, /for \(const site of sites\) content\.append\(markerPopupForSite\(site/);
+  assert.match(mapSource, /map\.fitBounds\(L\.featureGroup\(layers\)\.getBounds\(\)\.pad\(0\.12\)/);
+});
+
+test("empty map results remain an explicit empty state", async () => {
+  const { React, renderToStaticMarkup, HeritageMap, getHeritageMapSites } = await loadMapModules();
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    success: true,
+    items: [],
+    pagination: { limit: 100, offset: 0, total: 0 },
+  }), { status: 200, headers: { "Content-Type": "application/json" } });
+
+  try {
+    assert.deepEqual(await getHeritageMapSites(), []);
+    const html = renderToStaticMarkup(React.createElement(HeritageMap, { sites: [] }));
+    assert.match(html, /No heritage records match the current filters/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("map API request failures surface as recoverable API errors", async () => {

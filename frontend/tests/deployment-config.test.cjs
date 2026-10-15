@@ -35,17 +35,19 @@ test("API URL joining preserves endpoint queries and avoids duplicate /api segme
   assert.equal(buildApiUrl("admin/sites", "/api"), "/api/admin/sites");
 });
 
-test("public and admin clients share URL construction and have no localhost API fallback", async () => {
+test("admin service delegates to the shared API client without legacy route assumptions", async () => {
   const [apiSource, adminSource] = await Promise.all([
     readFile(path.join(frontendRoot, "src/lib/api.ts"), "utf8"),
     readFile(path.join(frontendRoot, "src/services/adminApi.ts"), "utf8"),
   ]);
 
-  for (const source of [apiSource, adminSource]) {
-    assert.match(source, /getApiBaseUrl\(import\.meta\.env\.VITE_API_BASE_URL\)/);
-    assert.match(source, /buildApiUrl\(/);
-    assert.doesNotMatch(source, /["']https?:\/\/localhost(?::\d+)?/i);
-  }
+  assert.match(apiSource, /getApiBaseUrl\(import\.meta\.env\.VITE_API_BASE_URL\)/);
+  assert.match(apiSource, /buildApiUrl\(/);
+  assert.doesNotMatch(apiSource, /["']https?:\/\/localhost(?::\d+)?/i);
+  assert.match(adminSource, /from "@\/lib\/api"/);
+  assert.match(adminSource, /updateAdminUserRole/);
+  assert.match(adminSource, /updateAdminUserStatus/);
+  assert.doesNotMatch(adminSource, /admin\/(?:stats|sites|users\/\$\{id\}\/role)/);
 });
 
 test("Vercel SPA rewrite handles browser routes but excludes API paths", async () => {

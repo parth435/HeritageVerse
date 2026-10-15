@@ -6,6 +6,7 @@ import { heritageMapToView, heritageToView } from "@/lib/heritageAdapter";
 import type { HeritageMapView, HeritageView } from "@/lib/heritageAdapter";
 import { HeritageMap } from "@/components/heritage/HeritageMap";
 import { RouterLink } from "@/lib/router";
+import { getHeritageImageFallback, getHeritageImageSource, isHeritageImageFallback } from "@/lib/image-assets.js";
 
 const PAGE_SIZE = 100;
 
@@ -27,6 +28,7 @@ export function LivingAtlas() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -39,7 +41,10 @@ export function LivingAtlas() {
   useEffect(() => {
     const controller = new AbortController();
     let active = true;
-    void Promise.all([getCategories({ signal: controller.signal }), getHeritageFacets(undefined, { signal: controller.signal })])
+    void Promise.all([
+      getCategories({ signal: controller.signal }, { withVerifiedPhoto: true }),
+      getHeritageFacets(undefined, { signal: controller.signal }, { withVerifiedPhoto: true }),
+    ])
       .then(([categoryOptions, facets]) => {
         if (!active) return;
         setCategories(categoryOptions);
@@ -67,7 +72,7 @@ export function LivingAtlas() {
       setSelectedRouteId("");
     }
 
-    void getHeritage({ q: query, category, state, limit: PAGE_SIZE, offset }, { signal: controller.signal })
+    void getHeritage({ q: query, category, state, withVerifiedPhoto: true, limit: PAGE_SIZE, offset }, { signal: controller.signal })
       .then((response) => {
         if (!active) return;
         const page = response.items.map(heritageToView);
@@ -97,7 +102,7 @@ export function LivingAtlas() {
     setMapLoading(true);
     setMapError(null);
 
-    void getHeritageMapSites({ q: query, category, state }, { signal: controller.signal })
+    void getHeritageMapSites({ q: query, category, state, withVerifiedPhoto: true }, { signal: controller.signal })
       .then((records) => {
         if (active) setMapSites(records.map(heritageMapToView));
       })
@@ -118,6 +123,14 @@ export function LivingAtlas() {
     ?? mapSites.find((site) => site.routeId === selectedRouteId)
     ?? sites[0]
     ?? null;
+  const selectedImage = selected?.gallery[0] ?? null;
+  const selectedImageSource = selectedImage
+    ? failedImageUrl
+      ? getHeritageImageFallback({ url: selectedImage.src }, failedImageUrl)
+      : getHeritageImageSource({ url: selectedImage.src, thumbnail_url: selectedImage.thumbnailSrc })
+    : null;
+  const selectedImageUnavailable = Boolean(selectedImage && (!selectedImageSource || isHeritageImageFallback(selectedImageSource)));
+  useEffect(() => setFailedImageUrl(null), [selectedImage?.src, selectedImage?.thumbnailSrc]);
   const selectSite = useCallback((routeId: string) => setSelectedRouteId(routeId), []);
   const changeCategory = (value: string) => { setCategory(value); setOffset(0); };
   const changeState = (value: string) => { setState(value); setOffset(0); };
@@ -127,7 +140,7 @@ export function LivingAtlas() {
       <div className="mx-auto max-w-7xl">
         <p className="text-xs uppercase tracking-[0.4em] text-gold">01 · Living Atlas</p>
         <h2 className="font-display mt-3 text-4xl text-parchment md:text-6xl">A subcontinent, pinned in light.</h2>
-        <p className="mt-4 max-w-2xl text-parchment/70">Search the published collection by name, category, and state. Locations without verified coordinates remain in the list and are not placed approximately.</p>
+        <p className="mt-4 max-w-2xl text-parchment/70">Search published places with verified, attributed photographs. Locations without verified coordinates remain in the list and are not placed approximately.</p>
 
         <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_repeat(2,minmax(12rem,0.45fr))]">
           <label className="relative block">
@@ -162,7 +175,7 @@ export function LivingAtlas() {
                 <button type="button" onClick={() => setMapRetryKey((current) => current + 1)} className="text-gold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Retry map locations</button>
               </p>
             ) : null}
-            <HeritageMap sites={sites} mapSites={mapSites} label="Living Atlas map" selectedRouteId={selected?.routeId} onSiteSelect={selectSite} />
+            <HeritageMap sites={sites} mapSites={mapSites} label="Living Atlas map" selectedRouteId={selected?.routeId} onSiteSelect={selectSite} verifiedPhotoOnly />
           </div>
           <div className="min-w-0 rounded-3xl border border-white/10 bg-white/[0.025] p-5">
             <div className="flex items-center justify-between gap-3">
@@ -171,6 +184,18 @@ export function LivingAtlas() {
             </div>
             {selected ? (
               <article className="mt-4 rounded-2xl border border-gold/20 bg-gold/[0.04] p-4">
+                {selectedImage && selectedImageSource && !selectedImageUnavailable ? (
+                  <img src={selectedImageSource} alt={selectedImage.alt} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailedImageUrl(selectedImageSource)} className="mb-4 aspect-[16/9] w-full rounded-xl object-cover" />
+                ) : selectedImage ? (
+                  <p role="status" className="mb-4 rounded-xl border border-white/10 px-3 py-4 text-xs text-parchment/55">The verified photograph could not be loaded. Its source details remain available below.</p>
+                ) : null}
+                {selectedImage ? (
+                  <p className="mb-3 flex flex-wrap gap-x-2 gap-y-1 text-[10px] leading-4 text-parchment/50">
+                    {selectedImage.credit || selectedImage.creator ? <span>{selectedImage.credit || selectedImage.creator}</span> : null}
+                    {safeExternalUrl(selectedImage.sourceUrl) ? <a href={safeExternalUrl(selectedImage.sourceUrl)!} target="_blank" rel="noopener noreferrer" className="text-gold-bright underline underline-offset-2">Source</a> : null}
+                    {selectedImage.license ? (safeExternalUrl(selectedImage.licenseUrl) ? <a href={safeExternalUrl(selectedImage.licenseUrl)!} target="_blank" rel="noopener noreferrer" className="text-gold-bright underline underline-offset-2">{selectedImage.license}</a> : <span>{selectedImage.license}</span>) : null}
+                  </p>
+                ) : null}
                 <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-gold"><MapPin className="h-3.5 w-3.5" aria-hidden="true" />{selected.location}</p>
                 <h4 className="font-display mt-2 text-2xl text-parchment">{selected.name}</h4>
                 <p className="mt-2 line-clamp-3 text-sm text-parchment/65">{selected.description}</p>
@@ -195,4 +220,14 @@ export function LivingAtlas() {
       </div>
     </section>
   );
+}
+
+function safeExternalUrl(value?: string | null) {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password ? url.href : null;
+  } catch {
+    return null;
+  }
 }

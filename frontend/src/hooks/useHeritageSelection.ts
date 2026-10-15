@@ -12,7 +12,7 @@ import {
 const SITE_PAGE_SIZE = 100;
 const SEARCH_DELAY_MS = 180;
 
-/** Search the full published catalogue and load the selected site's detail record. */
+/** Search published places with verified photos and load the selected site's detail record. */
 export function useHeritageSelection({ hasTimeline = false }: { hasTimeline?: boolean } = {}) {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<HeritageView[]>([]);
@@ -31,7 +31,7 @@ export function useHeritageSelection({ hasTimeline = false }: { hasTimeline?: bo
     setListLoading(true);
     setListError(null);
     const timer = window.setTimeout(() => {
-      void getHeritage({ q: query.trim() || undefined, hasTimeline: hasTimeline || undefined, limit: SITE_PAGE_SIZE }, { signal: controller.signal })
+      void getHeritage({ q: query.trim() || undefined, hasTimeline: hasTimeline || undefined, withVerifiedPhoto: true, limit: SITE_PAGE_SIZE }, { signal: controller.signal })
         .then((response) => {
           if (!active) return;
           const options = response.items.map(heritageToView);

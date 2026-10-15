@@ -88,7 +88,9 @@ router.get("/favorites", authenticate, async (req, res) => {
          FROM heritage_media m
          WHERE m.heritage_id = h.id AND m.media_type = 'image'
            AND m.media_role IN ('gallery', 'current')
-         ORDER BY (m.verification_status = 'verified') DESC, m.display_order ASC, m.id ASC
+           AND m.verification_status = 'verified'
+           AND m.is_illustrative = FALSE
+         ORDER BY m.display_order ASC, m.id ASC
          LIMIT 1
        ) selected_image ON TRUE
        WHERE f.user_id = $1 AND h.publication_status = 'published'

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Compass } from "lucide-react";
+import { RouterLink } from "@/lib/router";
 import { HeritageFilters, type HeritageSort } from "@/components/heritage/HeritageFilters";
 import { HeritageGrid } from "@/components/heritage/HeritageGrid";
 import { HeritageMap } from "@/components/heritage/HeritageMap";
@@ -51,8 +52,8 @@ export function ExplorePage() {
     const controller = new AbortController();
     let active = true;
     void Promise.all([
-      getCategories({ signal: controller.signal }),
-      getHeritageFacets(state, { signal: controller.signal }),
+      getCategories({ signal: controller.signal }, { withVerifiedPhoto: true }),
+      getHeritageFacets(state, { signal: controller.signal }, { withVerifiedPhoto: true }),
     ])
       .then(([results, facets]) => {
         if (!active) return;
@@ -85,6 +86,7 @@ export function ExplorePage() {
         category,
         state,
         district,
+          withVerifiedPhoto: true,
         limit: PAGE_SIZE,
         offset,
       },
@@ -186,8 +188,9 @@ export function ExplorePage() {
           </p>
           <h1 className="font-display mt-4 text-5xl leading-[0.98] text-parchment md:text-7xl">Explore the heritage atlas.</h1>
           <p className="mt-5 max-w-2xl text-sm leading-7 text-parchment/65 md:text-base">
-            Find places by name, region, or architectural tradition. Search and filters use the published heritage collection.
+            Find published heritage places that have verified, attributed photographs. Search and filters can include records beyond the curated Maharashtra catalogue.
           </p>
+          <RouterLink to="/nearby" className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full border border-gold/40 px-5 py-3 text-xs font-semibold uppercase tracking-[0.13em] text-gold-bright transition hover:bg-gold/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Find nearby heritage</RouterLink>
         </div>
 
         {facetsError ? (
@@ -223,18 +226,18 @@ export function ExplorePage() {
                 <p className="text-[10px] uppercase tracking-[0.25em] text-gold">Explore by location</p>
                 <h2 id="heritage-map-heading" className="font-display mt-1 text-3xl text-parchment">Heritage map</h2>
               </div>
-              <p className="text-xs text-parchment/50">Map follows the current search and location filters.</p>
+              <p className="text-xs text-parchment/50">Pins include matching curated places without verified photographs; cards below require verified photographs.</p>
             </div>
             {!loading && !error ? (
               <>
-                {mapLoading ? <p role="status" className="mb-3 text-xs text-parchment/55">Loading all verified map locations…</p> : null}
+                {mapLoading ? <p role="status" className="mb-3 text-xs text-parchment/55">Loading map locations…</p> : null}
                 {mapError ? (
                   <p role="alert" className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-400/30 bg-red-950/20 px-4 py-3 text-sm text-red-100">
                     <span>Map locations could not load. {mapError}</span>
                     <button type="button" onClick={() => setMapRetryKey((current) => current + 1)} className="text-gold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Retry map locations</button>
                   </p>
                 ) : null}
-                <HeritageMap sites={visibleItems} mapSites={mapSites} />
+                <HeritageMap sites={visibleItems} mapSites={mapSites} verifiedPhotoOnly />
               </>
             ) : null}
           </section>
@@ -243,7 +246,8 @@ export function ExplorePage() {
             loading={loading && offset === 0}
             error={error}
             onRetry={() => setRetryKey((current) => current + 1)}
-            emptyMessage="Try another search or clear one of the filters."
+            emptyMessage="No published places with verified photographs match these filters. Try another search or clear one of the filters."
+            verifiedPhotoOnly
           />
         </div>
 

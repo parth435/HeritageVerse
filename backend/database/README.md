@@ -32,11 +32,54 @@ The canonical `schema.sql` already adds `users.role` with the default `user` rol
 
 Citation metadata and source-provided locality/address fields are additive migrations `002_add_citation_metadata.sql` and `003_add_heritage_locality.sql`. Apply them in numeric order to an existing database before deploying code that reads those columns. They retain existing source and heritage rows and backfill source titles/publishers from existing source names.
 
+Migration `011_add_user_status.sql` adds the `users.status` column for existing
+databases, gives accounts with no status `ACTIVE`, normalizes recognized status
+values, and constrains the result to `ACTIVE` or `SUSPENDED`. Unrecognized
+legacy values are set to `SUSPENDED` so they cannot silently regain access.
+Migration `012_add_activity_logs.sql` creates the existing schema's admin audit
+table when upgrading a database that does not yet have it. Both migrations are
+repeatable and additive; they do not rebuild tables or remove user data. Apply
+numbered migrations in order after the schema/content baseline they depend on.
+
+Migration `013_maharashtra_curated_catalogue.sql` sets public catalogue
+membership to the 30 destinations in `selected-catalogue.json`, all in
+Maharashtra. It reuses existing Mumbai and Panhala identities, preserves the
+old Panhala slug as an alias, and adds the other curated records with source
+references and coordinates. It removes only out-of-scope membership rows;
+heritage rows, media, citations, favorites, visits, reviews, journeys, and stops
+remain in place. Those older records are excluded from public catalogue list,
+detail, map, search, and facets while they are outside membership. The migration
+does not delete or archive them. It is repeatable and refuses conflicting
+coordinates rather than silently replacing them. Existing archive status is
+preserved; the migration rolls back if a selected record is archived, rather
+than silently publishing it again. Migration `014_add_heritage_country.sql`
+adds a nullable country field and sets `India` only for the selected Maharashtra
+members, leaving unrelated legacy rows unchanged.
+
+Migration `015_correct_cave_chronologies.sql` corrects Ajanta's two separate
+excavation phases and extends Ellora's period through the 12th century using
+UNESCO's current site histories. It only changes records that still contain the
+exact prior text; it preserves source-review decisions and user relationships
+and is safe to reapply.
+
+`schema.sql` also adds and constrains `users.status` and creates
+`activity_logs`, so fresh schema setup and migration-based upgrades converge
+on the same account and audit structures. `migration-smoke.js` checks fresh
+setup and a legacy fixture with the status column and audit table removed,
+verifies legacy favorites/visits/reviews/journeys remain, and rolls back both
+fixtures. It refuses production and non-loopback database targets.
+
 The migration gives every existing account the least-privileged `user` role. After independently verifying an account owner, promote the initial administrator with an audited, parameterized database operation; do not expose role promotion through signup or profile APIs.
 
-Manual administrator provisioning procedure: first verify the person's identity and the exact existing account email out of band; never create an account or change a role through the application. In a privileged maintenance session, query that email and confirm the returned account is the intended person. Then run a parameterized update (`UPDATE users SET role = 'admin' WHERE id = $1 AND email = $2 AND role = 'user' RETURNING id, name, email, role`) using the verified numeric user ID and exact email as bound parameters. Require exactly one returned row, record the operator and change in the deployment audit log, and verify the result with a fresh authenticated session. Do not grant administrator access when identity or account ownership cannot be confirmed.
+Manual administrator provisioning procedure: first verify the person's identity and exact existing account email out of band; never create an account or change a role through signup/profile APIs. Confirm the database target and account ID, then use the guarded script, which requires the verified identity flag, operator name, exact ID/email, explicit confirmation, a transaction, the same advisory lock as admin APIs, an active account, and an audit-log row:
 
-Live local database check on 11 October 2026 found 14 accounts, all with the `user` role, and no administrator account. The unauthenticated admin API returns 401 and an ordinary account receives 403. Authorized UI CRUD could not be run because no verified administrator session is available; follow the provisioning procedure above, then run the CRUD checks with that account. Do not promote a user solely to clear this verification blocker.
+```powershell
+node backend/database/promote-admin.js --user-id 123 --email "exact-existing-account@example.com" --identity-verified --operator "Verified operator" --confirm PROMOTE
+```
+
+The script defaults to loopback-only. In a separate controlled maintenance session, a positively identified remote deployment database additionally requires `--allow-external-database`; never use that flag casually. This task did not run the script against any database. After provisioning, verify the audit row and use a fresh authenticated session. Do not grant administrator access when identity or account ownership cannot be confirmed.
+
+The unauthenticated admin API returns 401 and ordinary accounts receive 403. Verify administrator CRUD with a confirmed active administrator in a disposable or staging environment after following the provisioning procedure above. Do not promote an account solely to clear a verification gap.
 
 To check the scripts against a disposable database, create that database first, then run both commands. To inspect created relations and sample rows:
 
@@ -45,24 +88,43 @@ psql -c "\\dt"
 psql -c "SELECT count(*) FROM heritage; SELECT count(*) FROM heritage_sources; SELECT count(*) FROM heritage_timeline_events;"
 ```
 
+## Nearby location search
+
+Nearby distance filtering uses only the 30-place selected public catalogue and
+the existing source-verified coordinate fields. The browser fetches all bounded
+catalogue pages and computes straight-line distances locally, so precise GPS
+coordinates are not sent to HeritageVerse. Manual place-name searches use
+`GET /api/locations/search?q=...`; results are validated and attributed to
+OpenStreetMap, cached in memory for 24 hours, and rate-limited per client and
+per backend process. Set `GEOCODER_USER_AGENT` to an identifying application
+string with an operator contact. `GEOCODER_SEARCH_URL` may only identify the
+HTTPS endpoint `https://nominatim.openstreetmap.org/search`; other providers
+are rejected so the returned OpenStreetMap attribution stays accurate. The
+built-in public Nominatim endpoint is
+appropriate only when the deployment can keep aggregate traffic within its
+usage policy; multiple backend replicas need a shared limiter/cache or a
+contracted provider. Map tiles and externally opened directions receive the
+selected area/origin only when the visitor chooses those features.
+
 `ON_ERROR_STOP=1` makes the first SQL error stop each run. The seed script is idempotent and preserves IDs and user relationships. It inserts missing catalog rows and sources; its only existing-record update is the explicitly documented category correction for the Taj Mahal, Humayun's Tomb, and Sanchi. Review existing counts before seeding an established database.
 
 `schema.sql`, standalone migrations, and `seed.sql` are transaction-wrapped.
 `npm.cmd run test:migrations` exercises the fresh initialization order
-(`schema.sql`, `seed.sql`, then migrations 001–010) and a separate legacy
+(`schema.sql`, `seed.sql`, then migrations 001–015) and a separate legacy
 natural-key fixture. Both schemas run inside a local transaction and are rolled
 back. The checks cover selected catalogue membership and addresses, optional
 duplicate aliases, source-review preservation, existing user relationships,
-and migration rollback. Legacy fixture IDs are generated; the fresh path does
+legacy relationship preservation after catalogue exclusion, archive-status
+protection, migration idempotency, country field population, and rollback. Legacy fixture IDs are generated; the fresh path does
 not inject legacy rows. The command refuses production mode and non-loopback
 database hosts.
 
 ## Schema and API contract
 
-All names are snake_case. `heritage.id` is the detail route key; `slug` is unique and suitable for stable public links. `category_id` references `heritage_categories.id`. Heritage rows carry `name`, `slug`, `description`, `history`, `cultural_significance`, `architecture`, `historical_period`, `category_id`, `state`, `district`, `latitude`, `longitude`, timestamps, and `publication_status`. Coordinates allow NULL; only populate them from a verified source. `heritage_sources` records provenance. The seed uses official UNESCO World Heritage Centre URLs. It does not load images because reliable reuse/license details were not established.
+All names are snake_case. `heritage.id` is the detail route key; `slug` is unique and suitable for stable public links. `category_id` references `heritage_categories.id`. Heritage rows carry `name`, `slug`, `description`, `history`, `cultural_significance`, `architecture`, `historical_period`, `category_id`, `state`, optional `country`, `district`, `latitude`, `longitude`, timestamps, and `publication_status`. Coordinates allow NULL; only populate them from a verified source. `heritage_sources` records provenance. Public heritage endpoints additionally require `heritage_catalog_membership`; the current manifest contains 30 Maharashtra destinations in India. The broader legacy rows remain stored and retain their relationships.
 
-- `GET /api/heritage`: query `heritage h JOIN heritage_categories c ON c.id=h.category_id`; default to `h.publication_status='published'`. Filter by `category_id` or category slug, `state`, `district`; search `name`, `description`, `history`, and `cultural_significance` using parameterized `ILIKE`. Paginate with bounded `limit` and `offset`. Order deterministically (for example `h.name, h.id`). Join or separately fetch ordered media (`heritage_media.display_order`).
-- `GET /api/heritage/:id`: resolve numeric `heritage.id` as the route contract says; return category plus related ordered rows from `heritage_media`, `heritage_timeline_events`, `heritage_artifacts`, `heritage_architectural_layers`, and `heritage_sources`. Do not expose drafts to public callers.
+- `GET /api/heritage`: query published rows joined to `heritage_catalog_membership` and `heritage_categories`. Filter by `category_id` or category slug, `state`, and `district`; search `name`, `description`, `history`, and `cultural_significance` using parameterized `ILIKE`. Paginate with bounded `limit` and `offset`. Public order follows `membership.display_order`. Public media contains only verified, non-illustrative images; unverified candidates stay in the admin acquisition review data.
+- `GET /api/heritage/:id`: resolve numeric `heritage.id`; public access requires a published catalogue member. Authenticated owners may still resolve a published out-of-catalogue record when an existing favorite or visit links it. Return category plus related ordered rows from `heritage_media`, `heritage_timeline_events`, `heritage_artifacts`, `heritage_architectural_layers`, and `heritage_sources`. Do not expose drafts or archived records to public callers.
 - Favorites: POST body `{ heritage_id }`, authenticated `user_id` comes from verified session/token, insert into `favorites`; use `ON CONFLICT (user_id, heritage_id) DO NOTHING`. GET filters by authenticated `user_id`. DELETE `/api/favorites/:heritageId` deletes by both authenticated `user_id` and `heritage_id`.
 - Visited: same request and ownership pattern using `visited_places`; POST is idempotent with conflict handling. `created_at` records the first visit; if repeat visit history is needed, that requires a separate contract/table decision.
 - Reviews: POST body `{ heritage_id, rating, comment }`; rating is integer 1–5. Unique `(user_id, heritage_id)` means one review per user per site; choose upsert to edit it. GET `/:heritageId` returns reviews ordered by `created_at DESC, id DESC` and may join public user name. DELETE `/:id` must constrain both review `id` and authenticated `user_id` unless an admin role is verified.
@@ -130,8 +192,9 @@ Run migration 006 once against a verified local, non-production database:
 node backend/database/apply-migration.js 006_wikimedia_image_acquisition.sql --apply
 ```
 
-The CLI is dry-run by default. It reads the existing heritage IDs, processes
-records in batches of 20, and prints progress plus counts for verified
+The CLI is dry-run by default. With no explicit IDs it reads only current
+`heritage_catalog_membership` records, processes records in batches of 20, and
+prints progress plus counts for verified
 candidates, review candidates, no-image results, failures, and skipped rows.
 No database rows are changed in dry-run mode:
 
@@ -152,14 +215,44 @@ database:
 npm run images:import -- --apply --batch-size 20 --delay-ms 1000 --concurrency 1
 ```
 
-For a subset, add `--ids 12,34`. Apply mode commits each record separately, so
-an interrupted run resumes by skipping already verified and `not_found` rows;
-pending review items can be rechecked on a later run. `--retry-failed` selects
-only failed rows. `--refresh` rechecks all selected rows, but never updates or
-deletes an existing image; unique constraints and `ON CONFLICT DO NOTHING`
-prevent duplicate assets. The concurrency limit is 3 and request spacing cannot
-be reduced below one second. Wikimedia responses are cached in the database
-for 30 days on apply runs; dry-run responses are cached only for that process.
+Use `--commons-search` to run a destination-by-destination Commons search for
+catalogue destinations that do not yet have both verified current and
+historical images. It searches Commons file pages, loads image-page
+attribution metadata, and retains destination-name, locality/district, and
+Commons-coordinate evidence in the admin review queue. A filename, location
+score, or successful image-byte check does not prove that the visible subject
+is correct, so this mode never writes public `heritage_media` rows. It only
+updates the idempotent `heritage_image_acquisition` review record:
+
+```sh
+npm run images:import -- --apply --commons-search
+```
+
+For a subset, add `--ids 12,34`. Apply mode commits each record separately;
+`--refresh` rechecks selected rows and never updates or deletes existing image
+records. `ON CONFLICT` prevents duplicate image assets and the acquisition
+record is upserted in place. The concurrency limit is 3 and request spacing
+cannot be reduced below one second. Wikimedia responses are cached in the
+database for 30 days on apply runs; dry-run responses are cached only for that
+process.
+
+An exact candidate manifest can place supplied URLs and their unverified
+attribution claims in the admin image review queue without making upstream
+requests. Candidates do not enter `heritage_media` or public responses until
+an operator records a visual match in the manifest and reruns the importer.
+Commons metadata and image bytes are checked again during that approved run;
+candidate creator/license claims are never copied as authoritative metadata.
+The command writes only to a local, non-production database:
+
+```sh
+npm run images:import -- --apply --candidate-manifest database/source-data/selected-catalogue-wikimedia-candidates.json --queue-candidates
+```
+
+The normal `--apply --candidate-manifest` mode remains blocked until each
+candidate has explicit visual-match approval. A candidate stays review-only
+until an operator visually confirms the exact file for the destination. The
+approved import stores Commons source, attribution, license, and image metadata
+after a fresh file-page lookup and byte validation.
 
 The importer uses Wikidata entity search only when a record lacks a QID. It
 compares normalized labels/aliases, India/state/locality context, and available
@@ -201,7 +294,7 @@ and contemporary comparison pair.
 
 The optional ASI importer reads the official ASI Centrally Protected Monuments/Sites PDF at `https://asi.nic.in/pdf/CPM_List.pdf`. Keep the source copy at `database/source-data/ASI_CPM_List.pdf`; it requires Poppler's `pdftotext` executable and always attributes its records to that official source. From the repository root, run `node backend/database/import-asi.js` for a dry run. It accepts only complete single-line entries, rejects wrapped/incomplete entries, validates stable slugs and requires at least 500 rows. It adds a provenance citation and explicitly leaves historical details, coordinates, images, and visiting information unrecorded when the source does not supply them. Only after reviewing the dry-run summary, run `node backend/database/import-asi.js --apply` to insert records using additive `ON CONFLICT DO NOTHING` upserts in a transaction. Apply mode refuses remote and production database hosts; dry-run does not write. Existing records and user relationships are preserved. The importer reports the accepted count; query the database after import to establish the actual count and state coverage.
 
-Local verification on 10 October 2026 found 2,190 published records: 25 UNESCO cultural properties, 2 official museum entries, and 2,163 distinct complete ASI rows across 32 states/territories. The parser skipped 1,527 wrapped/incomplete rows and 8 duplicate rows. The source contains a Puducherry section, but its row fields are wrapped across lines; the importer conservatively skipped those rather than guessing how names and localities join. After migration 004, the catalog check found 2,199 provenance rows, no published records without sources, no incomplete source metadata, 9 complete coordinate pairs with coordinate citations, no unverified or partial coordinates, and exactly 2 museum records.
+Historical verification on 10 October 2026 found 2,190 published legacy records across 32 states/territories. After migration 013 on the local loopback database, the full legacy record set remains stored and the public membership audit reports 30 published Maharashtra destinations, 30 exact approved coordinate citations, 30 addresses, and preserved user-relationship counts. Image import/attribution coverage is tracked separately by `npm run verify:catalog`; a passing coordinate audit alone does not establish complete image coverage.
 
 The OSRM adapter reads `ROUTING_BASE_URL` from the backend environment as the provider base URL and appends `/route/v1/driving/{lon,lat;...}` itself. For a self-hosted service, set e.g. `ROUTING_BASE_URL=http://127.0.0.1:5001` in `backend/.env` and restart the backend. A one-off live adapter check against `https://router.project-osrm.org` returned a route between the verified Taj Mahal and Agra Fort coordinates: 3,760.8 m, estimated 371.2 seconds, 107 geometry points, and turn steps. The OSRM demo policy limits use to reasonable non-commercial requests at no more than one request per second and gives no uptime guarantee; because HeritageVerse's commercial status is unspecified, no demo URL was persisted in `backend/.env`. Use a self-hosted or contracted service for production. This implementation supports driving only, preserves journey stop order, and reports provider-estimated duration without live traffic or route optimization. If routing is unavailable, the API returns a provider error and the client retains its Google Maps link.
 
@@ -232,3 +325,61 @@ idempotent reruns, and representative API queries before production rollout.
 
 Do not run `schema.sql` or `seed.sql` automatically at application startup.
 Back up and positively identify the target before applying database changes.
+
+## One-time initialization of a new Neon database
+
+For a newly created, empty Neon database named exactly `heritageversedb`, use
+the standalone initializer from the repository root. It uses the existing
+`pg` dependency, does not load `backend/.env`, and is never invoked by backend
+startup. Supply the direct Neon endpoint hostname copied from the intended
+Neon project; pooler endpoints, localhost, other providers, other database
+names, and host mismatches are rejected. TLS certificate verification remains
+enabled.
+
+Keep the URL out of command history and terminal output. In PowerShell, a
+hidden prompt can set the dedicated process environment variable for this
+single invocation:
+
+```powershell
+$secureUrl = Read-Host "Direct Neon connection URL" -AsSecureString
+$urlPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureUrl)
+try {
+  $env:HERITAGEVERSE_NEON_DATABASE_URL = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($urlPointer)
+  node backend/database/initialize-neon.js --expected-host "ep-example-endpoint.us-east-2.aws.neon.tech"
+} finally {
+  Remove-Item Env:HERITAGEVERSE_NEON_DATABASE_URL -ErrorAction SilentlyContinue
+  [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($urlPointer)
+  $secureUrl.Dispose()
+}
+```
+
+Replace the sample host with the exact direct endpoint hostname from Neon.
+Before it asks for a write confirmation, the utility connects only to run
+read-only checks for the exact database, the `public` schema, and the absence
+of non-system relations. It then requires the exact confirmation
+`INITIALIZE heritageversedb`. It sends each complete SQL file through
+node-postgres in this fixed order: `schema.sql`, `seed.sql`, then migrations
+`001` through `015`. Each file's own `BEGIN`/`COMMIT` and dollar-quoted blocks
+are preserved; the utility does not split statements, run files concurrently,
+retry, drop tables, truncate data, or reset sequences. Migration 013 has an
+existing narrowly scoped `DELETE` of interim/out-of-scope
+`heritage_catalog_membership` rows created by migration 009 so the final public
+catalogue contains exactly the selected 30. The empty-database preflight ensures
+those rows cannot be pre-existing user data; this migration behavior is called
+out here because the initializer does not rewrite existing migration SQL.
+
+If a file fails, the utility reports its filename and stops. Earlier files
+may already have committed, so do not rerun the command: the non-empty
+preflight will refuse a partial database. Do not drop, truncate, or reset it
+to recover. Preserve the error output, inspect the reported file and database
+state with a database operator, then use a separately provisioned empty Neon
+database only after review if a clean initialization is still required. The
+utility makes no automatic recovery changes. After all files succeed, it runs
+read-only checks for the 30 published Maharashtra catalogue members, their
+addresses, India country values, citation metadata, required schema columns,
+and reports verified photograph counts separately from catalogue counts. It
+does not create image records, verify images, or promote an account.
+
+Implementation and automated tests must not execute this command against a
+database. Review the script and this recovery procedure before any operator
+invocation.

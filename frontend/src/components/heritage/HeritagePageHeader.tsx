@@ -1,6 +1,7 @@
 import { Compass } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { RouterLink } from "@/lib/router";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function HeritagePageHeader() {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ export function HeritagePageHeader() {
           <RouterLink to="/explore" className="text-gold-bright hover:text-parchment focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">
             Explore
           </RouterLink>
+          <RouterLink to="/nearby" className="text-parchment/70 hover:text-gold-bright focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Nearby</RouterLink>
           {user ? (
             <>
               <RouterLink to="/favorites" className="text-parchment/70 hover:text-gold-bright focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Favorites</RouterLink>
@@ -26,6 +28,7 @@ export function HeritagePageHeader() {
           ) : (
             <RouterLink to="/login" className="text-parchment/70 hover:text-gold-bright focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Sign in</RouterLink>
           )}
+          <ThemeToggle compact />
         </nav>
       </div>
     </header>

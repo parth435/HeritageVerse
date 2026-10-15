@@ -6,9 +6,22 @@ const WIKIDATA_ENTITY_DATA = "https://www.wikidata.org/wiki/Special:EntityData/"
 const WIKIDATA_API = "https://www.wikidata.org/w/api.php";
 const COMMONS_API = "https://commons.wikimedia.org/w/api.php";
 const MINIMUM_MATCH_CONFIDENCE = 0.95;
+const MAX_COMMONS_DESTINATION_DISTANCE_KM = 10;
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
 const DEFAULT_CONTACT_URL = "https://github.com/parth435/HeritageVerse";
+const COMMONS_SEARCH_ALIASES = Object.freeze({
+  "chhatrapati-shivaji-maharaj-terminus": ["Victoria Terminus Mumbai", "CST Mumbai"],
+  "deekshabhoomi": ["Deeksha Bhoomi Nagpur", "Deekshabhoomi Nagpur"],
+  "mumbai-victorian-art-deco": ["Victorian Gothic Mumbai", "Art Deco Mumbai", "Oval Maidan Mumbai"],
+  "chhatrapati-shivaji-maharaj-vastu-sangrahalaya": ["Prince of Wales Museum Mumbai", "CSMVS Museum Mumbai"],
+  "panhala-fort": ["Panhala Fort Kolhapur", "Panhalgad Kolhapur"],
+  "pandavleni-caves": ["Pandavleni Caves Nashik", "Trirashmi Caves Nashik"],
+  "pataleshwar-caves": ["Pataleshwar Cave Temple Pune"],
+  "raigad-fort": ["Raigad Fort Mahad"],
+  "murud-janjira-fort": ["Murud Janjira Fort Maharashtra"],
+});
 
 class WikimediaRequestError extends Error {
   constructor(code, message, retryable = false, diagnosticCode = null) {
@@ -259,6 +272,88 @@ function allowedCommonsPageUrl(value) {
   }
 }
 
+function inspectImageBytes(value, contentType, maximumBytes = MAX_IMAGE_BYTES) {
+  const bytes = Buffer.isBuffer(value) ? value : Buffer.from(value ?? []);
+  if (bytes.length < 32 || bytes.length > maximumBytes) {
+    throw new WikimediaRequestError("image_bytes_invalid", "The Wikimedia image response had an invalid size");
+  }
+  const mime = String(contentType ?? "").split(";")[0].trim().toLowerCase();
+  const fail = () => { throw new WikimediaRequestError("image_bytes_invalid", "The Wikimedia response did not contain a complete supported image"); };
+  let format = null;
+  let width = null;
+  let height = null;
+
+  if (mime === "image/jpeg" && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff && bytes.at(-2) === 0xff && bytes.at(-1) === 0xd9) {
+    format = "jpeg";
+    let offset = 2;
+    while (offset + 4 <= bytes.length) {
+      if (bytes[offset] !== 0xff) { offset += 1; continue; }
+      while (bytes[offset] === 0xff) offset += 1;
+      const marker = bytes[offset++];
+      if (marker === 0xd9 || marker === 0xda) break;
+      if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) continue;
+      if (offset + 2 > bytes.length) fail();
+      const segmentLength = bytes.readUInt16BE(offset);
+      if (segmentLength < 2 || offset + segmentLength > bytes.length) fail();
+      if ([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf].includes(marker)) {
+        if (segmentLength < 7) fail();
+        height = bytes.readUInt16BE(offset + 3);
+        width = bytes.readUInt16BE(offset + 5);
+        break;
+      }
+      offset += segmentLength;
+    }
+  } else if (mime === "image/png" && bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) {
+    format = "png";
+    let offset = 8;
+    let sawHeader = false;
+    let sawData = false;
+    let sawEnd = false;
+    while (offset + 12 <= bytes.length) {
+      const chunkLength = bytes.readUInt32BE(offset);
+      const chunkEnd = offset + 12 + chunkLength;
+      if (chunkEnd > bytes.length) fail();
+      const chunkType = bytes.toString("ascii", offset + 4, offset + 8);
+      if (!sawHeader) {
+        if (chunkType !== "IHDR" || chunkLength !== 13) fail();
+        width = bytes.readUInt32BE(offset + 8);
+        height = bytes.readUInt32BE(offset + 12);
+        sawHeader = true;
+      } else if (chunkType === "IDAT" && chunkLength > 0) sawData = true;
+      if (chunkType === "IEND") { sawEnd = chunkLength === 0; break; }
+      offset = chunkEnd;
+    }
+    if (!sawHeader || !sawData || !sawEnd) fail();
+  } else if (mime === "image/gif" && ["GIF87a", "GIF89a"].includes(bytes.toString("ascii", 0, 6)) && bytes.at(-1) === 0x3b) {
+    format = "gif";
+    width = bytes.readUInt16LE(6);
+    height = bytes.readUInt16LE(8);
+    if (!bytes.subarray(13, -1).includes(0x2c)) fail();
+  } else if (mime === "image/webp" && bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP") {
+    format = "webp";
+    if (bytes.readUInt32LE(4) + 8 > bytes.length || bytes.length < 30) fail();
+    const chunkType = bytes.toString("ascii", 12, 16);
+    if (chunkType === "VP8X") {
+      width = 1 + bytes.readUIntLE(24, 3);
+      height = 1 + bytes.readUIntLE(27, 3);
+    }
+  } else {
+    fail();
+  }
+
+  if ((width !== null && width < 1) || (height !== null && height < 1) ||
+      (width !== null && width > 100000) || (height !== null && height > 100000)) fail();
+  if (format !== "webp" && (width === null || height === null)) fail();
+  return {
+    format,
+    mime,
+    width,
+    height,
+    byteLength: bytes.length,
+    sha256: crypto.createHash("sha256").update(bytes).digest("hex"),
+  };
+}
+
 function parseCommonsImageInfo(page, heritageName = "") {
   if (!page || page.ns !== 6 || typeof page.title !== "string" || !Array.isArray(page.imageinfo) || !page.imageinfo[0]) {
     throw new WikimediaRequestError("commons_image_malformed", "Wikimedia Commons returned incomplete image metadata");
@@ -305,6 +400,10 @@ function parseCommonsImageInfo(page, heritageName = "") {
     credit,
     altText: `${heritageName || title} photograph from Wikimedia Commons`,
     uploadedAt: typeof info.timestamp === "string" ? info.timestamp : null,
+    mime: typeof info.mime === "string" ? info.mime : null,
+    width: Number.isSafeInteger(info.width) ? info.width : null,
+    height: Number.isSafeInteger(info.height) ? info.height : null,
+    byteLength: Number.isSafeInteger(info.size) ? info.size : null,
     documentedDate: originalDate || generalDate || null,
     documentedDateSource: originalDate ? "DateTimeOriginal" : generalDate ? "Date" : null,
     missingMetadata,
@@ -331,8 +430,11 @@ function scoreCommonsMatch(site, image, pageCoordinate = null) {
   const description = normalizeText(image.title + " " + image.description);
   if (!siteName || !filename) return 0;
   let confidence = 0;
+  const descriptiveText = `${filename} ${description}`;
+  const aliasMatch = (COMMONS_SEARCH_ALIASES[site.slug] ?? []).some((alias) => phraseInText(alias, descriptiveText));
   if (filename === siteName || description === siteName) confidence = 0.89;
   else if (filename.includes(siteName) || description.includes(siteName)) confidence = 0.83;
+  else if (aliasMatch) confidence = 0.78;
   else {
     const words = siteName.split(" ").filter((word) => word.length > 2);
     const matches = words.filter((word) => filename.split(" ").includes(word) || description.split(" ").includes(word));
@@ -342,7 +444,6 @@ function scoreCommonsMatch(site, image, pageCoordinate = null) {
   const context = normalizeText(contextText(site));
   const state = normalizeText(site.state);
   const locality = normalizeText(site.locality);
-  const descriptiveText = `${filename} ${description}`;
   if (locality && locality.length >= 4 && descriptiveText.includes(locality)) confidence += 0.035;
   else if (state && state.length >= 4 && descriptiveText.includes(state)) confidence += 0.035;
   if (descriptiveText.includes("india")) confidence += 0.025;
@@ -457,7 +558,7 @@ function createWikimediaClient(options = {}) {
     }
   }
 
-  async function fetchPaced(url) {
+  async function fetchPaced(url, accept = "application/json") {
     const previous = requestQueue;
     let release;
     requestQueue = new Promise((resolve) => { release = resolve; });
@@ -471,7 +572,7 @@ function createWikimediaClient(options = {}) {
       try {
         return await fetchImpl(url, {
           method: "GET",
-          headers: { Accept: "application/json", "User-Agent": userAgent },
+          headers: { Accept: accept, "User-Agent": userAgent },
           signal: controller.signal,
           redirect: "error",
         });
@@ -519,7 +620,7 @@ function createWikimediaClient(options = {}) {
           const retryable = payload.error.code === "maxlag" || payload.error.code === "ratelimited";
           lastError = new WikimediaRequestError(payload.error.code || "provider_api_error", "Wikimedia reported an API error", retryable);
           if (retryable && attempt < maxRetries) {
-            await sleepImpl(Math.min(60000, 1000 * (2 ** attempt)));
+            await sleepImpl(apiRetryDelay(payload.error, response, attempt, now()));
             continue;
           }
           throw lastError;
@@ -541,6 +642,49 @@ function createWikimediaClient(options = {}) {
       }
     }
     throw lastError ?? new WikimediaRequestError("provider_unavailable", "Wikimedia request failed");
+  }
+
+  async function verifyImageBytes(image) {
+    const imageUrl = allowedWikimediaImageUrl(image?.url);
+    if (!imageUrl) throw new WikimediaRequestError("image_url_rejected", "The Wikimedia image URL was not on an approved HTTPS upload host");
+    let lastError = null;
+    for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+      try {
+        const response = await fetchPaced(new URL(imageUrl), "image/jpeg,image/png,image/webp,image/gif");
+        if (response.status === 429 || response.status >= 500) {
+          const retryAfter = response.headers?.get?.("retry-after");
+          const delay = parseRetryAfter(retryAfter, now(), Math.min(60000, 1000 * (2 ** attempt)));
+          await response.body?.cancel?.().catch?.(() => {});
+          lastError = new WikimediaRequestError(response.status === 429 ? "rate_limited" : "provider_unavailable", `Wikimedia returned HTTP ${response.status}`, true);
+          if (attempt < maxRetries) await sleepImpl(delay);
+          continue;
+        }
+        if (!response.ok) {
+          await response.body?.cancel?.().catch?.(() => {});
+          throw new WikimediaRequestError("image_fetch_failed", `Wikimedia image request returned HTTP ${response.status}`);
+        }
+        const contentLength = Number(response.headers?.get?.("content-length"));
+        if (Number.isFinite(contentLength) && contentLength > MAX_IMAGE_BYTES) {
+          await response.body?.cancel?.().catch?.(() => {});
+          throw new WikimediaRequestError("image_bytes_too_large", "The Wikimedia image exceeded the 25 MB verification limit");
+        }
+        const bytes = Buffer.from(await response.arrayBuffer());
+        return inspectImageBytes(bytes, response.headers?.get?.("content-type"));
+      } catch (error) {
+        if (error instanceof WikimediaRequestError) {
+          lastError = error;
+          if (!error.retryable || attempt >= maxRetries) throw error;
+        } else {
+          const diagnosticCode = typeof error?.cause?.code === "string"
+            ? error.cause.code
+            : typeof error?.code === "string" ? error.code : null;
+          lastError = new WikimediaRequestError("image_fetch_failed", "Wikimedia image request failed", true, diagnosticCode);
+          if (attempt >= maxRetries) throw lastError;
+        }
+        await sleepImpl(Math.min(60000, 1000 * (2 ** attempt)));
+      }
+    }
+    throw lastError ?? new WikimediaRequestError("image_fetch_failed", "Wikimedia image request failed");
   }
 
   async function searchWikidata(site, diagnostics = null) {
@@ -654,17 +798,24 @@ function createWikimediaClient(options = {}) {
         format: "json",
         formatversion: "2",
         maxlag: "5",
-        prop: "imageinfo",
+        prop: "imageinfo|coordinates",
         titles: titles.join("|"),
         iiprop: "url|user|extmetadata|timestamp",
         iiurlwidth: "1000",
+        colimit: "1",
       }).toString();
       const infoPayload = await requestJson(infoUrl);
       for (const page of infoPayload?.query?.pages ?? []) {
         if (page?.missing !== undefined) continue;
         try {
           const image = parseCommonsImageInfo(page, site.name);
-          images.set(image.filename, { image, coordinate: null });
+          const coordinateValue = page.coordinates?.[0];
+          const coordinateLat = safeCoordinate(coordinateValue?.lat, -90, 90);
+          const coordinateLon = safeCoordinate(coordinateValue?.lon, -180, 180);
+          images.set(image.filename, {
+            image,
+            coordinate: coordinateLat === null || coordinateLon === null ? null : { latitude: coordinateLat, longitude: coordinateLon },
+          });
         } catch {
           // Keep searching other result files; malformed candidates are not surfaced as verified.
         }
@@ -674,8 +825,12 @@ function createWikimediaClient(options = {}) {
     const location = [site.locality, site.district, site.state, "India"].filter(Boolean).join(" ");
     // Commons text search can be overconstrained by stale district names, so search the monument first.
     await searchText(nameQuery);
+    const aliases = COMMONS_SEARCH_ALIASES[site.slug] ?? [];
+    for (const alias of aliases) {
+      await searchText(`${alias} ${location}`.trim());
+    }
     let textCandidates = [...images.values()]
-      .map(({ image, coordinate }) => ({ image, confidence: scoreCommonsMatch(site, image, coordinate) }))
+      .map(({ image, coordinate }) => ({ image, coordinate, confidence: scoreCommonsMatch(site, image, coordinate) }))
       .sort((left, right) => right.confidence - left.confidence || left.image.filename.localeCompare(right.image.filename));
     if ((!textCandidates[0] || textCandidates[0].confidence < MINIMUM_MATCH_CONFIDENCE || (textCandidates[1] && textCandidates[0].confidence - textCandidates[1].confidence < 0.06)) && location) {
       const contextualQuery = `${nameQuery} ${location}`.trim();
@@ -723,7 +878,7 @@ function createWikimediaClient(options = {}) {
       .sort((left, right) => right.confidence - left.confidence || left.image.filename.localeCompare(right.image.filename));
   }
 
-  return { requestJson, searchWikidata, loadEntityData, loadCommonsFile, searchCommons };
+  return { requestJson, searchWikidata, loadEntityData, loadCommonsFile, searchCommons, verifyImageBytes };
 }
 
 function parseRetryAfter(value, now = Date.now(), fallback = 1000) {
@@ -732,6 +887,19 @@ function parseRetryAfter(value, now = Date.now(), fallback = 1000) {
   if (Number.isFinite(seconds) && seconds >= 0) return Math.min(Number.MAX_SAFE_INTEGER, seconds * 1000);
   const time = Date.parse(value);
   return Number.isFinite(time) ? Math.max(0, time - now) : fallback;
+}
+
+function apiRetryDelay(error, response, attempt, now = Date.now()) {
+  const fallback = Math.min(60000, 1000 * (2 ** attempt));
+  const retryAfter = response?.headers?.get?.("retry-after");
+  if (retryAfter) return parseRetryAfter(retryAfter, now, fallback);
+
+  const lagSeconds = Number(error?.lag);
+  if (error?.code === "maxlag" && Number.isFinite(lagSeconds) && lagSeconds >= 0) {
+    // Give the replica a little room to recover after the provider's stated lag.
+    return Math.min(60000, Math.ceil(lagSeconds * 1000) + 1000);
+  }
+  return fallback;
 }
 
 function candidateSummary(candidate) {
@@ -753,6 +921,8 @@ function candidateSummary(candidate) {
       documented_date_source: image.documentedDateSource,
       uploaded_at: image.uploadedAt,
       media_role: classifyMediaRole(image),
+      binary_verified: image.binaryVerified === true,
+      byte_verification: image.byteVerification ?? null,
       confidence: candidate.confidence,
       missing_metadata: image.missingMetadata,
     };
@@ -767,13 +937,224 @@ function candidateSummary(candidate) {
   };
 }
 
+async function verifyImageBinary(image, client) {
+  if (typeof client.verifyImageBytes !== "function") {
+    throw new WikimediaRequestError("image_byte_check_unavailable", "Wikimedia image bytes could not be checked by this client");
+  }
+  const byteVerification = await client.verifyImageBytes(image);
+  return { ...image, binaryVerified: true, byteVerification };
+}
+
+function phraseInText(phrase, text) {
+  const normalizedPhrase = normalizeText(phrase);
+  if (!normalizedPhrase || normalizedPhrase.length < 4) return false;
+  return (` ${normalizeText(text)} `).includes(` ${normalizedPhrase} `);
+}
+
+function evaluateCommonsDestinationMatch(site, candidate) {
+  const descriptiveText = [candidate.image.filename, candidate.image.title, candidate.image.description].join(" ");
+  const localityMatch = phraseInText(site.locality, descriptiveText);
+  const districtMatch = phraseInText(site.district, descriptiveText);
+  const latitude = safeCoordinate(site.latitude, -90, 90);
+  const longitude = safeCoordinate(site.longitude, -180, 180);
+  const hasSiteCoordinates = latitude !== null && longitude !== null;
+  const distance = hasSiteCoordinates && candidate.coordinate
+    ? distanceKm({ latitude, longitude }, candidate.coordinate)
+    : null;
+
+  if (distance !== null && distance > MAX_COMMONS_DESTINATION_DISTANCE_KM) {
+    return { accepted: false, reason: "commons_geotag_too_far", localityMatch, districtMatch, distanceKm: Number(distance.toFixed(2)) };
+  }
+  const coordinateMatch = distance !== null && distance <= MAX_COMMONS_DESTINATION_DISTANCE_KM;
+  if (!coordinateMatch && !localityMatch && !districtMatch) {
+    return { accepted: false, reason: "commons_destination_context_unconfirmed", localityMatch, districtMatch, distanceKm: null };
+  }
+  return {
+    accepted: true,
+    reason: null,
+    evidence: coordinateMatch ? "commons_page_coordinates" : localityMatch ? "commons_page_locality_text" : "commons_page_district_text",
+    localityMatch,
+    districtMatch,
+    distanceKm: distance === null ? null : Number(distance.toFixed(2)),
+  };
+}
+
+async function acquireCommonsSearchForHeritage(site, client, options = {}) {
+  const threshold = options.threshold ?? MINIMUM_MATCH_CONFIDENCE;
+  const diagnostics = options.diagnostics ?? {};
+  const searched = await client.searchCommons(site, diagnostics);
+  if (!searched.length) {
+    return {
+      status: "not_found",
+      confidence: null,
+      entityConfidence: null,
+      matchedQid: null,
+      candidates: [],
+      images: [],
+      image: null,
+      errorCode: "no_suitable_commons_file",
+      errorMessage: "Commons search returned no file page with a positive destination name match",
+    };
+  }
+
+  const evaluated = searched.map((candidate) => ({
+    ...candidate,
+    destinationMatch: evaluateCommonsDestinationMatch(site, candidate),
+  }));
+  const candidateSummaries = evaluated.slice(0, 10).map((candidate) => ({
+    ...candidateSummary(candidate),
+    destination_match: candidate.destinationMatch.accepted,
+    destination_match_evidence: candidate.destinationMatch.evidence ?? null,
+    destination_match_reason: candidate.destinationMatch.reason,
+    destination_distance_km: candidate.destinationMatch.distanceKm,
+  }));
+  const destinationMatches = evaluated.filter((candidate) => candidate.destinationMatch.accepted);
+  if (!destinationMatches.length) {
+    const geotagged = evaluated.some((candidate) => candidate.destinationMatch.reason === "commons_geotag_too_far");
+    return {
+      status: "needs_review",
+      confidence: evaluated[0].confidence,
+      entityConfidence: null,
+      matchedQid: null,
+      candidates: candidateSummaries,
+      images: [],
+      image: null,
+      errorCode: geotagged ? "commons_destination_mismatch" : "commons_destination_unconfirmed",
+      errorMessage: geotagged
+        ? "Commons search results were geotagged more than 10 km from this destination; no image was imported"
+        : "Commons files matched the name but had no matching locality, district, or close Commons page coordinates",
+    };
+  }
+
+  const confidentMatches = destinationMatches.filter((candidate) => candidate.confidence >= threshold);
+  if (!confidentMatches.length) {
+    return {
+      status: "needs_review",
+      confidence: destinationMatches[0].confidence,
+      entityConfidence: null,
+      matchedQid: null,
+      candidates: candidateSummaries,
+      images: [],
+      image: null,
+      errorCode: "commons_match_below_threshold",
+      errorMessage: "The best Commons file page did not meet the automatic destination-match threshold",
+    };
+  }
+
+  const attributableMatches = confidentMatches.filter((candidate) => candidate.image.hasRequiredMetadata);
+  if (!attributableMatches.length) {
+    const best = confidentMatches[0];
+    return {
+      status: "needs_review",
+      confidence: best.confidence,
+      entityConfidence: null,
+      matchedQid: null,
+      candidates: candidateSummaries,
+      images: [],
+      image: null,
+      errorCode: "commons_attribution_incomplete",
+      errorMessage: `Commons metadata is missing ${best.image.missingMetadata.join(", ")}`,
+    };
+  }
+
+  // Commons search provides useful file-page metadata and destination clues,
+  // but text, coordinates, and valid bytes do not establish what a photograph
+  // depicts. Keep every matching file page in the review queue; the explicit
+  // candidate-manifest approval path performs a fresh metadata and byte check.
+  return {
+    status: "needs_review",
+    confidence: attributableMatches[0].confidence,
+    entityConfidence: null,
+    matchedQid: null,
+    candidates: candidateSummaries,
+    images: [],
+    image: null,
+    errorCode: "visual_match_review_required",
+    errorMessage: "Commons file-page metadata and location support a candidate, but a person must confirm the visible subject before publication",
+  };
+}
+
 async function acquireImageForHeritage(site, client, options = {}) {
+  if (options.commonsSearchOnly === true) return acquireCommonsSearchForHeritage(site, client, options);
   const threshold = options.threshold ?? MINIMUM_MATCH_CONFIDENCE;
   const diagnostics = options.diagnostics ?? {};
   const context = [];
   let selectedEntity = null;
   let matchedQid = null;
   let entityConfidence = null;
+
+  if (site.candidateImageFilename) {
+    const candidate = await client.loadCommonsFile(site.candidateImageFilename, site.name);
+    if (candidate) {
+      const confidence = scoreCommonsMatch(site, candidate);
+      const summary = candidateSummary({ image: candidate, confidence });
+      if (confidence >= threshold && candidate.hasRequiredMetadata) {
+        const checkedImage = await verifyImageBinary(candidate, client);
+        checkedImage.mediaRole = classifyMediaRole(checkedImage);
+        const checkedSummary = candidateSummary({ image: checkedImage, confidence });
+        return {
+          status: "verified",
+          confidence,
+          entityConfidence: null,
+          matchedQid: null,
+          candidates: [checkedSummary],
+          image: checkedImage,
+          images: [checkedImage],
+        };
+      }
+      context.push(summary);
+      if (site.candidateImageIsApproved !== true) {
+        return {
+          status: "needs_review",
+          confidence,
+          entityConfidence: null,
+          matchedQid: null,
+          candidates: context,
+          images: [],
+          image: null,
+          errorCode: candidate.hasRequiredMetadata ? "candidate_match_needs_review" : "commons_attribution_incomplete",
+          errorMessage: candidate.hasRequiredMetadata ? "The supplied Commons candidate requires a human destination match review" : "The supplied Commons candidate is missing required source or attribution metadata",
+        };
+      }
+      if (site.candidateImageIsApproved === true) {
+        return {
+          status: "needs_review",
+          confidence,
+          entityConfidence: null,
+          matchedQid: null,
+          candidates: context,
+          images: [],
+          image: null,
+          errorCode: candidate.hasRequiredMetadata ? "approved_image_match_below_threshold" : "commons_attribution_incomplete",
+          errorMessage: candidate.hasRequiredMetadata ? "The approved Commons file did not match the heritage record confidently enough" : "The approved Commons file is missing required source or attribution metadata",
+        };
+      }
+    } else if (site.candidateImageIsApproved !== true) {
+      return {
+        status: "needs_review",
+        confidence: null,
+        entityConfidence: null,
+        matchedQid: null,
+        candidates: [],
+        images: [],
+        image: null,
+        errorCode: "candidate_commons_file_missing",
+        errorMessage: "The supplied filename did not resolve to a Commons image page; its URL and metadata remain unverified",
+      };
+    } else if (site.candidateImageIsApproved === true) {
+      return {
+        status: "needs_review",
+        confidence: null,
+        entityConfidence: null,
+        matchedQid: null,
+        candidates: [],
+        images: [],
+        image: null,
+        errorCode: "approved_image_missing",
+        errorMessage: "The visually reviewed Commons file no longer resolves to an image page",
+      };
+    }
+  }
 
   if (site.wikidata_qid) {
     if (!validQid(site.wikidata_qid)) {
@@ -815,7 +1196,10 @@ async function acquireImageForHeritage(site, client, options = {}) {
       if (!image.hasRequiredMetadata) {
         continue;
       }
-      if (confidence >= threshold) verifiedImages.push({ ...image, mediaRole: classifyMediaRole(image) });
+      if (confidence >= threshold) {
+        const checkedImage = await verifyImageBinary(image, client);
+        verifiedImages.push({ ...checkedImage, mediaRole: classifyMediaRole(checkedImage) });
+      }
     }
     if (verifiedImages.length) {
       const incomplete = imageCandidates.filter((candidate) => candidate.missing_metadata?.length);
@@ -862,7 +1246,8 @@ async function acquireImageForHeritage(site, client, options = {}) {
   if (commonsCandidates[1] && bestCommons.confidence - commonsCandidates[1].confidence < 0.06) {
     return { status: "needs_review", confidence: bestCommons.confidence, entityConfidence, matchedQid, candidates: summaries, errorCode: "ambiguous_commons_match", errorMessage: "Multiple Commons images matched; manual review is required" };
   }
-  const verifiedImage = { ...bestCommons.image, mediaRole: classifyMediaRole(bestCommons.image) };
+  const checkedImage = await verifyImageBinary(bestCommons.image, client);
+  const verifiedImage = { ...checkedImage, mediaRole: classifyMediaRole(checkedImage) };
   return { status: "verified", confidence: bestCommons.confidence, entityConfidence, matchedQid, candidates: summaries, image: verifiedImage, images: [verifiedImage] };
 }
 
@@ -870,7 +1255,9 @@ module.exports = {
   CACHE_TTL_MS,
   DEFAULT_CONTACT_URL,
   MINIMUM_MATCH_CONFIDENCE,
+  MAX_COMMONS_DESTINATION_DISTANCE_KM,
   WikimediaRequestError,
+  acquireCommonsSearchForHeritage,
   acquireImageForHeritage,
   allowedWikimediaImageUrl,
   candidateSummary,
@@ -880,6 +1267,8 @@ module.exports = {
   decodeHtmlText,
   discoverEntityMatch,
   distanceKm,
+  evaluateCommonsDestinationMatch,
+  inspectImageBytes,
   normalizeText,
   parseCommonsImageInfo,
   parseContact,

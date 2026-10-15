@@ -80,15 +80,34 @@ function addExactFilter(conditions, values, column, value) {
   conditions.push(`${column} = $${values.length}`);
 }
 
+function publicPlaceScope(alias, withVerifiedPhoto) {
+  if (withVerifiedPhoto) {
+    return `EXISTS (
+      SELECT 1 FROM heritage_media verified_photo
+       WHERE verified_photo.heritage_id = ${alias}.id
+         AND verified_photo.media_type = 'image'
+         AND verified_photo.media_role IN ('gallery', 'current')
+         AND verified_photo.verification_status = 'verified'
+         AND verified_photo.is_illustrative = FALSE
+    )`;
+  }
+  return `EXISTS (
+    SELECT 1 FROM heritage_catalog_membership membership
+     WHERE membership.heritage_id = ${alias}.id
+  )`;
+}
+
 router.get("/categories", async (req, res) => {
+  const withVerifiedPhoto = readBooleanQuery(req, res, "withVerifiedPhoto");
+  if (!withVerifiedPhoto.ok) return;
   try {
     const result = await pool.query(
       `SELECT c.id, c.name, c.slug
          FROM heritage_categories c
         WHERE EXISTS (
-          SELECT 1 FROM heritage_catalog_membership membership
-          JOIN heritage h ON h.id = membership.heritage_id
+          SELECT 1 FROM heritage h
           WHERE h.category_id = c.id AND h.publication_status = 'published'
+            AND ${publicPlaceScope("h", withVerifiedPhoto.value === true)}
         )
         ORDER BY c.name ASC, c.id ASC`
     );
@@ -106,17 +125,20 @@ router.get("/categories", async (req, res) => {
 router.get("/heritage-facets", async (req, res) => {
   const state = readTextQuery(req, res, "state");
   if (!state.ok) return;
+  const withVerifiedPhoto = readBooleanQuery(req, res, "withVerifiedPhoto");
+  if (!withVerifiedPhoto.ok) return;
+  const placeScope = publicPlaceScope("heritage", withVerifiedPhoto.value === true);
   try {
     const [states, districts] = await Promise.all([
       pool.query(`SELECT DISTINCT state FROM heritage
         WHERE publication_status='published'
-          AND EXISTS (SELECT 1 FROM heritage_catalog_membership membership WHERE membership.heritage_id=heritage.id)
+          AND ${placeScope}
           AND NULLIF(BTRIM(state), '') IS NOT NULL
         ORDER BY state`),
       state.value
         ? pool.query(`SELECT DISTINCT district FROM heritage
             WHERE publication_status='published' AND state=$1
-              AND EXISTS (SELECT 1 FROM heritage_catalog_membership membership WHERE membership.heritage_id=heritage.id)
+              AND ${placeScope}
               AND NULLIF(BTRIM(district), '') IS NOT NULL
             ORDER BY district`, [state.value])
         : Promise.resolve({ rows: [] }),
@@ -143,6 +165,8 @@ router.get("/heritage", async (req, res) => {
   if (!district.ok) return;
   const hasTimeline = readBooleanQuery(req, res, "hasTimeline");
   if (!hasTimeline.ok) return;
+  const withVerifiedPhoto = readBooleanQuery(req, res, "withVerifiedPhoto");
+  if (!withVerifiedPhoto.ok) return;
 
   const limit = readPaginationValue(req, res, "limit", DEFAULT_LIMIT, MAX_LIMIT);
   if (limit === null) return;
@@ -152,7 +176,7 @@ router.get("/heritage", async (req, res) => {
   const values = [];
   const conditions = [
     "h.publication_status = 'published'",
-    "EXISTS (SELECT 1 FROM heritage_catalog_membership membership WHERE membership.heritage_id = h.id)",
+    publicPlaceScope("h", withVerifiedPhoto.value === true),
   ];
 
   if (q.value !== null) {
@@ -193,7 +217,6 @@ router.get("/heritage", async (req, res) => {
       `SELECT COUNT(*) AS total
        FROM heritage h
        JOIN heritage_categories c ON c.id = h.category_id
-       JOIN heritage_catalog_membership membership ON membership.heritage_id = h.id
        WHERE ${whereClause}`,
       filterValues
     );
@@ -211,6 +234,7 @@ router.get("/heritage", async (req, res) => {
          h.category_id,
          jsonb_build_object('id', c.id, 'name', c.name, 'slug', c.slug) AS category,
          h.state,
+         h.country,
          h.district,
          h.locality,
          h.address,
@@ -255,7 +279,7 @@ router.get("/heritage", async (req, res) => {
          END AS media
        FROM heritage h
        JOIN heritage_categories c ON c.id = h.category_id
-       JOIN heritage_catalog_membership membership ON membership.heritage_id = h.id
+       LEFT JOIN heritage_catalog_membership membership ON membership.heritage_id = h.id
        LEFT JOIN LATERAL (
          SELECT m.id, m.heritage_id, m.media_type, m.url, m.caption,
                 m.alt_text, m.credit, m.license, m.display_order, m.source_url,
@@ -266,12 +290,13 @@ router.get("/heritage", async (req, res) => {
          FROM heritage_media m
          WHERE m.heritage_id = h.id AND m.media_type = 'image'
            AND m.media_role IN ('gallery', 'current')
-           AND m.verification_status IN ('verified', 'unverified')
-         ORDER BY (m.verification_status = 'verified') DESC, m.display_order ASC, m.id ASC
+           AND m.verification_status = 'verified'
+           AND m.is_illustrative = FALSE
+         ORDER BY m.display_order ASC, m.id ASC
          LIMIT 1
        ) selected_image ON TRUE
        WHERE ${whereClause}
-       ORDER BY membership.display_order ASC
+       ORDER BY membership.display_order ASC NULLS LAST, h.name ASC, h.id ASC
        LIMIT $${values.length - 1} OFFSET $${values.length}`,
       values
     );
@@ -303,6 +328,8 @@ router.get("/heritage-map", async (req, res) => {
   if (!state.ok) return;
   const district = readTextQuery(req, res, "district");
   if (!district.ok) return;
+  const withVerifiedPhoto = readBooleanQuery(req, res, "withVerifiedPhoto");
+  if (!withVerifiedPhoto.ok) return;
 
   const limit = readPaginationValue(req, res, "limit", MAP_DEFAULT_LIMIT, MAX_LIMIT);
   if (limit === null) return;
@@ -312,7 +339,7 @@ router.get("/heritage-map", async (req, res) => {
   const values = [];
   const conditions = [
     "h.publication_status = 'published'",
-    "EXISTS (SELECT 1 FROM heritage_catalog_membership membership WHERE membership.heritage_id = h.id)",
+    publicPlaceScope("h", withVerifiedPhoto.value === true),
     "h.latitude IS NOT NULL",
     "h.longitude IS NOT NULL",
     "h.latitude BETWEEN -90 AND 90",
@@ -355,16 +382,15 @@ router.get("/heritage-map", async (req, res) => {
       "SELECT COUNT(*) AS total\n" +
         "FROM heritage h\n" +
         "JOIN heritage_categories c ON c.id = h.category_id\n" +
-        "JOIN heritage_catalog_membership membership ON membership.heritage_id = h.id\n" +
         "WHERE " + whereClause,
       filterValues
     );
     const mapQuery = [
-      "SELECT h.id, h.slug, h.name, h.description, h.state, h.district, h.locality,",
+      "SELECT h.id, h.slug, h.name, h.description, h.state, h.country, h.district, h.locality,",
       "       h.latitude, h.longitude, TRUE AS coordinates_verified, selected_image.media",
       "FROM heritage h",
       "JOIN heritage_categories c ON c.id = h.category_id",
-      "JOIN heritage_catalog_membership membership ON membership.heritage_id = h.id",
+      "LEFT JOIN heritage_catalog_membership membership ON membership.heritage_id = h.id",
       "LEFT JOIN LATERAL (",
       "  SELECT jsonb_build_array(jsonb_build_object(",
       "    'id', m.id, 'heritage_id', m.heritage_id, 'media_type', m.media_type,",
@@ -379,12 +405,13 @@ router.get("/heritage-map", async (req, res) => {
       "  WHERE m.heritage_id = h.id",
       "    AND m.media_type = 'image'",
       "    AND m.media_role IN ('gallery', 'current')",
-      "    AND m.verification_status IN ('verified', 'unverified')",
-      "  ORDER BY (m.verification_status = 'verified') DESC, m.display_order ASC, m.id ASC",
+      "    AND m.verification_status = 'verified'",
+      "    AND m.is_illustrative = FALSE",
+      "  ORDER BY m.display_order ASC, m.id ASC",
       "  LIMIT 1",
       ") selected_image ON TRUE",
       "WHERE " + whereClause,
-      "ORDER BY membership.display_order ASC",
+      "ORDER BY membership.display_order ASC NULLS LAST, h.name ASC, h.id ASC",
       "LIMIT $" + (values.length - 1) + " OFFSET $" + values.length,
     ].join("\n");
     const result = await pool.query(mapQuery, values);
@@ -465,6 +492,7 @@ router.get("/heritage/:id", authenticateOptional, async (req, res) => {
          h.category_id,
          jsonb_build_object('id', c.id, 'name', c.name, 'slug', c.slug) AS category,
          h.state,
+         h.country,
          h.district,
          h.locality,
          h.address,
@@ -512,7 +540,13 @@ router.get("/heritage/:id", authenticateOptional, async (req, res) => {
            'match_confidence', m.match_confidence
          ) ORDER BY (m.verification_status = 'verified') DESC, m.display_order ASC, m.id ASC) AS items
          FROM heritage_media m
-         WHERE m.heritage_id = h.id
+         WHERE (
+               m.heritage_id = h.id
+               AND (
+                 m.media_type <> 'image'
+                 OR (m.verification_status = 'verified' AND m.is_illustrative = FALSE)
+               )
+            )
             OR (
               m.heritage_id <> h.id
               AND m.media_type = 'image'
@@ -600,6 +634,14 @@ router.get("/heritage/:id", authenticateOptional, async (req, res) => {
          AND h.publication_status = 'published'
          AND (
            EXISTS (SELECT 1 FROM heritage_catalog_membership membership WHERE membership.heritage_id = h.id)
+           OR EXISTS (
+             SELECT 1 FROM heritage_media verified_photo
+              WHERE verified_photo.heritage_id = h.id
+                AND verified_photo.media_type = 'image'
+                AND verified_photo.media_role IN ('gallery', 'current')
+                AND verified_photo.verification_status = 'verified'
+                AND verified_photo.is_illustrative = FALSE
+           )
            OR ($2::INTEGER IS NOT NULL AND (
              EXISTS (SELECT 1 FROM favorites f WHERE f.heritage_id = h.id AND f.user_id = $2)
              OR EXISTS (SELECT 1 FROM visited_places v WHERE v.heritage_id = h.id AND v.user_id = $2)

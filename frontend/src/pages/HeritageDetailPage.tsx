@@ -11,7 +11,7 @@ import { heritageToView } from "@/lib/heritageAdapter";
 import { RouterLink } from "@/lib/router";
 import type { HeritageGalleryImage, HeritageView } from "@/lib/heritageAdapter";
 import { CitationLinks, SourcesAndReferences } from "@/components/heritage/Citations";
-import { getCurrentHeritageHeroImage, getHeritageImageFallback, getHeritageImageSource, getVerifiedHeritageImages } from "@/lib/image-assets.js";
+import { getHeritageHeroImage, getVerifiedHeritageImages, getHeritageImageFallback, getHeritageImageSource, isHeritageImageFallback } from "@/lib/image-assets.js";
 
 function GalleryImage({ image }: { image: HeritageGalleryImage }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
@@ -31,9 +31,10 @@ function GalleryImage({ image }: { image: HeritageGalleryImage }) {
           <div className="text-center"><Landmark className="mx-auto h-8 w-8" aria-hidden="true" /><p className="mt-2 text-[10px] uppercase tracking-[0.18em]">Image unavailable</p></div>
         </div>
       ) : (
-        <img src={source} alt={image.alt} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailedUrl(source)} className="max-h-[32rem] min-h-52 w-full bg-black/20 object-contain" />
+        <img src={source} alt={isHeritageImageFallback(source) ? `Illustrative placeholder; verified photograph unavailable for ${image.alt}` : image.alt} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailedUrl(source)} className="max-h-[32rem] min-h-52 w-full bg-black/20 object-contain" />
       )}
       <figcaption className="space-y-1 p-3 text-xs leading-5 text-parchment/65">
+        {isHeritageImageFallback(source) ? <p className="font-medium uppercase tracking-[0.12em] text-parchment/60">Illustrative placeholder; verified photograph unavailable.</p> : null}
         {image.label ? <p className="font-medium text-parchment">{image.label}{image.documentedDate ? ` · ${image.documentedDate}` : ""}</p> : null}
         {image.creator ? <p>Creator: {image.creator}</p> : null}
         {image.credit && image.credit !== image.creator ? <p>{image.credit}</p> : null}
@@ -70,7 +71,7 @@ function HeritageDetailContent({ item }: { item: HeritageView }) {
   const { user } = useAuth();
   const period = item.historicalPeriod;
   const galleryImages = getVerifiedHeritageImages(item.gallery);
-  const heroImage = getCurrentHeritageHeroImage(item.gallery);
+  const heroImage = getHeritageHeroImage(item.gallery);
   const heroImageCandidate = heroImage
     ? getHeritageImageSource({ url: heroImage.src, thumbnail_url: heroImage.thumbnailSrc })
     : null;
@@ -222,6 +223,7 @@ function HeritageDetailContent({ item }: { item: HeritageView }) {
             className="absolute inset-0 h-full w-full object-cover object-center"
           />
         ) : null}
+        {heroImageUrl && isHeritageImageFallback(heroImageUrl) ? <p className="absolute right-5 top-20 z-10 rounded-full border border-white/20 bg-ink/80 px-3 py-1 text-[10px] uppercase tracking-[0.15em] text-parchment/75 md:right-10">Illustrative placeholder</p> : null}
         <div className="absolute inset-0 bg-linear-to-t from-ink via-ink/75 to-ink/35" aria-hidden="true" />
         <div className="absolute inset-0 bg-linear-to-r from-ink/55 via-ink/10 to-transparent" aria-hidden="true" />
         <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-end px-5 pb-9 pt-24 sm:pb-10 md:px-10 md:pb-12 lg:pb-14">
@@ -229,6 +231,7 @@ function HeritageDetailContent({ item }: { item: HeritageView }) {
             <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to explore
           </RouterLink>
           <div className="mt-7 max-w-4xl sm:mt-9">
+            {!heroImage ? <p className="inline-flex rounded-full border border-white/20 bg-ink/70 px-3 py-1 text-[10px] uppercase tracking-[0.15em] text-parchment/65">No verified photograph</p> : null}
             {item.category ? <p className="text-[10px] uppercase tracking-[0.3em] text-gold">{item.category.name}</p> : null}
             <h1 className="font-display mt-3 text-4xl leading-[0.98] text-parchment sm:text-5xl md:text-6xl lg:text-7xl">{item.name}</h1>
             <p className="mt-5 flex items-center gap-2 text-sm text-parchment/70"><MapPin className="h-4 w-4 text-gold" aria-hidden="true" />{item.location}</p>

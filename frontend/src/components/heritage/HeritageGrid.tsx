@@ -8,6 +8,7 @@ type HeritageGridProps = {
   error?: string | null;
   onRetry?: () => void;
   emptyMessage?: string;
+  verifiedPhotoOnly?: boolean;
 };
 
 export function HeritageGrid({
@@ -16,6 +17,7 @@ export function HeritageGrid({
   error = null,
   onRetry,
   emptyMessage = "No heritage places match these filters.",
+  verifiedPhotoOnly = false,
 }: HeritageGridProps) {
   if (loading) {
     return (
@@ -62,7 +64,7 @@ export function HeritageGrid({
 
   return (
     <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3" aria-live="polite">
-      {items.map((item, index) => <HeritageCard key={`${item.slug}-${item.routeId}`} item={item} index={index} />)}
+      {items.map((item, index) => <HeritageCard key={`${item.slug}-${item.routeId}`} item={item} index={index} verifiedPhotoOnly={verifiedPhotoOnly} />)}
     </div>
   );
 }

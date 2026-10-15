@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS heritage (
   historical_period TEXT NOT NULL,
   category_id INTEGER NOT NULL REFERENCES heritage_categories(id) ON UPDATE CASCADE ON DELETE RESTRICT,
   state TEXT NOT NULL,
+  country TEXT,
   district TEXT,
   locality TEXT,
   address TEXT,
@@ -61,6 +62,7 @@ CREATE TABLE IF NOT EXISTS heritage (
 
 ALTER TABLE heritage ADD COLUMN IF NOT EXISTS locality TEXT;
 ALTER TABLE heritage ADD COLUMN IF NOT EXISTS address TEXT;
+ALTER TABLE heritage ADD COLUMN IF NOT EXISTS country TEXT;
 
 CREATE TABLE IF NOT EXISTS heritage_catalog_membership (
   heritage_id INTEGER PRIMARY KEY
@@ -357,6 +359,21 @@ END $$;
 
 -- 1. Ensure users table supports status column
 ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE';
+UPDATE users
+   SET status = CASE
+     WHEN status IS NULL OR BTRIM(status) = '' THEN 'ACTIVE'
+     WHEN UPPER(BTRIM(status)) IN ('ACTIVE', 'SUSPENDED') THEN UPPER(BTRIM(status))
+     ELSE 'SUSPENDED'
+   END
+ WHERE status IS NULL OR status <> CASE
+     WHEN status IS NULL OR BTRIM(status) = '' THEN 'ACTIVE'
+     WHEN UPPER(BTRIM(status)) IN ('ACTIVE', 'SUSPENDED') THEN UPPER(BTRIM(status))
+     ELSE 'SUSPENDED'
+   END;
+ALTER TABLE users ALTER COLUMN status SET DEFAULT 'ACTIVE';
+ALTER TABLE users ALTER COLUMN status SET NOT NULL;
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_status_check;
+ALTER TABLE users ADD CONSTRAINT users_status_check CHECK (status IN ('ACTIVE', 'SUSPENDED'));
 
 -- 2. Stories table for Editorial CMS
 CREATE TABLE IF NOT EXISTS stories (

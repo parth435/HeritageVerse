@@ -5,7 +5,7 @@ import type { HeritageView } from "@/lib/heritageAdapter";
 import { CitationLinks } from "@/components/heritage/Citations";
 import { ReconstructionPanel } from "@/components/heritage/ReconstructionPanel";
 import type { HeritageMedia } from "@/types/heritage";
-import { getHeritageImageFallback, getHeritageImageSource } from "@/lib/image-assets.js";
+import { getHeritageImageFallback, getHeritageImageSource, isHeritageImageFallback } from "@/lib/image-assets.js";
 import {
   getDefaultHeritageOption,
   getVerifiedComparisonPair,
@@ -36,7 +36,7 @@ function ComparisonImage({ media, label }: { media: HeritageMedia; label: string
   const imageSource = failedUrl
     ? getHeritageImageFallback({ url: media.url }, failedUrl)
     : getHeritageImageSource({ url: media.url, thumbnail_url: media.thumbnail_url });
-  const failed = !imageSource;
+  const failed = !imageSource || isHeritageImageFallback(imageSource);
   const sourceUrl = secureHttpsUrl(media.source_url);
   const licenseUrl = secureHttpsUrl(media.license_url);
 
@@ -77,11 +77,12 @@ function AdditionalSiteImage({ media }: { media: HeritageMedia }) {
   const source = failedUrl
     ? getHeritageImageFallback({ url: media.url }, failedUrl)
     : getHeritageImageSource({ url: media.url, thumbnail_url: media.thumbnail_url });
+  const unavailable = !source || isHeritageImageFallback(source);
   const sourceUrl = secureHttpsUrl(media.source_url);
   const licenseUrl = secureHttpsUrl(media.license_url);
   return (
     <figure className="overflow-hidden rounded-xl border border-white/10 bg-[#100d0b]">
-      {source ? <img src={source} alt={media.alt_text || media.caption || "Sourced site photograph"} loading="lazy" onError={() => setFailedUrl(source)} className="max-h-72 w-full bg-black/20 object-contain" /> : <div className="grid min-h-40 place-items-center text-sm text-parchment/55">Image unavailable</div>}
+      {source && !unavailable ? <img src={source} alt={media.alt_text || media.caption || "Sourced site photograph"} loading="lazy" onError={() => setFailedUrl(source)} className="max-h-72 w-full bg-black/20 object-contain" /> : <div role="status" className="grid min-h-40 place-items-center text-center text-sm text-parchment/55">Verified photograph unavailable</div>}
       <figcaption className="space-y-2 p-4 text-xs leading-5 text-parchment/70">
         <p className="font-medium text-parchment">{media.caption || "Sourced site photograph"}</p>
         <p>{media.credit || media.creator}</p>
@@ -163,7 +164,7 @@ export function ThenNowView({
         ) : null}
         {loadingSites ? <p className="mt-6 text-sm text-parchment/60" role="status">Loading sourced heritage records…</p> : null}
         {loadingDetail ? <p className="mt-6 text-sm text-parchment/60" role="status">Loading this site’s history and images…</p> : null}
-        {!loadingSites && !listError && sites.length === 0 ? <p className="mt-6 rounded-xl border border-white/10 p-5 text-sm text-parchment/60">No published heritage records with timeline data are available for comparison yet.</p> : null}
+        {!loadingSites && !listError && sites.length === 0 ? <p className="mt-6 rounded-xl border border-white/10 p-5 text-sm text-parchment/60">No published places with verified photographs and timeline data are available for comparison yet.</p> : null}
 
         {selectedSite && !loadingDetail ? (
           <>
@@ -249,7 +250,7 @@ export function ThenNow() {
     let active = true;
     setLoadingSites(true);
     setListError(null);
-    void getHeritage({ limit: 100, hasTimeline: true }, { signal: controller.signal })
+    void getHeritage({ limit: 100, hasTimeline: true, withVerifiedPhoto: true }, { signal: controller.signal })
       .then((response) => {
         if (!active) return;
         const options = response.items.map(heritageToView);

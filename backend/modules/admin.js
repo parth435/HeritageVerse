@@ -31,6 +31,170 @@ router.get("/admin/dashboard", authenticate, requireAdmin, async (req, res) => {
   }
 });
 
+function readAdminPagination(query) {
+  const read = (key, fallback, maximum) => {
+    const raw = query[key];
+    if (raw === undefined) return { value: fallback, valid: true };
+    if (typeof raw !== "string" || !/^\d+$/.test(raw)) return { value: null, valid: false };
+    const value = Number(raw);
+    if (!Number.isSafeInteger(value) || value > maximum) return { value: null, valid: false };
+    return { value, valid: true };
+  };
+  const limit = read("limit", 25, 100);
+  const offset = read("offset", 0, 1_000_000);
+  if (!limit.valid || limit.value < 1 || !offset.valid) return null;
+  return { limit: limit.value, offset: offset.value };
+}
+
+router.get("/admin/users", authenticate, requireAdmin, async (req, res) => {
+  const pagination = readAdminPagination(req.query);
+  if (!pagination) return res.status(400).json({ success: false, message: "Pagination must use a limit from 1 to 100 and an offset from 0 to 1000000" });
+  const q = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 120) : "";
+  const role = typeof req.query.role === "string" ? req.query.role : "";
+  const status = typeof req.query.status === "string" ? req.query.status : "";
+  if (role && !["user", "admin"].includes(role)) return res.status(400).json({ success: false, message: "Role filter must be user or admin" });
+  if (status && !["ACTIVE", "SUSPENDED"].includes(status)) return res.status(400).json({ success: false, message: "Status filter must be ACTIVE or SUSPENDED" });
+
+  const filters = [];
+  const values = [];
+  if (q) {
+    values.push(`%${q}%`);
+    filters.push(`(name ILIKE $${values.length} OR email ILIKE $${values.length})`);
+  }
+  if (role) { values.push(role); filters.push(`role = $${values.length}`); }
+  if (status) { values.push(status); filters.push(`status = $${values.length}`); }
+  const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+  try {
+    const result = await pool.query(
+      `SELECT id, name, email, role, status, created_at FROM users ${where}
+       ORDER BY created_at DESC, id DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
+      [...values, pagination.limit, pagination.offset],
+    );
+    const count = await pool.query(`SELECT COUNT(*)::INTEGER AS total FROM users ${where}`, values);
+    return res.json({
+      success: true,
+      users: result.rows,
+      pagination: { total: count.rows[0].total, ...pagination },
+    });
+  } catch (error) {
+    console.error("Admin user list failed:", error.code || "unknown error");
+    return res.status(500).json({ success: false, message: "Failed to load users" });
+  }
+});
+
+router.get("/admin/users/:userId", authenticate, requireAdmin, async (req, res) => {
+  const userId = readPositiveId(req.params.userId);
+  if (userId === null) return res.status(400).json({ success: false, message: "User ID must be a positive integer" });
+  try {
+    const result = await pool.query(
+      `SELECT u.id, u.name, u.email, u.role, u.status, u.created_at,
+              (SELECT COUNT(*)::INTEGER FROM favorites f WHERE f.user_id=u.id) AS favorites_count,
+              (SELECT COUNT(*)::INTEGER FROM visited_places v WHERE v.user_id=u.id) AS visits_count,
+              (SELECT COUNT(*)::INTEGER FROM reviews r WHERE r.user_id=u.id) AS reviews_count,
+              (SELECT COUNT(*)::INTEGER FROM journeys j WHERE j.user_id=u.id) AS journeys_count
+         FROM users u WHERE u.id=$1`,
+      [userId],
+    );
+    if (!result.rows.length) return res.status(404).json({ success: false, message: "User was not found" });
+    return res.json({ success: true, user: result.rows[0] });
+  } catch (error) {
+    console.error("Admin user lookup failed:", error.code || "unknown error");
+    return res.status(500).json({ success: false, message: "Failed to load user details" });
+  }
+});
+
+async function updateAdminUser(req, res, field, value) {
+  const userId = readPositiveId(req.params.userId);
+  if (userId === null) return res.status(400).json({ success: false, message: "User ID must be a positive integer" });
+
+  let client;
+  let transactionOpen = false;
+  try {
+    client = await pool.connect();
+    await client.query("BEGIN");
+    transactionOpen = true;
+    // Serialize admin membership changes so concurrent requests cannot remove the last active admin.
+    await client.query("SELECT pg_advisory_xact_lock($1, $2)", [1246350413, 1]);
+    const targetResult = await client.query(
+      "SELECT id, name, email, role, status, created_at FROM users WHERE id=$1 FOR UPDATE",
+      [userId],
+    );
+    const target = targetResult.rows[0];
+    if (!target) {
+      await client.query("ROLLBACK");
+      transactionOpen = false;
+      return res.status(404).json({ success: false, message: "User was not found" });
+    }
+
+    const currentRole = String(target.role).toLowerCase();
+    const currentStatus = String(target.status).toUpperCase();
+    if ((field === "role" && currentRole === value) || (field === "status" && currentStatus === value)) {
+      await client.query("ROLLBACK");
+      transactionOpen = false;
+      return res.status(409).json({ success: false, message: `User already has ${field} ${value}` });
+    }
+    if (field === "role" && value === "admin" && currentStatus !== "ACTIVE") {
+      await client.query("ROLLBACK");
+      transactionOpen = false;
+      return res.status(409).json({ success: false, message: "Reactivate the account before promoting it" });
+    }
+    if (Number(target.id) === req.user.id && ((field === "role" && value === "user") || (field === "status" && value === "SUSPENDED"))) {
+      await client.query("ROLLBACK");
+      transactionOpen = false;
+      return res.status(409).json({ success: false, message: "Administrators cannot demote or suspend their own account" });
+    }
+
+    const removesActiveAdmin = currentRole === "admin" && currentStatus === "ACTIVE" &&
+      ((field === "role" && value === "user") || (field === "status" && value === "SUSPENDED"));
+    if (removesActiveAdmin) {
+      const admins = await client.query("SELECT COUNT(*)::INTEGER AS total FROM users WHERE role='admin' AND status='ACTIVE'");
+      if (admins.rows[0].total <= 1) {
+        await client.query("ROLLBACK");
+        transactionOpen = false;
+        return res.status(409).json({ success: false, message: "The last active administrator cannot be demoted or suspended" });
+      }
+    }
+
+    const column = field === "role" ? "role" : "status";
+    const result = await client.query(
+      `UPDATE users SET ${column}=$1 WHERE id=$2 RETURNING id, name, email, role, status, created_at`,
+      [value, userId],
+    );
+    const action = field === "role" ? `role changed from ${currentRole} to ${value}` : `account status changed from ${currentStatus} to ${value}`;
+    await client.query(
+      "INSERT INTO activity_logs (title, entity_type, entity_id, user_id) VALUES ($1, 'user', $2, $3)",
+      [`User ${userId} ${action}`, userId, req.user.id],
+    );
+    await client.query("COMMIT");
+    transactionOpen = false;
+    return res.json({ success: true, message: `User ${field} updated`, user: result.rows[0] });
+  } catch (error) {
+    if (transactionOpen) {
+      try { await client.query("ROLLBACK"); } catch { /* Preserve the original failure response. */ }
+    }
+    console.error("Admin user update failed:", error.code || "unknown error");
+    return res.status(500).json({ success: false, message: "Failed to update user" });
+  } finally {
+    client?.release();
+  }
+}
+
+router.patch("/admin/users/:userId/role", authenticate, requireAdmin, (req, res) => {
+  const role = req.body?.role;
+  if (typeof role !== "string" || !["user", "admin"].includes(role)) {
+    return res.status(400).json({ success: false, message: "Role must be user or admin" });
+  }
+  return updateAdminUser(req, res, "role", role);
+});
+
+router.patch("/admin/users/:userId/status", authenticate, requireAdmin, (req, res) => {
+  const status = req.body?.status;
+  if (typeof status !== "string" || !["ACTIVE", "SUSPENDED"].includes(status)) {
+    return res.status(400).json({ success: false, message: "Status must be ACTIVE or SUSPENDED" });
+  }
+  return updateAdminUser(req, res, "status", status);
+});
+
 router.get("/admin/heritage", authenticate, requireAdmin, async (req, res) => {
   const q = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 120) : "";
   const state = typeof req.query.state === "string" ? req.query.state.trim().slice(0, 120) : "";

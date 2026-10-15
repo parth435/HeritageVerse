@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Heritage image unavailable</title>
+  <desc id="desc">A warm illustrated silhouette of a historic Indian monument.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#17120e"/>
+      <stop offset="1" stop-color="#34251b"/>
+    </linearGradient>
+    <linearGradient id="stone" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#c29b5b"/>
+      <stop offset="1" stop-color="#80623b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="720" fill="url(#background)"/>
+  <path d="M0 570c180-60 305-24 470 6s298 28 410-8 217-48 320-5v157H0z" fill="#241a13"/>
+  <g fill="url(#stone)" opacity=".88">
+    <path d="M270 530V356l78-42 78 42v174h-42V376h-72v154z"/>
+    <path d="M354 315c-2-47 18-80 53-106 35 26 55 59 53 106z"/>
+    <path d="M334 294h146l-24 28H358z"/>
+    <path d="M535 530V305h130v225h-36V353h-58v177z"/>
+    <path d="M600 305c-2-57 24-98 66-130 42 32 68 73 66 130z"/>
+    <path d="M571 274h190l-30 33H600z"/>
+    <path d="M710 530V356l78-42 78 42v174h-42V376h-72v154z"/>
+    <path d="M794 315c-2-47 18-80 53-106 35 26 55 59 53 106z"/>
+    <path d="M774 294h146l-24 28H798z"/>
+    <path d="M220 530h640v25H220z"/>
+    <path d="M188 555h704v24H188z"/>
+  </g>
+  <g fill="#17120e" opacity=".72">
+    <path d="M365 530v-92a37 37 0 0 1 74 0v92z"/>
+    <path d="M578 530V395a22 22 0 0 1 44 0v135z"/>
+    <path d="M747 530v-92a37 37 0 0 1 74 0v92z"/>
+  </g>
+  <path d="M112 620h976" stroke="#c29b5b" stroke-opacity=".35" stroke-width="2"/>
+  <circle cx="1040" cy="125" r="34" fill="#c29b5b" fill-opacity=".14"/>
+  <circle cx="1040" cy="125" r="24" fill="#c29b5b" fill-opacity=".2"/>
+</svg>

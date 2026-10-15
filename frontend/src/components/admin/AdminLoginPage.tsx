@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { RouterLink, useNavigate } from "@/lib/router";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import type { User } from "@/types/auth";
 
 function isActiveAdministrator(user: User | null) {
@@ -46,15 +47,16 @@ export function AdminLoginPage({ notice }: { notice?: string | null }) {
   const activeAdmin = isActiveAdministrator(user);
 
   return (
-    <main className="relative isolate min-h-svh overflow-hidden bg-[#090807] text-parchment">
+    <main className="relative isolate min-h-svh overflow-hidden bg-ink text-parchment">
+      <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6"><ThemeToggle compact /></div>
       <div className="absolute inset-0 -z-10" aria-hidden="true">
         <img
           src="https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1800&q=80"
           alt=""
           className="absolute inset-0 h-full w-full object-cover object-center opacity-35"
         />
-        <div className="absolute inset-0 bg-linear-to-r from-[#080706]/95 via-[#080706]/80 to-[#080706]/95" />
-        <div className="absolute inset-0 bg-linear-to-t from-[#080706] via-transparent to-[#080706]/60" />
+        <div className="absolute inset-0 bg-linear-to-r from-ink/95 via-ink/80 to-ink/95" />
+        <div className="absolute inset-0 bg-linear-to-t from-ink via-transparent to-ink/60" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_22%_44%,rgba(214,160,78,0.15),transparent_42%)]" />
       </div>
 
@@ -84,7 +86,7 @@ export function AdminLoginPage({ notice }: { notice?: string | null }) {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="w-full max-w-md rounded-[1.75rem] border border-white/[0.1] bg-[#100e0c]/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.48)] backdrop-blur-xl sm:p-9"
+            className="w-full max-w-md rounded-[1.75rem] border border-white/[0.1] bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.48)] backdrop-blur-xl sm:p-9"
           >
             <div className="mb-7 flex items-start gap-3">
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-gold/25 bg-gold/[0.08] text-gold">

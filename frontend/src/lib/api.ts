@@ -15,6 +15,10 @@ export type ApiRequestOptions = {
   signal?: AbortSignal;
 };
 
+export type PublicHeritageScope = {
+  withVerifiedPhoto?: boolean;
+};
+
 const API_BASE_URL = getApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
 
 export class ApiRequestError extends Error {
@@ -134,14 +138,25 @@ export async function authMe(requestOptions: Pick<ApiRequestOptions, "signal"> =
   return response.user;
 }
 
-export async function getCategories(requestOptions: Pick<ApiRequestOptions, "signal"> = {}) {
-  const response = await apiRequest<{ success: true; categories: HeritageCategory[] }>("categories", requestOptions);
+export async function getCategories(
+  requestOptions: Pick<ApiRequestOptions, "signal"> = {},
+  scope: PublicHeritageScope = {},
+) {
+  const suffix = scope.withVerifiedPhoto === undefined
+    ? ""
+    : `?withVerifiedPhoto=${String(scope.withVerifiedPhoto)}`;
+  const response = await apiRequest<{ success: true; categories: HeritageCategory[] }>(`categories${suffix}`, requestOptions);
   return response.categories;
 }
 
-export async function getHeritageFacets(state?: string, requestOptions: Pick<ApiRequestOptions, "signal"> = {}) {
+export async function getHeritageFacets(
+  state?: string,
+  requestOptions: Pick<ApiRequestOptions, "signal"> = {},
+  scope: PublicHeritageScope = {},
+) {
   const params = new URLSearchParams();
   if (state?.trim()) params.set("state", state.trim());
+  if (scope.withVerifiedPhoto !== undefined) params.set("withVerifiedPhoto", String(scope.withVerifiedPhoto));
   const suffix = params.size ? `?${params.toString()}` : "";
   return apiRequest<{ success: true; states: string[]; districts: string[] }>(`heritage-facets${suffix}`, requestOptions);
 }
@@ -152,6 +167,7 @@ export type HeritageQuery = {
   state?: string;
   district?: string;
   hasTimeline?: boolean;
+  withVerifiedPhoto?: boolean;
   limit?: number;
   offset?: number;
 };
@@ -164,20 +180,39 @@ function boundedInteger(value: number | undefined, fallback: number, minimum: nu
   return Math.max(minimum, Math.min(Math.floor(value), maximum));
 }
 
-export function getHeritage(query: HeritageQuery = {}, requestOptions: Pick<ApiRequestOptions, "signal"> = {}) {
+export function getHeritage(query: HeritageQuery = {}, requestOptions: Pick<ApiRequestOptions, "signal" | "authenticated"> = {}) {
   const params = new URLSearchParams();
   for (const key of ["q", "category", "state", "district"] as const) {
     const value = query[key]?.trim();
     if (value) params.set(key, value);
   }
   if (query.hasTimeline !== undefined) params.set("hasTimeline", String(query.hasTimeline));
+  if (query.withVerifiedPhoto !== undefined) params.set("withVerifiedPhoto", String(query.withVerifiedPhoto));
   params.set("limit", String(boundedInteger(query.limit, 24, 1, MAX_HERITAGE_LIMIT)));
   params.set("offset", String(boundedInteger(query.offset, 0, 0, MAX_HERITAGE_OFFSET)));
 
   return apiRequest<PaginatedApiResponse<Heritage>>(`heritage?${params.toString()}`, requestOptions);
 }
 
-export type HeritageMapQuery = Pick<HeritageQuery, "q" | "category" | "state" | "district">;
+export type LocationSearchResult = {
+  label: string;
+  latitude: number;
+  longitude: number;
+  osm_type: string | null;
+  osm_id: string | null;
+  category: string | null;
+  type: string | null;
+};
+
+export async function searchLocation(query: string, requestOptions: Pick<ApiRequestOptions, "signal"> = {}) {
+  const params = new URLSearchParams({ q: query.trim() });
+  return apiRequest<{ success: true; results: LocationSearchResult[]; attribution: string }>(`locations/search?${params.toString()}`, {
+    ...requestOptions,
+    authenticated: false,
+  });
+}
+
+export type HeritageMapQuery = Pick<HeritageQuery, "q" | "category" | "state" | "district" | "withVerifiedPhoto">;
 export type HeritageMapPage = {
   success: true;
   items: HeritageMapRecord[];
@@ -195,6 +230,7 @@ export function getHeritageMapPage(
     const value = query[key]?.trim();
     if (value) params.set(key, value);
   }
+  if (query.withVerifiedPhoto !== undefined) params.set("withVerifiedPhoto", String(query.withVerifiedPhoto));
   params.set("limit", String(boundedInteger(query.limit, HERITAGE_MAP_PAGE_SIZE, 1, MAX_HERITAGE_LIMIT)));
   params.set("offset", String(boundedInteger(query.offset, 0, 0, MAX_HERITAGE_OFFSET)));
   return apiRequest<HeritageMapPage>("heritage-map?" + params.toString(), requestOptions);
@@ -204,7 +240,7 @@ export async function getHeritageMapSites(
   query: HeritageMapQuery = {},
   requestOptions: Pick<ApiRequestOptions, "signal"> = {},
 ) {
-  const sites: HeritageMapRecord[] = [];
+  const sites = new Map<number, HeritageMapRecord>();
   let offset = 0;
   let total = Number.POSITIVE_INFINITY;
 
@@ -215,11 +251,13 @@ export async function getHeritageMapSites(
     );
     total = page.pagination.total;
     if (page.items.length === 0) break;
-    sites.push(...page.items);
+    for (const site of page.items) {
+      if (!sites.has(site.id)) sites.set(site.id, site);
+    }
     offset = page.pagination.offset + page.items.length;
   }
 
-  return sites;
+  return [...sites.values()];
 }
 
 export async function getHeritageById(id: string | number, requestOptions: Pick<ApiRequestOptions, "signal"> = {}) {
@@ -323,11 +361,26 @@ export const addJourneyStop = (journeyId: number, heritageId: number, stopOrder:
 export const removeJourneyStop = (journeyId: number, stopId: number) => apiRequest<{ success: true }>(`journeys/${journeyId}/stops/${stopId}`, { method: "DELETE" });
 
 export type AdminDashboard = { heritage: { total: number; published: number; draft: number }; users: number; reviews: number; categories: number; images: { verified: number; missing: number; needs_review: number; provider_network_errors: number } };
+export type AdminUser = Pick<User, "id" | "name" | "email" | "created_at"> & { role: "user" | "admin"; status: "ACTIVE" | "SUSPENDED" };
+export type AdminUserDetails = AdminUser & { favorites_count: number; visits_count: number; reviews_count: number; journeys_count: number };
+export type AdminUserQuery = { q?: string; role?: "user" | "admin"; status?: "ACTIVE" | "SUSPENDED"; limit?: number; offset?: number };
 export type AdminImage = Pick<HeritageMedia, "url" | "thumbnail_url" | "alt_text" | "caption" | "credit" | "creator" | "license" | "license_url" | "source_url" | "provider" | "verification_status" | "match_confidence"> & { media_id: number; heritage_id: number; name: string; slug: string; state: string; district: string | null };
-export type AdminImageCandidate = { filename?: string; title?: string; source_url?: string; creator?: string | null; license?: string | null; license_url?: string | null; confidence?: number; missing_metadata?: string[]; qid?: string; label?: string; description?: string; coordinate?: unknown };
+export type AdminImageCandidate = { filename?: string; title?: string; source_url?: string; creator?: string | null; license?: string | null; license_url?: string | null; confidence?: number; missing_metadata?: string[]; qid?: string; label?: string; description?: string; coordinate?: unknown; candidate_kind?: string; candidate_image_url?: string | null; candidate_resolution_status?: string; commons_page_status?: string; supplied_url_http_status?: number | null; candidate_url_matches_commons?: boolean | null; submitted_creator_claim?: string | null; submitted_license_claim?: string | null; creator_claim_matches?: boolean | null; license_claim_matches?: boolean | null; image_url?: string | null; thumbnail_url?: string | null; destination_match?: boolean; destination_match_evidence?: string | null; destination_match_reason?: string | null; destination_distance_km?: number | null; binary_verified?: boolean };
 export type AdminImageReview = { heritage_id: number; name: string; slug: string; state: string; district: string | null; publication_status?: string; acquisition_status: "needs_review" | "failed" | null; error_code: string | null; error_message: string | null; last_checked_at: string | null; retry_count: number | null; candidates: AdminImageCandidate[]; unverified_images: Omit<AdminImage, "media_id" | "heritage_id" | "name" | "slug" | "state" | "district">[] };
 export type AdminHeritage = Pick<Heritage, "id" | "name" | "slug" | "state" | "district" | "locality" | "address" | "historical_period" | "publication_status"> & { category: HeritageCategory; updated_at: string; image: (Pick<HeritageMedia, "id" | "url" | "thumbnail_url" | "alt_text" | "verification_status" | "creator" | "credit" | "license" | "license_url" | "source_url" | "provider" | "is_illustrative">) | null; image_status: string };
 export const getAdminDashboard = () => apiRequest<{ success: true; dashboard: AdminDashboard }>("admin/dashboard").then((response) => response.dashboard);
+export function getAdminUsers(query: AdminUserQuery = {}) {
+  const params = new URLSearchParams();
+  if (query.q?.trim()) params.set("q", query.q.trim());
+  if (query.role) params.set("role", query.role);
+  if (query.status) params.set("status", query.status);
+  params.set("limit", String(boundedInteger(query.limit, 25, 1, 100)));
+  params.set("offset", String(boundedInteger(query.offset, 0, 0, MAX_HERITAGE_OFFSET)));
+  return apiRequest<{ success: true; users: AdminUser[]; pagination: { total: number; limit: number; offset: number } }>(`admin/users?${params}`);
+}
+export const getAdminUserById = (id: number) => apiRequest<{ success: true; user: AdminUserDetails }>(`admin/users/${encodeURIComponent(String(id))}`).then((response) => response.user);
+export const updateAdminUserRole = (id: number, role: AdminUser["role"]) => apiRequest<{ success: true; message: string; user: AdminUser }>(`admin/users/${encodeURIComponent(String(id))}/role`, { method: "PATCH", body: { role } });
+export const updateAdminUserStatus = (id: number, status: AdminUser["status"]) => apiRequest<{ success: true; message: string; user: AdminUser }>(`admin/users/${encodeURIComponent(String(id))}/status`, { method: "PATCH", body: { status } });
 export type AdminHeritageQuery = { q?: string; state?: string; category?: number; status?: string; limit?: number; offset?: number };
 export type AdminPage<T> = { items: T[]; total: number; limit: number; offset: number };
 export function getAdminHeritage(query: AdminHeritageQuery = {}) {

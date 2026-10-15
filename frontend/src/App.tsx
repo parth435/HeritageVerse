@@ -1,24 +1,27 @@
-import { useEffect } from "react";
-import { AuthPage } from "@/components/AuthPage";
-import { AdminLoginPage } from "@/components/admin/AdminLoginPage";
-import { AdminRealApp } from "@/components/admin/AdminRealApp";
-import { ExplorePage } from "@/pages/ExplorePage";
-import { FavoritesPage } from "@/pages/FavoritesPage";
-import { HeritageDetailPage } from "@/pages/HeritageDetailPage";
-import { HomePage } from "@/pages/HomePage";
-import { NotFoundPage } from "@/pages/NotFoundPage";
-import { ProfilePage } from "@/pages/ProfilePage";
-import { VisitedPage } from "@/pages/VisitedPage";
-import { JourneysPage } from "@/pages/JourneysPage";
+import { lazy, Suspense, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import type { User } from "@/types/auth";
 import { RouterLink, useLocation, useNavigate } from "@/lib/router";
+
+const AuthPage = lazy(() => import("@/components/AuthPage").then(({ AuthPage }) => ({ default: AuthPage })));
+const AdminLoginPage = lazy(() => import("@/components/admin/AdminLoginPage").then(({ AdminLoginPage }) => ({ default: AdminLoginPage })));
+const AdminRealApp = lazy(() => import("@/components/admin/AdminRealApp").then(({ AdminRealApp }) => ({ default: AdminRealApp })));
+const ExplorePage = lazy(() => import("@/pages/ExplorePage").then(({ ExplorePage }) => ({ default: ExplorePage })));
+const FavoritesPage = lazy(() => import("@/pages/FavoritesPage").then(({ FavoritesPage }) => ({ default: FavoritesPage })));
+const HeritageDetailPage = lazy(() => import("@/pages/HeritageDetailPage").then(({ HeritageDetailPage }) => ({ default: HeritageDetailPage })));
+const HomePage = lazy(() => import("@/pages/HomePage").then(({ HomePage }) => ({ default: HomePage })));
+const NotFoundPage = lazy(() => import("@/pages/NotFoundPage").then(({ NotFoundPage }) => ({ default: NotFoundPage })));
+const ProfilePage = lazy(() => import("@/pages/ProfilePage").then(({ ProfilePage }) => ({ default: ProfilePage })));
+const VisitedPage = lazy(() => import("@/pages/VisitedPage").then(({ VisitedPage }) => ({ default: VisitedPage })));
+const JourneysPage = lazy(() => import("@/pages/JourneysPage").then(({ JourneysPage }) => ({ default: JourneysPage })));
+const NearbyPage = lazy(() => import("@/pages/NearbyPage").then(({ NearbyPage }) => ({ default: NearbyPage })));
 
 const adminRoutes = new Set([
   "/admin",
   "/admin/heritage",
   "/admin/images",
   "/admin/categories",
+  "/admin/users",
 ]);
 
 function isActiveAdministrator(user: User | null) {
@@ -26,6 +29,14 @@ function isActiveAdministrator(user: User | null) {
 }
 
 export default function App() {
+  return (
+    <Suspense fallback={<RouteLoading />}>
+      <AppRoutes />
+    </Suspense>
+  );
+}
+
+function AppRoutes() {
   const { user, isReady, sessionMessage } = useAuth();
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -52,6 +63,7 @@ export default function App() {
   }
 
   if (pathname === "/explore") return <ExplorePage />;
+  if (pathname === "/nearby") return <NearbyPage />;
   if (pathname === "/favorites") return <FavoritesPage isAuthenticated={Boolean(user)} />;
   if (pathname === "/visited") return <VisitedPage isAuthenticated={Boolean(user)} />;
   if (pathname === "/journeys") return <JourneysPage isAuthenticated={Boolean(user)} />;
@@ -85,6 +97,14 @@ export default function App() {
   }
 
   return <NotFoundPage />;
+}
+
+function RouteLoading() {
+  return (
+    <main className="grid min-h-svh place-items-center bg-ink px-5 text-parchment" role="status" aria-live="polite">
+      <p className="text-sm text-parchment/70">Loading this part of HeritageVerse…</p>
+    </main>
+  );
 }
 
 function RouteRedirect({ to, label }: { to: string; label: string }) {
