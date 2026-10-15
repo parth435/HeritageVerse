@@ -1,6 +1,7 @@
 "use strict";
 
-const pool = require("../config/db");
+const { Pool } = require("pg");
+const { createDatabasePoolOptions } = require("../config/database-options");
 
 function argument(name) {
   const index = process.argv.indexOf(name);
@@ -8,12 +9,47 @@ function argument(name) {
   return process.argv[index + 1];
 }
 
-function databaseHost() {
-  if (process.env.DATABASE_URL) {
-    try { return new URL(process.env.DATABASE_URL).hostname.toLowerCase().replace(/^\[|\]$/g, ""); }
-    catch { return "invalid"; }
+function parseDatabaseTarget(connectionString, legacyHost = "localhost", legacyDatabase = "") {
+  if (!connectionString) {
+    return {
+      host: String(legacyHost || "localhost").toLowerCase().replace(/^\[|\]$/g, ""),
+      database: String(legacyDatabase || ""),
+    };
   }
-  return (process.env.DB_HOST || "localhost").toLowerCase().replace(/^\[|\]$/g, "");
+  try {
+    const url = new URL(connectionString);
+    if (!["postgres:", "postgresql:"].includes(url.protocol.toLowerCase()) || !url.hostname || url.pathname.length < 2) {
+      return { host: "invalid", database: "" };
+    }
+    return {
+      host: url.hostname.toLowerCase().replace(/^\[|\]$/g, ""),
+      database: decodeURIComponent(url.pathname.slice(1)),
+    };
+  } catch {
+    return { host: "invalid", database: "" };
+  }
+}
+
+function validateDatabaseTarget({ target, nodeEnvironment, externalOptIn, expectedHost, expectedDatabase }) {
+  const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
+  const isLocal = localHosts.has(target.host);
+  if (nodeEnvironment === "production" && isLocal) {
+    throw new Error("Production administrator provisioning must not target a loopback database.");
+  }
+  if (!isLocal || nodeEnvironment === "production") {
+    if (!externalOptIn) {
+      throw new Error("This database is not a confirmed local loopback target. Recheck the database and pass --allow-external-database only in a controlled maintenance session.");
+    }
+    if (!expectedHost || !expectedDatabase) {
+      throw new Error("Remote administrator provisioning requires --expected-host and --expected-database.");
+    }
+    if (target.host !== expectedHost.toLowerCase()) {
+      throw new Error("DATABASE_URL host does not match the explicitly confirmed --expected-host.");
+    }
+    if (target.database !== expectedDatabase) {
+      throw new Error("DATABASE_URL database does not match the explicitly confirmed --expected-database.");
+    }
+  }
 }
 
 function printHelp() {
@@ -22,7 +58,7 @@ function printHelp() {
 Usage:
   node backend/database/promote-admin.js --user-id <id> --email <exact-email> --identity-verified --operator <name> --confirm PROMOTE
 
-For a non-loopback database, also pass --allow-external-database explicitly.
+For a non-loopback database, also pass --allow-external-database --expected-host <host> --expected-database <name>.
 The command does not create accounts, set passwords, or edit other user data.
 `);
 }
@@ -38,21 +74,27 @@ async function main() {
   const operator = argument("--operator")?.trim().slice(0, 120);
   const explicitlyConfirmed = process.argv.includes("--identity-verified");
   const confirmed = argument("--confirm");
-  const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
-  const isProductionTarget = process.env.NODE_ENV === "production" || !localHosts.has(databaseHost());
   const externalOptIn = process.argv.includes("--allow-external-database");
+  const expectedHost = argument("--expected-host")?.trim().toLowerCase();
+  const expectedDatabase = argument("--expected-database")?.trim();
 
   if (!Number.isSafeInteger(userId) || userId < 1 || !email || !operator || !explicitlyConfirmed || confirmed !== "PROMOTE") {
     printHelp();
     throw new Error("A valid ID, exact email, verified-identity flag, operator name, and explicit PROMOTE confirmation are required.");
   }
-  if (isProductionTarget && !externalOptIn) {
-    throw new Error("This database is not a confirmed local loopback target. Recheck the database and pass --allow-external-database only in a controlled maintenance session.");
-  }
+  const target = parseDatabaseTarget(process.env.DATABASE_URL, process.env.DB_HOST, process.env.DB_NAME);
+  validateDatabaseTarget({ target, nodeEnvironment: process.env.NODE_ENV, externalOptIn, expectedHost, expectedDatabase });
 
+  const pool = new Pool(createDatabasePoolOptions(process.env));
   const client = await pool.connect();
   let transactionOpen = false;
   try {
+    if (expectedDatabase) {
+      const database = await client.query("SELECT current_database() AS name");
+      if (database.rows[0]?.name !== expectedDatabase) {
+        throw new Error("Connected database does not match the explicitly confirmed --expected-database.");
+      }
+    }
     await client.query("BEGIN");
     transactionOpen = true;
     // Use the same lock as admin API mutations so provisioning serializes with
@@ -96,7 +138,11 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error("Administrator provisioning failed:", error.message || error.code || "unknown error");
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  main().catch((error) => {
+    console.error("Administrator provisioning failed:", error.message || error.code || "unknown error");
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { parseDatabaseTarget, validateDatabaseTarget };

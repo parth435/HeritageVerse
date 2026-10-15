@@ -71,13 +71,33 @@ fixtures. It refuses production and non-loopback database targets.
 
 The migration gives every existing account the least-privileged `user` role. After independently verifying an account owner, promote the initial administrator with an audited, parameterized database operation; do not expose role promotion through signup or profile APIs.
 
+### Existing account password verification and reset
+
+The admin login uses the same `POST /api/auth/signin` flow as regular sign-in. For an active `user` account, a correct password authenticates as a regular user and the admin login displays a distinct “does not have active administrator access” message. The generic “Invalid email or password” response means the backend did not find one unique email row or bcrypt did not match; it does not identify which case. A bcrypt-looking stored value does not prove the entered password. Confirm that Render's `DATABASE_URL` targets the same database being inspected before deciding a password reset is needed.
+
+There is no public password-reset endpoint. If the owner cannot verify the existing password, an operator who has independently verified the account owner's identity can use the guarded one-time CLI below. It requires a production maintenance shell with `DATABASE_URL` injected from the approved secret store; it does not load `backend/.env`. The operator must copy the exact database host and name from the intended production database. The command checks both against the connection URL and checks `current_database()` before prompting. It accepts the new password twice through a hidden TTY prompt, uses the same `bcrypt.hash(password, 10)` and 8-character/72-byte limits as signup, updates only the specified active `user` row, and writes an activity log entry. It does not create an account, change a role, or change schema.
+
+```powershell
+$env:NODE_ENV = "production"
+node backend/database/reset-user-password.js --user-id 1 --email "parthbasarwadkar@gmail.com" --identity-verified --operator "<verified operator name>" --expected-host "<exact production database host>" --expected-database "heritageversedb" --allow-external-database --confirm RESET-PASSWORD
+```
+
+Do not place a connection URL or password in command arguments, source code, logs, or shell history. After a reset, sign in manually in the browser to verify the new password; the account should still report that it lacks admin access. Then, in the same controlled maintenance session with the same verified `DATABASE_URL`, use the documented promotion procedure below. The reset utility is an operator CLI and is not called by the backend at startup or by a public API.
+
 Manual administrator provisioning procedure: first verify the person's identity and exact existing account email out of band; never create an account or change a role through signup/profile APIs. Confirm the database target and account ID, then use the guarded script, which requires the verified identity flag, operator name, exact ID/email, explicit confirmation, a transaction, the same advisory lock as admin APIs, an active account, and an audit-log row:
 
 ```powershell
 node backend/database/promote-admin.js --user-id 123 --email "exact-existing-account@example.com" --identity-verified --operator "Verified operator" --confirm PROMOTE
 ```
 
-The script defaults to loopback-only. In a separate controlled maintenance session, a positively identified remote deployment database additionally requires `--allow-external-database`; never use that flag casually. This task did not run the script against any database. After provisioning, verify the audit row and use a fresh authenticated session. Do not grant administrator access when identity or account ownership cannot be confirmed.
+The script defaults to loopback-only. A positively identified remote database also requires `--allow-external-database`, `--expected-host`, and `--expected-database`; the live connection's `current_database()` is checked before writes. The CLI uses only process environment values and does not load `backend/.env`. Never use the external-target flags casually. For the confirmed production account, run the following only after its password authenticates and identity is independently verified, from the same controlled shell that holds the intended `DATABASE_URL`:
+
+```powershell
+$env:NODE_ENV = "production"
+node backend/database/promote-admin.js --user-id 1 --email "parthbasarwadkar@gmail.com" --identity-verified --operator "<verified operator name>" --expected-host "<exact production database host>" --expected-database "heritageversedb" --allow-external-database --confirm PROMOTE
+```
+
+After provisioning, verify the role/status and audit row, sign out, and authenticate with a fresh session. Do not grant administrator access when identity or account ownership cannot be confirmed.
 
 The unauthenticated admin API returns 401 and ordinary accounts receive 403. Verify administrator CRUD with a confirmed active administrator in a disposable or staging environment after following the provisioning procedure above. Do not promote an account solely to clear a verification gap.
 
