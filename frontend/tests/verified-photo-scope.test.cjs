@@ -7,36 +7,45 @@ const test = require("node:test");
 
 const root = path.resolve(__dirname, "../src");
 
-test("Explore keeps verified-photo filtering on cards while map pins use curated scope", async () => {
-  const [api, explore, map, card] = await Promise.all([
+test("ordinary catalogues include published records without verified photos and retain safe map rules", async () => {
+  const [api, explore, atlas, map, card, grid, adapter] = await Promise.all([
     readFile(path.join(root, "lib/api.ts"), "utf8"),
     readFile(path.join(root, "pages/ExplorePage.tsx"), "utf8"),
+    readFile(path.join(root, "components/LivingAtlas.tsx"), "utf8"),
     readFile(path.join(root, "components/heritage/HeritageMap.tsx"), "utf8"),
     readFile(path.join(root, "components/heritage/HeritageCard.tsx"), "utf8"),
+    readFile(path.join(root, "components/heritage/HeritageGrid.tsx"), "utf8"),
+    readFile(path.join(root, "lib/heritageAdapter.ts"), "utf8"),
   ]);
 
   assert.match(api, /withVerifiedPhoto\?: boolean/);
   assert.match(api, /params\.set\("withVerifiedPhoto", String\(query\.withVerifiedPhoto\)\)/);
-  assert.match(api, /withVerifiedPhoto\?: boolean/);
-  assert.match(explore, /getCategories\(\{ signal: controller\.signal \}, \{ withVerifiedPhoto: true \}\)/);
-  assert.match(explore, /getHeritageFacets\(state, \{ signal: controller\.signal \}, \{ withVerifiedPhoto: true \}\)/);
-  assert.match(explore, /withVerifiedPhoto: true,[\s\S]{0,100}limit: PAGE_SIZE/);
-  const mapRequest = explore.match(/getHeritageMapSites\(\s*(\{[^}]*\})/);
-  assert.ok(mapRequest);
-  assert.doesNotMatch(mapRequest[1], /withVerifiedPhoto/);
-  assert.match(explore, /matching curated places without verified photographs/);
-  assert.match(explore, /setOffset\(items\.length\)/);
-  assert.match(explore, /verifiedPhotoOnly/);
+  assert.match(api, /if \(query\.withVerifiedPhoto !== undefined\) params\.set\("withVerifiedPhoto"/);
+  assert.doesNotMatch(explore, /withVerifiedPhoto\s*:\s*true/);
+  assert.doesNotMatch(atlas, /withVerifiedPhoto\s*:\s*true/);
+  assert.match(explore, /getCategories\(\{ signal: controller\.signal \}\)/);
+  assert.match(explore, /getHeritageFacets\(state, \{ signal: controller\.signal \}\)/);
+  assert.match(atlas, /getCategories\(\{ signal: controller\.signal \}\)/);
+  assert.match(atlas, /getHeritageFacets\(undefined, \{ signal: controller\.signal \}\)/);
+  assert.match(explore, /getHeritage\([\s\S]{0,180}limit: PAGE_SIZE/);
+  assert.match(atlas, /getHeritage\(\{ q: query, category, state, limit: PAGE_SIZE/);
+  assert.match(explore, /getHeritageMapSites\(/);
+  assert.match(atlas, /getHeritageMapSites\(\{ q: query, category, state \}/);
   assert.match(explore, /<HeritageMap[^>]*verifiedPhotoOnly/);
+  assert.match(atlas, /<HeritageMap[^>]*verifiedPhotoOnly/);
+  assert.match(explore, /setOffset\(items\.length\)/);
+  assert.match(explore, /No published places match these filters/);
+  assert.match(grid, /items\.map\(\(item, index\)/);
+  assert.match(card, /No verified photograph/);
+  assert.match(atlas, /selectedImage\.sourceUrl/);
   assert.match(map, /if \(verifiedPhotoOnly\)/);
-  assert.match(map, /Verified photograph unavailable/);
-  assert.match(card, /verifiedPhotoOnly && isHeritageImageFallback/);
+  assert.match(adapter, /coordinates_verified === true && validCoordinatePair/);
+  assert.match(map, /filterMappableSites/);
 });
 
-test("homepage place features source photographs from the verified-photo API scope", async () => {
+test("photo-focused homepage features retain the verified-photo API scope", async () => {
   const files = [
     "components/CinematicMonument.tsx",
-    "components/LivingAtlas.tsx",
     "components/MuseumInMotion.tsx",
     "components/ThenNow.tsx",
     "hooks/useHeritageSelection.ts",
@@ -48,8 +57,7 @@ test("homepage place features source photographs from the verified-photo API sco
   assert.match(contents[0], /candidate\.is_illustrative === false/);
   assert.doesNotMatch(contents[0], /images\.unsplash\.com/);
   assert.match(contents[0], /Source/);
-  assert.match(contents[2], /ImageAttribution/);
-  assert.match(contents[1], /selectedImage\.sourceUrl/);
-  assert.match(contents[3], /isHeritageImageFallback\(imageSource\)/);
-  assert.match(contents[3], /isHeritageImageFallback\(source\)/);
+  assert.match(contents[1], /ImageAttribution/);
+  assert.match(contents[2], /isHeritageImageFallback\(imageSource\)/);
+  assert.match(contents[2], /isHeritageImageFallback\(source\)/);
 });

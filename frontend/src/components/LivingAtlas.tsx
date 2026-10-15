@@ -42,8 +42,8 @@ export function LivingAtlas() {
     const controller = new AbortController();
     let active = true;
     void Promise.all([
-      getCategories({ signal: controller.signal }, { withVerifiedPhoto: true }),
-      getHeritageFacets(undefined, { signal: controller.signal }, { withVerifiedPhoto: true }),
+      getCategories({ signal: controller.signal }),
+      getHeritageFacets(undefined, { signal: controller.signal }),
     ])
       .then(([categoryOptions, facets]) => {
         if (!active) return;
@@ -72,7 +72,7 @@ export function LivingAtlas() {
       setSelectedRouteId("");
     }
 
-    void getHeritage({ q: query, category, state, withVerifiedPhoto: true, limit: PAGE_SIZE, offset }, { signal: controller.signal })
+    void getHeritage({ q: query, category, state, limit: PAGE_SIZE, offset }, { signal: controller.signal })
       .then((response) => {
         if (!active) return;
         const page = response.items.map(heritageToView);
@@ -102,7 +102,7 @@ export function LivingAtlas() {
     setMapLoading(true);
     setMapError(null);
 
-    void getHeritageMapSites({ q: query, category, state, withVerifiedPhoto: true }, { signal: controller.signal })
+    void getHeritageMapSites({ q: query, category, state }, { signal: controller.signal })
       .then((records) => {
         if (active) setMapSites(records.map(heritageMapToView));
       })
@@ -140,7 +140,7 @@ export function LivingAtlas() {
       <div className="mx-auto max-w-7xl">
         <p className="text-xs uppercase tracking-[0.4em] text-gold">01 · Living Atlas</p>
         <h2 className="font-display mt-3 text-4xl text-parchment md:text-6xl">A subcontinent, pinned in light.</h2>
-        <p className="mt-4 max-w-2xl text-parchment/70">Search published places with verified, attributed photographs. Locations without verified coordinates remain in the list and are not placed approximately.</p>
+        <p className="mt-4 max-w-2xl text-parchment/70">Search published heritage places. Verified, attributed photographs appear when available; locations without source-verified coordinates stay in the list and are not placed approximately.</p>
 
         <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_repeat(2,minmax(12rem,0.45fr))]">
           <label className="relative block">
@@ -168,7 +168,7 @@ export function LivingAtlas() {
         {loading ? <p role="status" className="mt-5 text-sm text-parchment/60">Loading the published heritage collection…</p> : null}
         <div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <div>
-            {mapLoading ? <p role="status" className="mb-3 text-xs text-parchment/55">Loading all verified map locations…</p> : null}
+            {mapLoading ? <p role="status" className="mb-3 text-xs text-parchment/55">Loading source-verified map locations…</p> : null}
             {mapError ? (
               <p role="alert" className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-400/30 bg-red-950/20 px-4 py-3 text-sm text-red-100">
                 <span>Map locations could not load. {mapError}</span>
@@ -188,7 +188,9 @@ export function LivingAtlas() {
                   <img src={selectedImageSource} alt={selectedImage.alt} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailedImageUrl(selectedImageSource)} className="mb-4 aspect-[16/9] w-full rounded-xl object-cover" />
                 ) : selectedImage ? (
                   <p role="status" className="mb-4 rounded-xl border border-white/10 px-3 py-4 text-xs text-parchment/55">The verified photograph could not be loaded. Its source details remain available below.</p>
-                ) : null}
+                ) : (
+                  <img src="/heritage-image-fallback.svg" alt={`Illustrative placeholder; no photograph available for ${selected.name}`} className="mb-4 aspect-[16/9] w-full rounded-xl object-cover" />
+                )}
                 {selectedImage ? (
                   <p className="mb-3 flex flex-wrap gap-x-2 gap-y-1 text-[10px] leading-4 text-parchment/50">
                     {selectedImage.credit || selectedImage.creator ? <span>{selectedImage.credit || selectedImage.creator}</span> : null}

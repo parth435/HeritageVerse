@@ -52,8 +52,8 @@ export function ExplorePage() {
     const controller = new AbortController();
     let active = true;
     void Promise.all([
-      getCategories({ signal: controller.signal }, { withVerifiedPhoto: true }),
-      getHeritageFacets(state, { signal: controller.signal }, { withVerifiedPhoto: true }),
+      getCategories({ signal: controller.signal }),
+      getHeritageFacets(state, { signal: controller.signal }),
     ])
       .then(([results, facets]) => {
         if (!active) return;
@@ -86,7 +86,6 @@ export function ExplorePage() {
         category,
         state,
         district,
-          withVerifiedPhoto: true,
         limit: PAGE_SIZE,
         offset,
       },
@@ -188,7 +187,7 @@ export function ExplorePage() {
           </p>
           <h1 className="font-display mt-4 text-5xl leading-[0.98] text-parchment md:text-7xl">Explore the heritage atlas.</h1>
           <p className="mt-5 max-w-2xl text-sm leading-7 text-parchment/65 md:text-base">
-            Find published heritage places that have verified, attributed photographs. Search and filters can include records beyond the curated Maharashtra catalogue.
+            Find published heritage places. Verified photo attribution appears when images are available. Search and filters can include records beyond the curated Maharashtra catalogue.
           </p>
           <RouterLink to="/nearby" className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full border border-gold/40 px-5 py-3 text-xs font-semibold uppercase tracking-[0.13em] text-gold-bright transition hover:bg-gold/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">Find nearby heritage</RouterLink>
         </div>
@@ -226,7 +225,7 @@ export function ExplorePage() {
                 <p className="text-[10px] uppercase tracking-[0.25em] text-gold">Explore by location</p>
                 <h2 id="heritage-map-heading" className="font-display mt-1 text-3xl text-parchment">Heritage map</h2>
               </div>
-              <p className="text-xs text-parchment/50">Pins include matching curated places without verified photographs; cards below require verified photographs.</p>
+              <p className="text-xs text-parchment/50">Pins and cards include matching published places. Map markers require source-verified coordinates.</p>
             </div>
             {!loading && !error ? (
               <>
@@ -246,8 +245,7 @@ export function ExplorePage() {
             loading={loading && offset === 0}
             error={error}
             onRetry={() => setRetryKey((current) => current + 1)}
-            emptyMessage="No published places with verified photographs match these filters. Try another search or clear one of the filters."
-            verifiedPhotoOnly
+            emptyMessage="No published places match these filters. Try another search or clear one of the filters."
           />
         </div>
 

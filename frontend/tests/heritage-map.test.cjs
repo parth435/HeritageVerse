@@ -41,6 +41,7 @@ async function loadMapModules() {
     React: react.default,
     renderToStaticMarkup: renderer.renderToStaticMarkup,
     HeritageMap: (await server.ssrLoadModule("/src/components/heritage/HeritageMap.tsx")).HeritageMap,
+    HeritageGrid: (await server.ssrLoadModule("/src/components/heritage/HeritageGrid.tsx")).HeritageGrid,
     groupCoordinateSites: (await server.ssrLoadModule("/src/lib/map-utils.ts")).groupCoordinateSites,
     filterMappableSites: (await server.ssrLoadModule("/src/lib/map-utils.ts")).filterMappableSites,
     heritageMapToView: (await server.ssrLoadModule("/src/lib/heritageAdapter.ts")).heritageMapToView,
@@ -168,6 +169,33 @@ test("empty map results remain an explicit empty state", async () => {
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test("ordinary catalogue grid passes a photo-less published record to its card", async () => {
+  const { HeritageGrid } = await loadMapModules();
+  const item = {
+    routeId: "301",
+    databaseId: 301,
+    slug: "panhala-fort",
+    name: "Panhala Fort",
+    location: "Kolhapur, Maharashtra",
+    latitude: null,
+    longitude: null,
+    hasCoordinates: false,
+    coordinateStatus: "missing",
+    media: [],
+    gallery: [],
+    timelineEvents: [],
+    artifacts: [],
+    architecturalLayers: [],
+    sources: [],
+  };
+  const grid = HeritageGrid({ items: [item] });
+  const card = grid.props.children[0];
+
+  assert.equal(card.props.item.name, "Panhala Fort");
+  assert.deepEqual(card.props.item.gallery, []);
+  assert.equal(card.props.verifiedPhotoOnly, false);
 });
 
 test("map API request failures surface as recoverable API errors", async () => {
