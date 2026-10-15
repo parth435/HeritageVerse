@@ -43,6 +43,21 @@ test("ordinary catalogues include published records without verified photos and 
   assert.match(map, /filterMappableSites/);
 });
 
+test("Living Atlas keeps successful catalogue results when category or facet loading fails", async () => {
+  const atlas = await readFile(path.join(root, "components/LivingAtlas.tsx"), "utf8");
+  const filtersEffect = atlas.match(/Promise\.all\(\[\s*getCategories\([\s\S]*?\}, \[\]\);/)?.[0];
+  const catalogueEffect = atlas.match(/getHeritage\([\s\S]*?\}, \[category, offset, query, state\]\);/)?.[0];
+
+  assert.ok(filtersEffect, "expected a separate category and facet request effect");
+  assert.ok(catalogueEffect, "expected a separate catalogue request effect");
+  assert.match(filtersEffect, /Promise\.all\(/);
+  assert.match(filtersEffect, /setFiltersError\(reason instanceof Error \? reason\.message : "Atlas filters could not load\."\)/);
+  assert.doesNotMatch(filtersEffect, /setError\(/);
+  assert.match(catalogueEffect, /setSites\(\(current\) => append \? \[\.\.\.current, \.\.\.page\] : page\)/);
+  assert.match(catalogueEffect, /setError\(reason instanceof Error \? reason\.message : "The heritage atlas could not load\."\)/);
+  assert.match(atlas, /filtersError \? \([\s\S]*?role="status"[\s\S]*?Some filter options could not load\. You can still view the collection\./);
+});
+
 test("photo-focused homepage features retain the verified-photo API scope", async () => {
   const files = [
     "components/CinematicMonument.tsx",

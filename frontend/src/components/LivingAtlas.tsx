@@ -19,6 +19,7 @@ export function LivingAtlas() {
   const [total, setTotal] = useState(0);
   const [categories, setCategories] = useState<HeritageCategory[]>([]);
   const [states, setStates] = useState<string[]>([]);
+  const [filtersError, setFiltersError] = useState<string | null>(null);
   const [selectedRouteId, setSelectedRouteId] = useState("");
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
@@ -49,9 +50,10 @@ export function LivingAtlas() {
         if (!active) return;
         setCategories(categoryOptions);
         setStates(facets.states);
+        setFiltersError(null);
       })
       .catch((reason: unknown) => {
-        if (active) setError(reason instanceof Error ? reason.message : "Atlas filters could not load.");
+        if (active) setFiltersError(reason instanceof Error ? reason.message : "Atlas filters could not load.");
       });
     return () => {
       active = false;
@@ -164,6 +166,11 @@ export function LivingAtlas() {
           </label>
         </div>
 
+        {filtersError ? (
+          <p role="status" className="mt-4 rounded-xl border border-gold/20 bg-gold/5 px-4 py-3 text-sm text-parchment/70">
+            Some filter options could not load. You can still view the collection. {filtersError}
+          </p>
+        ) : null}
         {error ? <p role="alert" className="mt-5 rounded-xl border border-red-400/30 bg-red-950/20 p-4 text-sm text-red-100">{error}</p> : null}
         {loading ? <p role="status" className="mt-5 text-sm text-parchment/60">Loading the published heritage collection…</p> : null}
         <div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
