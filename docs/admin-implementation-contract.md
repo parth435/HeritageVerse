@@ -19,7 +19,7 @@ The following architectural facts from the Phase 3 Audit are established:
 2. **Current Admin State:**
    * **Zero** Admin API routes currently exist in the backend.
    * Admin authorization is **not currently implemented** on the backend.
-   * The `/admin` frontend route in `src/App.tsx` is completely unguarded.
+   * The `/admin` frontend route in `frontend/src/App.tsx` is completely unguarded.
 3. **Current Database State:**
    * The `users` table currently contains only: `id`, `name`, `email`, `password_hash`, `created_at`.
    * There is **no confirmed role or status implementation** in the database.
@@ -41,7 +41,7 @@ The following architectural facts from the Phase 3 Audit are established:
 A precise implementation specification for backend architecture and security owned by **Parth**.
 
 ### 2.1 Authentication & Token Strategy
-* **Token Standard:** JSON Web Token (JWT) signed using the existing `jsonwebtoken` dependency declared in `server/package.json`.
+* **Token Standard:** JSON Web Token (JWT) signed using the existing `jsonwebtoken` dependency declared in `backend/package.json`.
 * **JWT Secret:** Must be retrieved from environment variable `process.env.JWT_SECRET`. No hardcoded secrets.
 * **Token Expiration:** Recommended 24 hours (`expiresIn: "24h"`).
 * **JWT Payload:** Must be constructed strictly from existing database columns:
@@ -114,7 +114,7 @@ A precise implementation specification for backend architecture and security own
   ```
 
 ### 2.6 Server Port Fallback
-* In `server/index.js`, replace `app.listen(process.env.PORT)` with:
+* In `backend/index.js`, replace `app.listen(process.env.PORT)` with:
   ```javascript
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
@@ -419,27 +419,27 @@ The planned Admin API consists of **exactly 20 endpoints** under the `/api/admin
 Strict separation of frontend modifications into **REQUIRED AFTER BACKEND READY** versus **NOT REQUIRED**.
 
 ### 5.1 REQUIRED AFTER BACKEND READY (Only in Phase 5+)
-1. **`src/App.tsx`:**
+1. **`frontend/src/App.tsx`:**
    * Add authorization guard to `/admin`: verify `user && user.role === 'admin'`.
    * Redirect non-admin authenticated users and unauthenticated guests.
-2. **`src/lib/auth.ts`:**
+2. **`frontend/src/lib/auth.ts`:**
    * Extend `SessionUser` interface with `role?: string; token?: string;`.
    * Store token returned by `POST /api/auth/signin` into session storage/local storage.
-3. **`src/context/AuthContext.tsx`:**
+3. **`frontend/src/context/AuthContext.tsx`:**
    * Pass role and token state to consuming components.
-4. **`src/components/admin/AdminApp.tsx`:**
-   * Import functions from `src/services/adminApi.ts`.
+4. **`frontend/src/components/admin/AdminApp.tsx`:**
+   * Import functions from `frontend/src/services/adminApi.ts`.
    * Replace static mock data with `useEffect` data fetching.
    * Add loading state spinners, empty state messages, error banners.
    * Add Delete confirmation dialog.
    * Bind sidebar profile to active authenticated user and wire logout button.
-5. **`src/services/adminApi.ts`:**
+5. **`frontend/src/services/adminApi.ts`:**
    * Update endpoint paths to match `/api/admin/*` contract (e.g. `/api/admin/sites`).
 
 ### 5.2 NOT REQUIRED (Must Remain Untouched)
-* **DO NOT MODIFY:** `src/data/adminMockData.ts` (Keep for fallback/testing).
-* **DO NOT MODIFY:** `src/data/monuments.ts` (Used by public experiences).
-* **DO NOT MODIFY:** `src/components/ThenNow.tsx` (Owned by Swaranjali).
+* **DO NOT MODIFY:** `frontend/src/data/adminMockData.ts` (Keep for fallback/testing).
+* **DO NOT MODIFY:** `frontend/src/data/monuments.ts` (Used by public experiences).
+* **DO NOT MODIFY:** `frontend/src/components/ThenNow.tsx` (Owned by Swaranjali).
 * **DO NOT MODIFY:** Any interactive component: `CinematicMonument.tsx`, `LivingAtlas.tsx`, `MuseumInMotion.tsx`, `TimeMachine.tsx`, `MonumentDissection.tsx`, `TheJourney.tsx`, `HeritageOS.tsx`.
 
 ---
@@ -450,7 +450,7 @@ Strict separation of frontend modifications into **REQUIRED AFTER BACKEND READY*
 +------------------+--------------------------------------------------------------------------+
 | Owner            | Locked Responsibilities                                                  |
 +------------------+--------------------------------------------------------------------------+
-| PARTH            | 1. Port fallback (PORT || 5000) in server/index.js                       |
+| PARTH            | 1. Port fallback (PORT || 5000) in backend/index.js                       |
 | (Backend Lead)   | 2. JWT token generation in signup & signin                               |
 |                  | 3. authenticateToken and requireAdmin middleware                         |
 |                  | 4. All 20 /api/admin/* endpoints, controllers, and queries              |
@@ -520,15 +520,15 @@ Strict separation of frontend modifications into **REQUIRED AFTER BACKEND READY*
 ## 8. PART G — DO NOT CHANGE EXISTING FEATURES
 
 Strictly preserved without modification:
-1. **Cinematic Monument** ([`src/components/CinematicMonument.tsx`](file:///c:/mini%20project/HeritageVerse/src/components/CinematicMonument.tsx))
-2. **Living Atlas** ([`src/components/LivingAtlas.tsx`](file:///c:/mini%20project/HeritageVerse/src/components/LivingAtlas.tsx))
-3. **Museum in Motion** ([`src/components/MuseumInMotion.tsx`](file:///c:/mini%20project/HeritageVerse/src/components/MuseumInMotion.tsx))
-4. **Time Machine** ([`src/components/TimeMachine.tsx`](file:///c:/mini%20project/HeritageVerse/src/components/TimeMachine.tsx))
-5. **Monument Dissection** ([`src/components/MonumentDissection.tsx`](file:///c:/mini%20project/HeritageVerse/src/components/MonumentDissection.tsx))
-6. **Then / Now** ([`src/components/ThenNow.tsx`](file:///c:/mini%20project/HeritageVerse/src/components/ThenNow.tsx))
-7. **The Journey** ([`src/components/TheJourney.tsx`](file:///c:/mini%20project/HeritageVerse/src/components/TheJourney.tsx))
-8. **HeritageOS** ([`src/components/HeritageOS.tsx`](file:///c:/mini%20project/HeritageVerse/src/components/HeritageOS.tsx))
-9. **Existing Signup & Signin Experience** ([`src/components/AuthPage.tsx`](file:///c:/mini%20project/HeritageVerse/src/components/AuthPage.tsx))
+1. **Cinematic Monument** ([`frontend/src/components/CinematicMonument.tsx`](../frontend/src/components/CinematicMonument.tsx))
+2. **Living Atlas** ([`frontend/src/components/LivingAtlas.tsx`](../frontend/src/components/LivingAtlas.tsx))
+3. **Museum in Motion** ([`frontend/src/components/MuseumInMotion.tsx`](../frontend/src/components/MuseumInMotion.tsx))
+4. **Time Machine** ([`frontend/src/components/TimeMachine.tsx`](../frontend/src/components/TimeMachine.tsx))
+5. **Monument Dissection** ([`frontend/src/components/MonumentDissection.tsx`](../frontend/src/components/MonumentDissection.tsx))
+6. **Then / Now** ([`frontend/src/components/ThenNow.tsx`](../frontend/src/components/ThenNow.tsx))
+7. **The Journey** ([`frontend/src/components/TheJourney.tsx`](../frontend/src/components/TheJourney.tsx))
+8. **HeritageOS** ([`frontend/src/components/HeritageOS.tsx`](../frontend/src/components/HeritageOS.tsx))
+9. **Existing Signup & Signin Experience** ([`frontend/src/components/AuthPage.tsx`](../frontend/src/components/AuthPage.tsx))
 
 **Directives:** No redesign. No rebuild. No replacement. No second authentication system.
 

@@ -1,0 +1,159 @@
+{
+  "startedAt": "2026-10-11T06:13:03.379Z",
+  "readOnly": true,
+  "public": {
+    "home": {
+      "heading": "Monuments still breathing.",
+      "mapPresent": true,
+      "markers": 2,
+      "attribution": " Leaflet | © OpenStreetMap contributors"
+    },
+    "exploreInitial": {
+      "path": "/explore",
+      "heading": "Explore the heritage atlas.",
+      "text": "HeritageVerse\nEXPLORE\nSIGN IN\n\nA LIVING COLLECTION\n\nExplore the heritage atlas.\n\nFind places by name, region, or architectural tradition. Search and filters use the published heritage collection.\n\nSearch places\nFilter by category\nAll categories\nArchaeological site\nASI protected site\nBuddhist monument\nCave and rock-cut site\nFort and palace\nHistoric urban ensemble\nMausoleum and tomb\nMuseum\nScientific heritage\nStepwell and water heritage\nTemple and religious site\nFilter by state\nAll states and territories\nAndhra Pradesh\nArunachal Pradesh\nAssam\nBihar\nChhattisgarh\nDaman & Diu (U.T.)\nDelhi\nGoa\nGujarat\nHaryana\nHimachal Pradesh\nJammu & Kashmir (U.T.)\nJharkhand\nKarnataka\nKerala\nLadakh (U.T.)\nMadhya Pradesh\nMaharashtra\nManipur\nMeghalaya\nMizoram\nNagaland\nOdisha\nPunjab\nRajasthan\nSikkim\nTamil Nadu\nTelangana\nTripura\nUttar Pradesh\nUttarakhand\nWest Bengal\nFilter by district\nAll districts\nSort heritage p",
+      "viewportWidth": 762,
+      "documentWidth": 747,
+      "overflow": false,
+      "resultCount": "2190 places",
+      "categories": [
+        "All categories",
+        "Archaeological site",
+        "ASI protected site",
+        "Buddhist monument",
+        "Cave and rock-cut site",
+        "Fort and palace",
+        "Historic urban ensemble",
+        "Mausoleum and tomb",
+        "Museum",
+        "Scientific heritage",
+        "Stepwell and water heritage",
+        "Temple and religious site"
+      ]
+    },
+    "search": {
+      "resultCount": "2 places",
+      "cards": [
+        "Agra Fort",
+        "Taj Mahal"
+      ]
+    },
+    "categorySelection": {
+      "found": true,
+      "text": "Mausoleum and tomb",
+      "value": "mausoleum-tomb"
+    },
+    "categoryFilter": {
+      "resultCount": "1 place",
+      "cards": [
+        "Taj Mahal"
+      ]
+    },
+    "stateSelection": {
+      "found": true,
+      "text": "Uttar Pradesh",
+      "value": "Uttar Pradesh"
+    },
+    "stateFilter": {
+      "resultCount": "1 place",
+      "cards": [
+        "Taj Mahal"
+      ]
+    },
+    "reset": {
+      "resultCount": "2190 places",
+      "search": ""
+    },
+    "detail": {
+      "heading": "Taj Mahal",
+      "citationLinks": 2,
+      "sourceSection": true,
+      "reviewHeading": "Visitor reviews",
+      "anonymousReviewPrompt": true,
+      "mapPresent": true,
+      "overflow": false
+    },
+    "detailH1": "Taj Mahal",
+    "mobileDetail": {
+      "path": "/heritage/15",
+      "heading": "Taj Mahal",
+      "text": "HeritageVerse\nEXPLORE\nSIGN IN\nBACK TO EXPLORE\n\nMAUSOLEUM AND TOMB\n\nTaj Mahal\n\nAgra, Uttar Pradesh\n\nA white marble mausoleum set within a formal garden complex on the Yamuna.\n[1]\n\nSave favorite\nMark visited\n\nSave this place or mark it as visited to find it again later.\n\nGallery\n\nThe Taj Mahal, seen from the riverbed · 1855–1865\n\nFrancis Frith; image courtesy of The J. Paul Getty Museum, Los Angeles (CC0 1.0 via Wikimedia Commons)\n\nImage source\nCC0 1.0 Universal Public Domain Dedication\n\nTaj Mahal in 2025 · 2025-10-04\n\nDudva (CC0 1.0 via Wikimedia Commons)\n\nImage source\nCC0 1.0 Universal Public Domain Dedication\n\nOverview\n\nA white marble mausoleum set within a formal garden complex on the Yamuna.\n[1]\n\nHistory\n\nCommissioned by Mughal emperor Shah Jahan; construction of the mausoleum ran from 1632 to 1648, with associated works completed later.\n[1]\n\nCultural significance\n\nIt is recognized as",
+      "viewportWidth": 390,
+      "documentWidth": 390,
+      "overflow": false
+    }
+  },
+  "protected": {
+    "/favorites": {
+      "path": "/favorites",
+      "heading": "Favorites",
+      "text": "HeritageVerse\nEXPLORE\nSIGN IN\n\nYOUR COLLECTION\n\nFavorites\nSign in to see your collection\n\nYour saved places are available after you sign in.\n\nSIGN IN",
+      "viewportWidth": 762,
+      "documentWidth": 747,
+      "overflow": false
+    },
+    "/visited": {
+      "path": "/visited",
+      "heading": "Visited places",
+      "text": "HeritageVerse\nEXPLORE\nSIGN IN\n\nYOUR TRAVELS\n\nVisited places\nSign in to see your visits\n\nSign in to see the places you have marked as visited.\n\nSIGN IN",
+      "viewportWidth": 762,
+      "documentWidth": 747,
+      "overflow": false
+    },
+    "/profile": {
+      "path": "/profile",
+      "heading": "Profile",
+      "text": "HeritageVerse\nEXPLORE\nSIGN IN\n\nYOUR ACCOUNT\n\nProfile\n\nSign in to view the account details available in your current session.\n\nSIGN IN",
+      "viewportWidth": 762,
+      "documentWidth": 762,
+      "overflow": false
+    },
+    "/journeys": {
+      "path": "/journeys",
+      "heading": "Journeys",
+      "text": "HeritageVerse\nEXPLORE\nSIGN IN\n\nYOUR TRAVELS\n\nJourneys\n\nSign in to create and manage journeys.",
+      "viewportWidth": 762,
+      "documentWidth": 762,
+      "overflow": false
+    }
+  },
+  "navigation": {
+    "backToExplore": {
+      "path": "/explore",
+      "heading": "Explore the heritage atlas.",
+      "text": "HeritageVerse\nEXPLORE\nSIGN IN\n\nA LIVING COLLECTION\n\nExplore the heritage atlas.\n\nFind places by name, region, or architectural tradition. Search and filters use the published heritage collection.\n\nSearch places\nFilter by category\nAll categories\nArchaeological site\nASI protected site\nBuddhist monument\nCave and rock-cut site\nFort and palace\nHistoric urban ensemble\nMausoleum and tomb\nMuseum\nScientific heritage\nStepwell and water heritage\nTemple and religious site\nFilter by state\nAll states and territories\nAndhra Pradesh\nArunachal Pradesh\nAssam\nBihar\nChhattisgarh\nDaman & Diu (U.T.)\nDelhi\nGoa\nGujarat\nHaryana\nHimachal Pradesh\nJammu & Kashmir (U.T.)\nJharkhand\nKarnataka\nKerala\nLadakh (U.T.)\nMadhya Pradesh\nMaharashtra\nManipur\nMeghalaya\nMizoram\nNagaland\nOdisha\nPunjab\nRajasthan\nSikkim\nTamil Nadu\nTelangana\nTripura\nUttar Pradesh\nUttarakhand\nWest Bengal\nFilter by district\nAll districts\nSort heritage p",
+      "viewportWidth": 762,
+      "documentWidth": 747,
+      "overflow": false
+    },
+    "forwardToDetail": {
+      "path": "/heritage/15",
+      "heading": "Taj Mahal",
+      "text": "HeritageVerse\nEXPLORE\nSIGN IN\nBACK TO EXPLORE\n\nMAUSOLEUM AND TOMB\n\nTaj Mahal\n\nAgra, Uttar Pradesh\n\nA white marble mausoleum set within a formal garden complex on the Yamuna.\n[1]\n\nSave favorite\nMark visited\n\nSave this place or mark it as visited to find it again later.\n\nGallery\n\nThe Taj Mahal, seen from the riverbed · 1855–1865\n\nFrancis Frith; image courtesy of The J. Paul Getty Museum, Los Angeles (CC0 1.0 via Wikimedia Commons)\n\nImage source\nCC0 1.0 Universal Public Domain Dedication\n\nTaj Mahal in 2025 · 2025-10-04\n\nDudva (CC0 1.0 via Wikimedia Commons)\n\nImage source\nCC0 1.0 Universal Public Domain Dedication\n\nOverview\n\nA white marble mausoleum set within a formal garden complex on the Yamuna.\n[1]\n\nHistory\n\nCommissioned by Mughal emperor Shah Jahan; construction of the mausoleum ran from 1632 to 1648, with associated works completed later.\n[1]\n\nCultural significance\n\nIt is recognized as",
+      "viewportWidth": 762,
+      "documentWidth": 747,
+      "overflow": false
+    },
+    "mobileMenuOpened": true,
+    "mobileExplore": {
+      "path": "/explore",
+      "heading": "Explore the heritage atlas.",
+      "text": "HeritageVerse\nEXPLORE\nSIGN IN\n\nA LIVING COLLECTION\n\nExplore the heritage atlas.\n\nFind places by name, region, or architectural tradition. Search and filters use the published heritage collection.\n\nSearch places\nFilter by category\nAll categories\nArchaeological site\nASI protected site\nBuddhist monument\nCave and rock-cut site\nFort and palace\nHistoric urban ensemble\nMausoleum and tomb\nMuseum\nScientific heritage\nStepwell and water heritage\nTemple and religious site\nFilter by state\nAll states and territories\nAndhra Pradesh\nArunachal Pradesh\nAssam\nBihar\nChhattisgarh\nDaman & Diu (U.T.)\nDelhi\nGoa\nGujarat\nHaryana\nHimachal Pradesh\nJammu & Kashmir (U.T.)\nJharkhand\nKarnataka\nKerala\nLadakh (U.T.)\nMadhya Pradesh\nMaharashtra\nManipur\nMeghalaya\nMizoram\nNagaland\nOdisha\nPunjab\nRajasthan\nSikkim\nTamil Nadu\nTelangana\nTripura\nUttar Pradesh\nUttarakhand\nWest Bengal\nFilter by district\nAll districts\nSort heritage p",
+      "viewportWidth": 390,
+      "documentWidth": 390,
+      "overflow": false
+    },
+    "mobileMenuClosed": true
+  },
+  "authValidation": {
+    "message": "Password must be at least 8 characters.",
+    "passwordPlaceholder": "At least 8 characters"
+  },
+  "mutationRequests": [],
+  "errors": {
+    "console": [],
+    "exceptions": [],
+    "http": []
+  },
+  "finishedAt": "2026-10-11T06:13:33.317Z"
+}

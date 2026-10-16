@@ -1,0 +1,38 @@
+# Heritage photograph attribution
+
+The local JPEG copies below depict their corresponding catalogue places. They were downloaded from the linked Wikimedia Commons file pages as web-sized images; attribution and reuse terms are shown per image.
+
+| Heritage place | Local file | Source | Creator | License |
+| --- | --- | --- | --- | --- |
+| Chhatrapati Shivaji Maharaj Terminus | `chhatrapati-shivaji-terminus.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Chhatrapati_Shivaji_Terminus,_Fort,_Mumbai.jpg) | Kanad Sanyal | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0/)) |
+| Gateway of India | `gateway-of-india.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Gateway_Of_India.jpg) | Joe Ravi | CC BY-SA 3.0 ([license](https://creativecommons.org/licenses/by-sa/3.0/)) |
+| Elephanta Caves | `elephanta-caves.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Elephanta_Caves,_India.jpg) | Vyacheslav Argenberg | CC BY 4.0 ([license](https://creativecommons.org/licenses/by/4.0/)) |
+| Kanheri Caves | `kanheri-caves.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Kanheri_caves1.jpg) | सुबोध कुलकर्णी | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0)) |
+| Ajanta Caves | `ajanta-caves.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Ajanta_cave_no._9_2010.jpg) | Marcin Białek | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0/)) |
+| Ellora Caves | `ellora-caves.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Ellora_Caves,_India,_Kailasanatha_Temple_2.jpg) | Vyacheslav Argenberg | CC BY 4.0 ([license](https://creativecommons.org/licenses/by/4.0/)) |
+| Daulatabad Fort | `daulatabad-fort.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Daulatabad_Fort.jpg) | Danial Chitnis | CC BY 2.0 ([license](https://creativecommons.org/licenses/by/2.0/)) |
+| Bibi Ka Maqbara | `bibi-ka-maqbara.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Bibi_Ka_Maqbara.jpg) | Danial Chitnis | CC BY 2.0 ([license](https://creativecommons.org/licenses/by/2.0/)) |
+| Raigad Fort | `raigad-fort.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Raigad_Fort-Rigad.JPG) | Gbaadkar | CC BY-SA 3.0 ([license](https://creativecommons.org/licenses/by-sa/3.0)) |
+| Shivneri Fort | `shivneri-fort.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Shivneri_fort_main_building.jpg) | Nandini Jaybhaye | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0)) |
+| Sinhagad Fort | `sinhagad-fort.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Sinhagad_Fort_(49146).jpg) | Suraj Digrase | CC0 ([license](https://creativecommons.org/publicdomain/zero/1.0/deed.en)) |
+| Shaniwar Wada | `shaniwar-wada.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Shaniwar_Wada_main_gate.jpg) | Shree$432 | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0/)) |
+| Aga Khan Palace | `aga-khan-palace.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Aga_Khan_Palace_Pune.jpg) | DanielGJHDavidson | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0)) |
+| Pratapgad Fort | `pratapgad-fort.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Pratapgad_fort_front_view.jpg) | Success think | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0)) |
+| Sindhudurg Fort | `sindhudurg-fort.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Sindhudurg_Fort,_Back_Wall.jpg) | Aparnavenugopal | CC BY 3.0 ([license](https://creativecommons.org/licenses/by/3.0)) |
+| Vijaydurg Fort | `vijaydurg-fort.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Vijaydurg_Fort_20.jpg) | Rehansarang | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0)) |
+| Murud-Janjira Fort | `murud-janjira-fort.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Murud_Janjira_Fort_top_view,_Maharashtra.jpg) | Amitabha Gupta | CC BY 4.0 ([license](https://creativecommons.org/licenses/by/4.0)) |
+| Karla Caves | `karla-caves.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Karla_Caves_-_2025_-_08.jpg) | Oleg Yunakov | CC0 ([license](https://creativecommons.org/publicdomain/zero/1.0/deed.en)) |
+| Bhaja Caves | `bhaja-caves.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Bhaja_Caves_Entrance_Side_View.jpg) | KSeraphin | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0)) |
+| Pandavleni Caves | `pandavleni-caves.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:View_of_Pandavleni_Caves.jpg) | Nevilzaveri | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0)) |
+| Kalaram Temple | `kalaram-temple.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Kalaram_Temple,_Panchavati,_Nashik.jpg) | K.Venkataramana | CC0 ([license](https://creativecommons.org/publicdomain/zero/1.0/deed.en)) |
+| Deekshabhoomi | `deekshabhoomi.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Deekshabhoomi,_Nagpur_in_India.jpg) | Prakash Lokhande | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0)) |
+| Victorian Gothic and Art Deco Ensembles of Mumbai | `mumbai-victorian-art-deco.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Starting_point_of_Art_Deco_buildings_exploration_on_Marine_Drive,_Mumbai.jpg) | DesiBoy101 | CC BY 4.0 ([license](https://creativecommons.org/licenses/by/4.0)) |
+| Panhala Fort | `panhala-fort.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Remotest_Rampart_on_Panhala.jpg) | Ankur P | CC BY-SA 2.0 ([license](https://creativecommons.org/licenses/by-sa/2.0/)) |
+| Lohagad Fort | `lohagad-fort.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Lohagad_Fort_Vinchu_Kata_6.jpg) | Rangan Datta Wiki | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0)) |
+| Vasai Fort | `vasai-fort.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Vasai_Fort_2.jpg) | Paul Kokkat | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0)) |
+| Chhatrapati Shivaji Maharaj Vastu Sangrahalaya | `chhatrapati-shivaji-maharaj-vastu-sangrahalaya.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Prince_of_Wales_Museum,_Mumbai_01.jpg) | Bernard Gagnon | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0)) |
+| Pitalkhora Caves | `pitalkhora-caves.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:4_Pitalkhora_overview.jpg) | Ms Sarah Welch | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0)) |
+| Lonar Lake | `lonar-lake.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Lonar_Crater_seen_from_above.jpg) | Dhruva Punde | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0)) |
+| Pataleshwar Caves | `pataleshwar-caves.jpg` | [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Pataleshwar_Caves_-_Main_Temple_Entrance.jpg) | Himanshu Rane | CC BY-SA 4.0 ([license](https://creativecommons.org/licenses/by-sa/4.0)) |
+
+The shared image manifest maps every selected catalogue slug to its local same-origin `/heritage-images/...` asset and attribution metadata. No external image host is needed at runtime.

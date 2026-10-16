@@ -1,0 +1,353 @@
+{
+  "startedAt": "2026-10-10T18:01:40.922Z",
+  "desktop": {
+    "home": {
+      "title": "HeritageVerse — Monuments in Motion",
+      "width": 1425,
+      "documentWidth": 1425,
+      "overflow": false
+    }
+  },
+  "map": {
+    "present": true,
+    "markerCount": 2,
+    "markers": [
+      "Agra Fort",
+      "Ajanta Caves"
+    ],
+    "tiles": 12,
+    "tilesDecoded": 12,
+    "attribution": " Leaflet | © OpenStreetMap contributors",
+    "error": null,
+    "markerPopup": "Agra Fort\n\nA Mughal citadel containing palaces, audience halls and mosques within red sandstone walls.\n\nAgra, Uttar Pradesh"
+  },
+  "tajMahal": {
+    "selection": {
+      "found": true,
+      "id": "15"
+    },
+    "render": {
+      "images": [
+        {
+          "complete": true,
+          "width": 1280,
+          "height": 983,
+          "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Taj_Mahal_about_1855%E2%80%931865.jpg/1280px-Taj_Mahal_about_1855%E2%80%931865.jpg",
+          "alt": "The Taj Mahal viewed from the riverbed in a photograph dated about 1855 to 1865"
+        },
+        {
+          "complete": true,
+          "width": 1280,
+          "height": 828,
+          "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/00/Taj_Mahal_in_2025_1.jpg/1280px-Taj_Mahal_in_2025_1.jpg",
+          "alt": "The Taj Mahal photographed on 4 October 2025"
+        }
+      ],
+      "viewpointNotice": true,
+      "providerStatus": [
+        "No reconstruction provider is configured. For OpenAI, set HERITAGE_RECONSTRUCTION_PROVIDER=openai and OPENAI_API_KEY on the server. A compatible custom provider can use HERITAGE_RECONSTRUCTION_URL and HERITAGE_RECONSTRUCTION_API_KEY."
+      ]
+    },
+    "provider": {
+      "success": true,
+      "reconstruction": {
+        "configured": false,
+        "reason": "provider_not_configured"
+      }
+    }
+  },
+  "access": {
+    "admin": {
+      "heading": "This path has not been mapped.",
+      "showsAdmin": false
+    },
+    "journeys": {
+      "signInRequired": true
+    }
+  },
+  "mobile": {
+    "home": {
+      "viewport": 390,
+      "document": 390,
+      "overflow": false
+    },
+    "explore": {
+      "viewport": 390,
+      "document": 390,
+      "overflow": false
+    }
+  },
+  "consoleErrors": [],
+  "exceptions": [],
+  "httpErrors": [],
+  "tileResponses": [
+    {
+      "url": "https://tile.openstreetmap.org/6/45/27.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/46/27.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/45/26.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/46/26.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/45/28.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/46/28.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/44/27.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/47/27.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/44/26.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/47/26.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/44/28.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/47/28.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1467/864.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1466/863.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1468/863.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1469/864.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1469/862.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1469/863.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1468/862.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1466/864.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1467/862.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1468/864.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1467/863.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1466/862.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1468/862.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": false
+    },
+    {
+      "url": "https://tile.openstreetmap.org/11/1469/864.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": false
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/45/27.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/46/27.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/45/26.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/46/26.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/45/28.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/46/28.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/44/27.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/47/27.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/44/26.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/47/26.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/44/28.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/47/28.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/22/13.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": false
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/23/13.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": false
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/22/14.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": false
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/23/14.png",
+      "status": 200,
+      "mime": "image/png",
+      "fromCache": false
+    }
+  ],
+  "imageResponses": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Taj_Mahal_about_1855%E2%80%931865.jpg/1280px-Taj_Mahal_about_1855%E2%80%931865.jpg",
+      "status": 200,
+      "mime": "image/jpeg",
+      "fromCache": true
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/00/Taj_Mahal_in_2025_1.jpg/1280px-Taj_Mahal_in_2025_1.jpg",
+      "status": 200,
+      "mime": "image/jpeg",
+      "fromCache": true
+    }
+  ],
+  "apiFailures": [],
+  "finishedAt": "2026-10-10T18:02:03.630Z"
+}

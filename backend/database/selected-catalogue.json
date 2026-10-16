@@ -1,0 +1,634 @@
+{
+  "catalogue": "heritageverse-selected-30",
+  "version": 1,
+  "expectedCount": 30,
+  "stateCounts": {
+    "Maharashtra": 30
+  },
+  "places": [
+    {
+      "order": 1,
+      "key": "chhatrapati-shivaji-maharaj-terminus",
+      "name": "Chhatrapati Shivaji Maharaj Terminus",
+      "slug": "chhatrapati-shivaji-maharaj-terminus",
+      "category": "architectural-landmark",
+      "state": "Maharashtra",
+      "district": "Mumbai City",
+      "locality": "Mumbai",
+      "operation": "add",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 18.940122,
+        "longitude": 72.836203,
+        "sourceUrl": "https://whc.unesco.org/en/list/945/maps/"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 2,
+      "key": "gateway-of-india",
+      "name": "Gateway of India",
+      "slug": "gateway-of-india",
+      "category": "architectural-landmark",
+      "state": "Maharashtra",
+      "district": "Mumbai City",
+      "locality": "Mumbai",
+      "operation": "add",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 18.92196,
+        "longitude": 72.83456,
+        "sourceUrl": "https://www.openstreetmap.org/way/28845634"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 3,
+      "key": "elephanta-caves",
+      "name": "Elephanta Caves",
+      "slug": "elephanta-caves",
+      "category": "cave-rock-cut",
+      "state": "Maharashtra",
+      "district": "Mumbai Suburban",
+      "locality": "Elephanta Island",
+      "operation": "correct-location",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 18.96667,
+        "longitude": 72.93583,
+        "sourceUrl": "https://whc.unesco.org/en/list/244/maps/"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 4,
+      "key": "kanheri-caves",
+      "name": "Kanheri Caves",
+      "slug": "kanheri-caves",
+      "category": "cave-rock-cut",
+      "state": "Maharashtra",
+      "district": "Mumbai Suburban",
+      "locality": "Sanjay Gandhi National Park",
+      "operation": "add",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 19.208,
+        "longitude": 72.906,
+        "sourceUrl": "https://vocab.getty.edu/page/tgn/1103310"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 5,
+      "key": "ajanta-caves",
+      "name": "Ajanta Caves",
+      "slug": "ajanta-caves",
+      "category": "cave-rock-cut",
+      "state": "Maharashtra",
+      "district": "Chhatrapati Sambhajinagar",
+      "locality": "Ajanta",
+      "operation": "keep-curated",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 20.553111,
+        "longitude": 75.70025,
+        "sourceUrl": "https://whc.unesco.org/en/list/242/"
+      },
+      "imageStatus": "existing-verified-metadata",
+      "country": "India"
+    },
+    {
+      "order": 6,
+      "key": "ellora-caves",
+      "name": "Ellora Caves",
+      "slug": "ellora-caves",
+      "category": "cave-rock-cut",
+      "state": "Maharashtra",
+      "district": "Chhatrapati Sambhajinagar",
+      "locality": "Ellora",
+      "operation": "keep-curated",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 20.02639,
+        "longitude": 75.17917,
+        "sourceUrl": "https://whc.unesco.org/en/list/243/"
+      },
+      "imageStatus": "existing-verified-metadata",
+      "country": "India"
+    },
+    {
+      "order": 7,
+      "key": "daulatabad-fort",
+      "name": "Daulatabad Fort",
+      "slug": "daulatabad-fort",
+      "category": "fort-palace",
+      "state": "Maharashtra",
+      "district": "Chhatrapati Sambhajinagar",
+      "locality": "Daulatabad",
+      "operation": "add",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 19.944056,
+        "longitude": 75.219917,
+        "sourceUrl": "https://www.nma.gov.in/showfile.php?lang=2&level=1&lid=2102&ls_id=1688"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 8,
+      "key": "bibi-ka-maqbara",
+      "name": "Bibi Ka Maqbara",
+      "slug": "bibi-ka-maqbara",
+      "category": "mausoleum-tomb",
+      "state": "Maharashtra",
+      "district": "Chhatrapati Sambhajinagar",
+      "locality": "Chhatrapati Sambhajinagar",
+      "operation": "add",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 19.901389,
+        "longitude": 75.320278,
+        "sourceUrl": "https://www.nma.gov.in/showfile.php?lang=1&level=1&lid=2045&ls_id=1647"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 9,
+      "key": "raigad-fort",
+      "name": "Raigad Fort",
+      "slug": "raigad-fort",
+      "category": "fort-palace",
+      "state": "Maharashtra",
+      "district": "Raigad",
+      "locality": "Mahad",
+      "operation": "correct-identity-and-location",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 18.236111,
+        "longitude": 73.444444,
+        "sourceUrl": "https://whc.unesco.org/en/list/1739/maps/"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 10,
+      "key": "shivneri-fort",
+      "name": "Shivneri Fort",
+      "slug": "shivneri-fort",
+      "category": "fort-palace",
+      "state": "Maharashtra",
+      "district": "Pune",
+      "locality": "Junnar",
+      "operation": "correct-title-and-description",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 19.196667,
+        "longitude": 73.858333,
+        "sourceUrl": "https://whc.unesco.org/en/list/1739/maps/"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 11,
+      "key": "sinhagad-fort",
+      "name": "Sinhagad Fort",
+      "slug": "sinhagad-fort",
+      "category": "fort-palace",
+      "state": "Maharashtra",
+      "district": "Pune",
+      "locality": "Pune",
+      "operation": "add",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 18.36466,
+        "longitude": 73.7567,
+        "sourceUrl": "https://www.openstreetmap.org/way/126392859"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 12,
+      "key": "shaniwar-wada",
+      "name": "Shaniwar Wada",
+      "slug": "shaniwar-wada",
+      "category": "fort-palace",
+      "state": "Maharashtra",
+      "district": "Pune",
+      "locality": "Pune",
+      "operation": "correct-title-and-description",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 18.5195,
+        "longitude": 73.8553,
+        "sourceUrl": "https://geoheritage.in/assets/img/Library/Popular%20articles/Monograph_Potential%20Geoparks%20of%20India.pdf"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 13,
+      "key": "aga-khan-palace",
+      "name": "Aga Khan Palace",
+      "slug": "aga-khan-palace",
+      "category": "fort-palace",
+      "state": "Maharashtra",
+      "district": "Pune",
+      "locality": "Pune",
+      "operation": "correct-title-and-description",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 18.55236,
+        "longitude": 73.90145,
+        "sourceUrl": "https://www.openstreetmap.org/way/215998839"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 14,
+      "key": "pratapgad-fort",
+      "name": "Pratapgad Fort",
+      "slug": "pratapgad-fort",
+      "category": "fort-palace",
+      "state": "Maharashtra",
+      "district": "Satara",
+      "locality": "Mahabaleshwar",
+      "operation": "add-separate-from-ambiguous-Pratapgad-record",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 17.935833,
+        "longitude": 73.578611,
+        "sourceUrl": "https://whc.unesco.org/en/list/1739/maps/"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 15,
+      "key": "sindhudurg-fort",
+      "name": "Sindhudurg Fort",
+      "slug": "sindhudurg-fort",
+      "category": "fort-palace",
+      "state": "Maharashtra",
+      "district": "Sindhudurg",
+      "locality": "Malvan",
+      "operation": "add",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 16.0425,
+        "longitude": 73.459722,
+        "sourceUrl": "https://whc.unesco.org/en/list/1739/maps/"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 16,
+      "key": "vijaydurg-fort",
+      "name": "Vijaydurg Fort",
+      "slug": "vijaydurg-fort",
+      "category": "fort-palace",
+      "state": "Maharashtra",
+      "district": "Sindhudurg",
+      "locality": "Vijaydurg",
+      "operation": "add-separate-from-Tala-Fort-record",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 16.560833,
+        "longitude": 73.333333,
+        "sourceUrl": "https://whc.unesco.org/en/list/1739/maps/"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 17,
+      "key": "murud-janjira-fort",
+      "name": "Murud-Janjira Fort",
+      "slug": "murud-janjira-fort",
+      "category": "fort-palace",
+      "state": "Maharashtra",
+      "district": "Raigad",
+      "locality": "Murud",
+      "operation": "correct-title-and-location",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 18.299917,
+        "longitude": 72.964411,
+        "sourceUrl": "https://whc.unesco.org/en/tentativelists/6703"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 18,
+      "key": "karla-caves",
+      "name": "Karla Caves",
+      "slug": "karla-caves",
+      "category": "cave-rock-cut",
+      "state": "Maharashtra",
+      "district": "Pune",
+      "locality": "Lonavala",
+      "operation": "correct-title-and-location",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 18.78374,
+        "longitude": 73.47032,
+        "sourceUrl": "https://mapcarta.com/N1065807980"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 19,
+      "key": "bhaja-caves",
+      "name": "Bhaja Caves",
+      "slug": "bhaja-caves",
+      "category": "cave-rock-cut",
+      "state": "Maharashtra",
+      "district": "Pune",
+      "locality": "Lonavala",
+      "operation": "correct-title-and-location",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 18.727,
+        "longitude": 73.481,
+        "sourceUrl": "https://vocab.getty.edu/page/tgn/8697395"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 20,
+      "key": "pandavleni-caves",
+      "name": "Pandavleni Caves",
+      "slug": "pandavleni-caves",
+      "category": "cave-rock-cut",
+      "state": "Maharashtra",
+      "district": "Nashik",
+      "locality": "Nashik",
+      "operation": "correct-title-and-location",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 19.9396,
+        "longitude": 73.7485,
+        "sourceUrl": "https://vocab.getty.edu/page/tgn/8697409"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 21,
+      "key": "kalaram-temple",
+      "name": "Kalaram Temple",
+      "slug": "kalaram-temple",
+      "category": "temple-religious",
+      "state": "Maharashtra",
+      "district": "Nashik",
+      "locality": "Nashik",
+      "operation": "add",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 20.00695,
+        "longitude": 73.79522,
+        "sourceUrl": "https://www.openstreetmap.org/way/361247890"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 22,
+      "key": "deekshabhoomi",
+      "name": "Deekshabhoomi",
+      "slug": "deekshabhoomi",
+      "category": "buddhist-monument",
+      "state": "Maharashtra",
+      "district": "Nagpur",
+      "locality": "Nagpur",
+      "operation": "add",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 21.1282,
+        "longitude": 79.06693,
+        "sourceUrl": "https://www.openstreetmap.org/node/297521871"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 23,
+      "key": "mumbai-victorian-art-deco",
+      "name": "Victorian Gothic and Art Deco Ensembles of Mumbai",
+      "slug": "mumbai-victorian-art-deco",
+      "category": "historic-urban",
+      "state": "Maharashtra",
+      "district": "Mumbai City",
+      "locality": "Mumbai",
+      "operation": "retain-existing",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 18.929806,
+        "longitude": 72.830083,
+        "sourceUrl": "https://whc.unesco.org/en/list/1480/maps/"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 24,
+      "key": "panhala-fort",
+      "name": "Panhala Fort",
+      "slug": "panhala-fort",
+      "category": "fort-palace",
+      "state": "Maharashtra",
+      "district": "Kolhapur",
+      "locality": "Panhala",
+      "operation": "canonicalize-existing",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 16.811111,
+        "longitude": 74.108056,
+        "sourceUrl": "https://whc.unesco.org/en/list/1739/maps/"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 25,
+      "key": "lohagad-fort",
+      "name": "Lohagad Fort",
+      "slug": "lohagad-fort",
+      "category": "fort-palace",
+      "state": "Maharashtra",
+      "district": "Pune",
+      "locality": "Lonavala",
+      "operation": "add",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 18.71,
+        "longitude": 73.476667,
+        "sourceUrl": "https://whc.unesco.org/en/list/1739/maps/"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 26,
+      "key": "vasai-fort",
+      "name": "Vasai Fort",
+      "slug": "vasai-fort",
+      "category": "fort-palace",
+      "state": "Maharashtra",
+      "district": "Palghar",
+      "locality": "Vasai",
+      "operation": "add",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 19.330497,
+        "longitude": 72.815572,
+        "sourceUrl": "https://whc.unesco.org/en/tentativelists/6703"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 27,
+      "key": "chhatrapati-shivaji-maharaj-vastu-sangrahalaya",
+      "name": "Chhatrapati Shivaji Maharaj Vastu Sangrahalaya",
+      "slug": "chhatrapati-shivaji-maharaj-vastu-sangrahalaya",
+      "category": "museum",
+      "state": "Maharashtra",
+      "district": "Mumbai City",
+      "locality": "Mumbai",
+      "operation": "add",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 18.926873,
+        "longitude": 72.832613,
+        "sourceUrl": "https://shop.museumsofindia.org/node/330"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 28,
+      "key": "pitalkhora-caves",
+      "name": "Pitalkhora Caves",
+      "slug": "pitalkhora-caves",
+      "category": "cave-rock-cut",
+      "state": "Maharashtra",
+      "district": "Chhatrapati Sambhajinagar",
+      "locality": "near Amba village",
+      "operation": "add",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 20.313889,
+        "longitude": 74.9925,
+        "sourceUrl": "https://nmma.nic.in/nmma/NAS1/nmma_doc/NMMA_Training_Manual_English.pdf"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 29,
+      "key": "lonar-lake",
+      "name": "Lonar Lake",
+      "slug": "lonar-lake",
+      "category": "archaeological",
+      "state": "Maharashtra",
+      "district": "Buldhana",
+      "locality": "Lonar",
+      "operation": "add",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 19.975833,
+        "longitude": 76.508333,
+        "sourceUrl": "https://rsis.ramsar.org/RISapp/files/RISrep/IN2441RIS_2011_en.pdf"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    },
+    {
+      "order": 30,
+      "key": "pataleshwar-caves",
+      "name": "Pataleshwar Caves",
+      "slug": "pataleshwar-caves",
+      "category": "cave-rock-cut",
+      "state": "Maharashtra",
+      "district": "Pune",
+      "locality": "Pune",
+      "operation": "add",
+      "coordinates": {
+        "status": "verified",
+        "latitude": 18.5268,
+        "longitude": 73.8507,
+        "sourceUrl": "https://geoheritage.in/assets/img/Library/Popular%20articles/Monograph_Potential%20Geoparks%20of%20India.pdf"
+      },
+      "imageStatus": "pending-image-import",
+      "country": "India"
+    }
+  ],
+  "duplicateAliases": [
+    {
+      "identity": {
+        "name": "Ajanta Caves",
+        "state": "Maharashtra",
+        "district": [
+          "Aurangabad",
+          "Chhatrapati Sambhajinagar"
+        ],
+        "locality": "Ajanta",
+        "category": "asi-protected"
+      },
+      "canonicalSlug": "ajanta-caves",
+      "reason": "Retain the sparse ASI row and its child records when this natural identity is unique."
+    },
+    {
+      "identity": {
+        "name": "Ellora Caves",
+        "state": "Maharashtra",
+        "district": [
+          "Aurangabad",
+          "Chhatrapati Sambhajinagar"
+        ],
+        "locality": "Ellora",
+        "category": "asi-protected"
+      },
+      "canonicalSlug": "ellora-caves",
+      "reason": "Retain the sparse ASI row and its child records when this natural identity is unique."
+    }
+  ],
+  "unresolvedCoordinates": [
+    "gateway-of-india",
+    "kanheri-caves",
+    "daulatabad-fort",
+    "bibi-ka-maqbara",
+    "raigad-fort",
+    "shivneri-fort",
+    "sinhagad-fort",
+    "shaniwar-wada",
+    "aga-khan-palace",
+    "pratapgad-fort",
+    "sindhudurg-fort",
+    "vijaydurg-fort",
+    "murud-janjira-fort",
+    "karla-caves",
+    "bhaja-caves",
+    "pandavleni-caves",
+    "kalaram-temple",
+    "deekshabhoomi",
+    "qutub-minar",
+    "khajuraho-group-of-monuments",
+    "sanchi-stupa",
+    "amer-fort"
+  ]
+}

@@ -16,7 +16,7 @@
 This document defines the formal HTTP REST interface for the HeritageVerse Admin System.
 
 Every endpoint below is classified as either:
-* **`[EXISTING API]`**: Currently implemented and running in [`server/index.js`](file:///c:/mini%20project/HeritageVerse/server/index.js).
+* **`[EXISTING API]`**: Currently implemented and running in [`backend/index.js`](../backend/index.js).
 * **`[PLANNED API]`**: Proposed endpoint required for complete frontend-to-database integration. Pending backend implementation by Parth.
 
 All request and response bodies use standard `application/json`. Authenticated endpoints require an HTTP header:

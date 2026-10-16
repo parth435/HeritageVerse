@@ -1,0 +1,93 @@
+{
+  "startedAt": "2026-10-11T06:18:22.860Z",
+  "routes": {
+    "/admin": {
+      "direct": {
+        "path": "/admin",
+        "heading": "Enter HeritageVerse.",
+        "hasSignInForm": true,
+        "isNotFound": false,
+        "overflow": false
+      },
+      "afterRefresh": {
+        "path": "/admin",
+        "heading": "Enter HeritageVerse.",
+        "hasSignInForm": true,
+        "isNotFound": false,
+        "overflow": false
+      }
+    },
+    "/admin/heritage": {
+      "direct": {
+        "path": "/admin/heritage",
+        "heading": "Enter HeritageVerse.",
+        "hasSignInForm": true,
+        "isNotFound": false,
+        "overflow": false
+      },
+      "afterRefresh": {
+        "path": "/admin/heritage",
+        "heading": "Enter HeritageVerse.",
+        "hasSignInForm": true,
+        "isNotFound": false,
+        "overflow": false
+      }
+    },
+    "/admin/categories": {
+      "direct": {
+        "path": "/admin/categories",
+        "heading": "Enter HeritageVerse.",
+        "hasSignInForm": true,
+        "isNotFound": false,
+        "overflow": false
+      },
+      "afterRefresh": {
+        "path": "/admin/categories",
+        "heading": "Enter HeritageVerse.",
+        "hasSignInForm": true,
+        "isNotFound": false,
+        "overflow": false
+      }
+    }
+  },
+  "history": {
+    "before": {
+      "path": "/admin",
+      "heading": "Enter HeritageVerse.",
+      "hasSignInForm": true,
+      "isNotFound": false,
+      "overflow": false
+    },
+    "middle": {
+      "path": "/admin/heritage",
+      "heading": "Enter HeritageVerse.",
+      "hasSignInForm": true,
+      "isNotFound": false,
+      "overflow": false
+    },
+    "afterNavigate": {
+      "path": "/admin/categories",
+      "heading": "Enter HeritageVerse.",
+      "hasSignInForm": true,
+      "isNotFound": false,
+      "overflow": false
+    },
+    "afterBack": {
+      "path": "/admin/heritage",
+      "heading": "Enter HeritageVerse.",
+      "hasSignInForm": true,
+      "isNotFound": false,
+      "overflow": false
+    },
+    "afterForward": {
+      "path": "/admin/categories",
+      "heading": "Enter HeritageVerse.",
+      "hasSignInForm": true,
+      "isNotFound": false,
+      "overflow": false
+    }
+  },
+  "consoleErrors": [],
+  "exceptions": [],
+  "finishedAt": "2026-10-11T06:18:32.978Z"
+}

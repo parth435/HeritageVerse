@@ -2,5 +2,17 @@ node_modules/
 dist/
 .env
 *.env
+.env.*
+!.env.example
+!frontend/.env.example
+!backend/.env.example
 *.log
 .DS_Store
+
+# TypeScript build metadata
+*.tsbuildinfo
+# Local temporary and build artifacts
+.vite/
+*.tsbuildinfo
+.codex-coordinate-audit.tmp.js
+Cursor.rar

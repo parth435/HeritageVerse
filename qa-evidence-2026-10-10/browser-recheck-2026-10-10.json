@@ -1,0 +1,572 @@
+{
+  "startedAt": "2026-10-10T17:53:14.566Z",
+  "desktop": {
+    "home": "{\"title\":\"HeritageVerse — Monuments in Motion\",\"ready\":\"complete\",\"viewport\":1425,\"document\":1425,\"rootText\":17564}"
+  },
+  "mobile": {
+    "explore": "{\"viewport\":390,\"document\":390,\"overflow\":false,\"mapWidth\":0}"
+  },
+  "map": "{\"mapPresent\":false,\"mappedSites\":0,\"attribution\":null,\"error\":\"No sites in these results have a complete coordinate pair with a supporting source yet. Other records remain listed without approximate pins.\",\"viewport\":1425,\"document\":1425}",
+  "tajMahal": {
+    "selection": "{\"found\":true,\"value\":\"15\",\"options\":27}",
+    "render": "{\"pair\":2,\"images\":[{\"alt\":\"The Taj Mahal viewed from the riverbed in a photograph dated about 1855 to 1865\",\"src\":\"https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Taj_Mahal_about_1855%E2%80%931865.jpg/1280px-Taj_Mahal_about_1855%E2%80%931865.jpg\",\"complete\":true,\"naturalWidth\":1280,\"naturalHeight\":983},{\"alt\":\"The Taj Mahal photographed on 4 October 2025\",\"src\":\"https://thumb.wikimedia.org/wikipedia/commons/thumb/0/00/Taj_Mahal_in_2025_1.jpg/1280px-Taj_Mahal_in_2025_1.jpg\",\"complete\":true,\"naturalWidth\":1280,\"naturalHeight\":828}],\"caption\":true,\"site\":true,\"providerStatus\":[\"No reconstruction provider is configured. For OpenAI, set HERITAGE_RECONSTRUCTION_PROVIDER=openai and OPENAI_API_KEY on the server. A compatible custom provider can use HERITAGE_RECONSTRUCTION_URL and HERITAGE_RECONSTRUCTION_API_KEY.\"]}",
+    "reconstructionText": "ILLUSTRATIVE ONLY\n\nAI historical visualization\n\nAny generated image is an interpretation informed by cited records. It is not an authentic historical photograph or evidence of undocumented details.\n\nNo reconstruction provider is configured. For OpenAI, set HERITAGE_RECONSTRUCTION_PROVIDER=openai and OPENAI_API_KEY on the server. A compatible custom provider can use HERITAGE_RECONSTRUCTION_URL and HERITAGE_RECONSTRUCTION_API_KEY."
+  },
+  "providers": {
+    "reconstruction": {
+      "success": true,
+      "reconstruction": {
+        "configured": false,
+        "reason": "provider_not_configured"
+      }
+    }
+  },
+  "access": {
+    "adminPage": "{\"title\":\"HeritageVerse — Monuments in Motion\",\"heading\":\"This path has not been mapped.\",\"text\":\"404 · PAGE NOT FOUND\\n\\nThis path has not been mapped.\\n\\nThe page may have moved, or the address may be incomplete.\\n\\nRETURN HOME\"}",
+    "adminApiStatus": 401,
+    "journeysPage": "{\"signInRequired\":true,\"text\":\"HeritageVerse\\nEXPLORE\\nSIGN IN\\n\\nYOUR TRAVELS\\n\\nJourneys\\n\\nSign in to create and manage journeys.\"}",
+    "journeysApiStatus": 401
+  },
+  "browserErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "exceptions": [],
+  "apiFailures": [],
+  "externalFailures": [
+    {
+      "url": "https://tile.openstreetmap.org/5/22/13.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/23/13.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/22/12.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/23/12.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/22/14.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/23/14.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/21/13.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/24/13.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/21/12.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/24/12.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/21/14.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/24/14.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/22/13.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/23/13.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/22/12.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/23/12.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/22/14.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/23/14.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/21/13.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/24/13.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/21/12.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/24/12.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/21/14.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "url": "https://tile.openstreetmap.org/5/24/14.png",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+    }
+  ],
+  "externalResponses": [
+    {
+      "url": "https://tile.openstreetmap.org/6/45/27.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/46/27.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/45/26.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/46/26.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/45/28.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/46/28.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/44/27.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/47/27.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/44/26.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/47/26.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/44/28.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/47/28.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/45/27.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/46/27.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/45/26.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/46/26.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/45/28.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/46/28.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/44/27.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/47/27.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/44/26.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/47/26.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/44/28.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://tile.openstreetmap.org/6/47/28.png",
+      "status": 200,
+      "mime": "image/png",
+      "type": "Image"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Taj_Mahal_about_1855%E2%80%931865.jpg/1280px-Taj_Mahal_about_1855%E2%80%931865.jpg",
+      "status": 200,
+      "mime": "image/jpeg",
+      "type": "Image"
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/00/Taj_Mahal_in_2025_1.jpg/1280px-Taj_Mahal_in_2025_1.jpg",
+      "status": 200,
+      "mime": "image/jpeg",
+      "type": "Image"
+    }
+  ],
+  "apiResponses": [
+    {
+      "url": "http://127.0.0.1:5173/api/categories",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage?category=museum&limit=1&offset=0",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage?limit=100&offset=0",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/categories",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage?hasTimeline=true&limit=100&offset=0",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage?limit=100&offset=0",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage?hasTimeline=true&limit=100&offset=0",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage/16",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage/2180",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage/16",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/reconstruction/status",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/reconstruction/status",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage-facets",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage?category=museum&limit=100&offset=0",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage?limit=1&offset=0",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/categories",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage-facets",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage?limit=24&offset=0",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/categories",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage-facets",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage?limit=24&offset=0",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/categories",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage?limit=1&offset=0",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage?category=museum&limit=1&offset=0",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage?limit=100&offset=0",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/categories",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage?hasTimeline=true&limit=100&offset=0",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage?limit=100&offset=0",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage?hasTimeline=true&limit=100&offset=0",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage/2180",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage/16",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage/16",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/reconstruction/status",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/reconstruction/status",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage-facets",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage?category=museum&limit=100&offset=0",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/heritage/15",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/reconstruction/status",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/reconstruction/status",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/reconstruction/status",
+      "status": 200,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/admin/heritage",
+      "status": 401,
+      "mime": "application/json",
+      "type": "Fetch"
+    },
+    {
+      "url": "http://127.0.0.1:5173/api/journeys",
+      "status": 401,
+      "mime": "application/json",
+      "type": "Fetch"
+    }
+  ],
+  "finishedAt": "2026-10-10T17:54:07.382Z"
+}
