@@ -4,6 +4,7 @@ const express = require("express");
 const { createAttemptLimiter } = require("../middleware/rate-limit");
 
 const DEFAULT_SEARCH_URL = "https://nominatim.openstreetmap.org/search";
+const DEFAULT_USER_AGENT = "HeritageVerse/1.0 (https://github.com/parth435/HeritageVerse)";
 const LOCATION_SEARCH_ATTRIBUTION = "Location search by OpenStreetMap contributors (ODbL).";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const CACHE_LIMIT = 500;
@@ -46,9 +47,9 @@ function parseResults(payload) {
 function createLocationSearchRouter({
   fetchImpl = globalThis.fetch,
   searchUrl = process.env.GEOCODER_SEARCH_URL || DEFAULT_SEARCH_URL,
-  userAgent = process.env.GEOCODER_USER_AGENT || "HeritageVerse/1.0 (manual location search)",
+  userAgent = process.env.GEOCODER_USER_AGENT?.trim() || DEFAULT_USER_AGENT,
   requireConfiguredUserAgent = process.env.NODE_ENV === "production",
-  userAgentIsConfigured = Boolean(process.env.GEOCODER_USER_AGENT?.trim()),
+  userAgentIsConfigured = true,
   perMinuteLimiter,
   upstreamLimiter,
   minIntervalMs = 1000,

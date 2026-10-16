@@ -118,8 +118,9 @@ catalogue pages and computes straight-line distances locally, so precise GPS
 coordinates are not sent to HeritageVerse. Manual place-name searches use
 `GET /api/locations/search?q=...`; results are validated and attributed to
 OpenStreetMap, cached in memory for 24 hours, and rate-limited per client and
-per backend process. Set `GEOCODER_USER_AGENT` to an identifying application
-string with an operator contact. `GEOCODER_SEARCH_URL` may only identify the
+per backend process. The default User-Agent identifies HeritageVerse and links
+to its public project URL; set `GEOCODER_USER_AGENT` to override it with an
+identifying application string and operator contact. `GEOCODER_SEARCH_URL` may only identify the
 HTTPS endpoint `https://nominatim.openstreetmap.org/search`; other providers
 are rejected so the returned OpenStreetMap attribution stays accurate. The
 built-in public Nominatim endpoint is
